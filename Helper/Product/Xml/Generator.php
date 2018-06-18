@@ -532,6 +532,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             foreach ($productAttribute['values'] as $attribute) {
                 $configurableAttributes[$productAttribute['store_label']]['values'][] = $attribute['store_label'];
             }
+            $configurableAttributes[$productAttribute['store_label']]['attribute_code'] = $attributeFull['attribute_code'];
+            $configurableAttributes[$productAttribute['store_label']]['attribute_id'] = $attributeFull['attribute_id'];
             $configurableAttributes[$productAttribute['store_label']]['is_filterable'] = $attributeFull['is_filterable'];
             $configurableAttributes[$productAttribute['store_label']]['frontend_input'] = $attributeFull['frontend_input'];
         }
@@ -679,10 +681,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         if ($this->helper->canUseProductAttributes()) {
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
                 $variants = [];
+                $variant_codes = [];
                 $configurableAttributes = $this->getConfigurableAttributes($product);
                 foreach ($configurableAttributes as $attrName => $confAttrN) {
                     if (is_array($confAttrN) && array_key_exists('values', $confAttrN)) {
                         $variants[] = $attrName;
+                        $variant_codes[] = $confAttrN['attribute_code'];
                         $values = implode(' , ', $confAttrN['values']);
                         $this->createChild('attribute', [
                             'is_configurable' => 1,
@@ -710,6 +714,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
                         $is_variant_in_stock = ($stockitem->getIsInStock()) ? 1 : 0;
 
+                        $imagePath = $child_product->getImage() ? $child_product->getImage() : $child_product->getSmallImage();
+                        $_baseImage = $this->storeManager
+                                ->getStore()
+                                ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
+                            . 'catalog/product' . $imagePath;
+
                         if (method_exists($child_product, 'isSaleable')) {
                             $is_variant_sellable = ($child_product->isSaleable()) ? 1 : 0;
                         } else {
@@ -722,14 +732,26 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             $is_variant_visible = '';
                         }
 
-                        $productVariation = $this->createChild('variant', [
+                        $variant_node_attributes = [
                             'id' => $child_product->getId(),
                             'type' => $child_product->getTypeId(),
                             'visibility' => $is_variant_visible,
                             'is_in_stock' => $is_variant_in_stock,
                             'is_seallable' => $is_variant_sellable,
                             'price' => $child_product->getPrice()
-                        ], false, $variantElem);
+                        ];
+                        $matches = array();
+                        preg_match('/.*\.(jpg|jpeg|png|gif)$/', $_baseImage, $matches);
+                        if (count($matches) > 0) {
+                            $variant_node_attributes['variantimage'] = $_baseImage;
+                        }
+
+                        $productVariation = $this->createChild(
+                            'variant',
+                            $variant_node_attributes,
+                            false,
+                            $variantElem
+                        );
 
                         $this->createChild('name', false,
                             $child_product->getName(), $productVariation);
@@ -739,6 +761,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             if (
                                 !in_array($attribute['store_label'], $variants)
                                 && !in_array($attribute['frontend_label'], $variants)
+                                && !in_array($attribute['attribute_code'], $variant_codes)
                             ) {
                                 continue;
                             }
@@ -1067,10 +1090,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     ) {
         try {
             $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
+            $imagePath = $product->getImage() ? $product->getImage() : $product->getSmallImage();
             $_baseImage = $this->storeManager
                     ->getStore()
                     ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
-                . 'catalog/product' . $product->getImage();
+                . 'catalog/product' . $imagePath;
 
             $priceRange = array('price_min' => 0, 'price_max' => 0);
 
@@ -1185,8 +1209,44 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 strval($product->getMetaDescription()), $productElem);
 
             $this->renderTieredPrices($product, $productElem);
+
+            if ($product->getTypeId() == Grouped::TYPE_CODE) {
+                $this->renderGroupedChildrenSkus($product, $productElem);
+            }
         } catch (\Exception $e) {
             //continue
+        }
+    }
+
+    /**
+     * @param $product
+     * @param $productElem
+     */
+    protected function renderGroupedChildrenSkus($product, $productElem)
+    {
+        $childProductCollection = $product->getTypeInstance()
+            ->getAssociatedProducts($product);
+        $childSkus = array();
+        foreach ($childProductCollection as $childProduct) {
+            if ($childProduct->getTypeId() == Configurable::TYPE_CODE) {
+                $configChildren = $this->getConfigurableChildren($childProduct);
+                foreach ($configChildren as $configChild) {
+                    $childSkus[] = $configChild->getSku();
+                }
+            } else {
+                $childSkus[] = $childProduct->getSku();
+            }
+        }
+        if (count($childSkus) > 0) {
+            $attributeElem = $this->createChild('attribute', [
+                'is_filterable' => 0,
+                'name' => 'configurable_simple_skus'
+            ], false, $productElem);
+            $this->createChild('attribute_values', false,
+                implode(',', $childSkus),
+                $attributeElem);
+            $this->createChild('attribute_label', false,
+                'configurable_simple_skus', $attributeElem);
         }
     }
 }

@@ -245,10 +245,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getBatchCollection()
     {
-        if (!$this->batchCollection) {
-            $batchCollection = $this->batchCollectionFactory->create();
-            $this->batchCollection = $batchCollection;
-        }
+        $batchCollection = $this->batchCollectionFactory->create();
+        $this->batchCollection = $batchCollection;
 
         return $this->batchCollection;
     }

@@ -110,10 +110,8 @@ class ProductSave implements ObserverInterface
 
     public function getBatchCollection()
     {
-        if (!$this->batchCollection) {
-            $batchCollection = $this->batchCollectionFactory->create();
-            $this->batchCollection = $batchCollection;
-        }
+        $batchCollection = $this->batchCollectionFactory->create();
+        $this->batchCollection = $batchCollection;
 
         return $this->batchCollection;
     }
@@ -135,14 +133,13 @@ class ProductSave implements ObserverInterface
             array_key_exists('sku', $origData)) {
             $oldSku = $origData['sku'];
             if ($sku != $oldSku) {
-                $this->helper->writeProductDeletion($oldSku, $productId, $storeId, $product);
-                return $this;
+                $this->helper->writeProductDeletion($oldSku, $productId, 0, $product);
             }
         }
 
         //recording disabled item as deleted
         if ($product->getStatus() == '2') {
-            $this->helper->writeProductDeletion($sku, $productId, $storeId, $product);
+            $this->helper->writeProductDeletion($sku, $productId, 0, $product);
             return $this;
         }
 

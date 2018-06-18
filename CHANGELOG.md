@@ -111,3 +111,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Attribute cacheable from blocks.
 - Checksum files.
 - Code duplication.
+
+## [4.3.5] - 2017-08-10 00:00:00
+### Changed
+- Fall back to small image if base image is missing.
+
+### Added
+- Variable products images import.
+- Feeds import support.
+- Update product attributes from grid support.
+- Search configurable product by simple products skus.
+- Search Grouped product by simple products skus.
+- Refresh cart and messages block after ajax add-to-cart submission.
+
+### Fixed
+- Syncing attribute with missing frontend_label.
