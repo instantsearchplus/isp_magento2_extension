@@ -586,6 +586,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     'id' => $category->getId(),
                     'path' => $category->getPath(),
                     'parent_id' => $category->getParentId(),
+                    'name' => $category->getName()
                 ];
             }
             $this->_categories = $categoryMap;
@@ -597,7 +598,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $productCategories = $product->getCategoryIds();
         $rootCategoryId = $this->getRootCategoryId();
-        $paths = array_map(function ($category) use ($productCategories, $rootCategoryId) {
+        $paths = [];
+        $category_names = [];
+        $all_categories = $this->getCategoryMap();
+        foreach ($all_categories as $category) {
             if (in_array($category['id'], $productCategories)) {
                 $path = explode('/', $category['path']);
                 //we don't want the root category for the entire site
@@ -607,13 +611,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     isset($path[0]) &&
                     $path[0] != $rootCategoryId
                 ) {
-                    return [];
+                    continue;
                 }
                 //we want more specific categories first
-                return implode(':', array_reverse($path));
+                $paths[] =  implode(':', array_reverse($path));
+                $category_names[] = $category['name'];
             }
-        }, $this->getCategoryMap());
-        return array_filter($paths);
+        }
+        return array(array_filter($paths), $category_names);
     }
 
     public function createChild($childName, $childAttributes, $childValue, $childParent)
@@ -1234,8 +1239,19 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->renderProductVariantXml($product, $productElem);
             }
 
+            $cats_data = $this->getCategoryPathsByProduct($product);
             $this->createChild('categories', false,
-                implode(';', $this->getCategoryPathsByProduct($product)), $productElem);
+                implode(';', $cats_data[0]), $productElem);
+
+            $attributeElem = $this->createChild('attribute', [
+                'is_filterable' => 0,
+                'name' => 'category_names'
+            ], false, $productElem);
+            $this->createChild('attribute_values', false,
+                implode(',', $cats_data[1]),
+                $attributeElem);
+            $this->createChild('attribute_label', false,
+                'category_names', $attributeElem);
 
             $this->createChild('meta_title', false,
                 strval($product->getMetaTitle()), $productElem);
