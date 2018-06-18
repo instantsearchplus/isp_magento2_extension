@@ -1,0 +1,14 @@
+<?php
+$shouldSync=$this->localhostSynced();
+
+if($shouldSync){
+    ?>
+    <div id="autosuggest-notification" class="notification-global">
+        <a target="_blank" href="<?php echo Mage::helper('adminhtml')->getUrl('adminhtml/autocompleteplus_push/startpush');?>">
+            <b><?php echo  $this->__('Sync now'); ?></b>
+        </a>
+        <?php echo $this->__(' to complete the initial <strong>InstantSearch+</strong> product synchronization with our cloud service') ?>.
+    </div>
+<?php
+}
+?>

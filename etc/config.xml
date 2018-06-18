@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../Magento/Store/etc/config.xsd">
+    <default>
+        <autosuggest>
+            <general>
+                <enabled>1</enabled>
+                <store_email></store_email>
+            </general>
+            <api>
+                <endpoint>https://acp-magento.appspot.com</endpoint>
+                <uuid></uuid>
+                <authentication_key></authentication_key>
+            </api>
+            <dashboard>
+                <endpoint>https://acp-magento.appspot.com</endpoint>
+                <params><![CDATA[ma_dashboard?site_id=%s&authentication_key=%s]]></params>
+            </dashboard>
+            <product>
+                <attributes>1</attributes>
+                <image_field>thumbnail</image_field>
+            </product>
+            <search>
+                <layered>0</layered>
+            </search>
+        </autosuggest>
+    </default>
+</config>

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!--<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <body>
+        <referenceContainer name="notifications">
+            <block template="Autocompleteplus_Autosuggest::autocompleteplus/notifications.phtml" class="Autocompleteplus\Autosuggest\Block\Notifications" name="autocompleteplus_notifications"/>
+        </referenceContainer>
+        <referenceContainer name="before_body_end">
+            <block class="Magento\Framework\View\Element\Text" name="instantsearch.adminLinks">
+                <action method="setText">
+                    <argument name="text" xsi:type="string">
+						
+						<script type="text/javascript">
+							document.observe('dom:loaded', function() {$('nav').select('li.level0').each(function(l, ind) {
+								if (l.innerHTML.indexOf('InstantSearch+') >= 0) {
+									l.select('a').first().writeAttribute('target', '_blank');
+								}});
+							});
+						</script>
+						
+					</argument>
+                </action>
+            </block>
+        </referenceContainer>
+    </body>
+</page>-->

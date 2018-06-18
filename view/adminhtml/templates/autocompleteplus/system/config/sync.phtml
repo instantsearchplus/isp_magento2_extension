@@ -1,0 +1,21 @@
+<script type="text/javascript">
+    //<![CDATA[
+    function syncautocomplete() {
+
+        var url='<?php echo $this->getSyncUrl(); ?>';
+
+        window.open(url);
+    }
+    //]]>
+</script>
+<?php
+
+if($this->getIsReachable()==0){
+    echo $this->getButtonHtml();
+}else{
+    echo
+    '<style>
+        #row_autocompleteplus_config_sync{display: none}
+    </style>';
+}
+ ?>

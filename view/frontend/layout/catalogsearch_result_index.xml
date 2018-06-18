@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2015 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="catalogsearch.leftnav">
+            <action method="setTemplate" ifconfig="autosuggest/search/layered">
+                <argument name="template" xsi:type="string">Autocompleteplus_Autosuggest::layer/view.phtml</argument>
+            </action>
+        </referenceBlock>
+        <referenceBlock name="search.result">
+            <action method="setTemplate" ifconfig="autosuggest/search/layered">
+                <argument name="template" xsi:type="string">Autocompleteplus_Autosuggest::catalogsearch/result_empty.phtml</argument>
+            </action>
+        </referenceBlock>
+        <referenceContainer name="content">
+            <block class="Autocompleteplus\Autosuggest\Block\SearchResult\ListProduct" ifconfig="autosuggest/search/layered" name="autosuggest.results" template="Autocompleteplus_Autosuggest::catalog/product/list.phtml"/>
+        </referenceContainer>
+    </body>
+</page>

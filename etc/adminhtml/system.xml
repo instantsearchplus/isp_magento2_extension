@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="autosuggest" translate="label" sortOrder="200">
+            <label>InstantSearch+</label>
+        </tab>
+        <section id="autosuggest" translate="label" type="text" sortOrder="500" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Configuration</label>
+            <tab>autosuggest</tab>
+            <resource>Autocompleteplus_Autosuggest::instantsearch_configuration</resource>
+            <group id="api" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>API Settings</label>
+                <field id="endpoint" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>API Endpoint</label>
+                    <comment>The URL our module reaches out to for API requests.</comment>
+                </field>
+                <field id="uuid" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>UUID</label>
+                    <comment>Please make sure you have run the required setup specified in your Notifications after install if this field is not populated.</comment>
+                </field>
+                <field id="authentication_key" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Authentication Key</label>
+                    <comment>Authentication Key for API requests</comment>
+                </field>
+            </group>
+            <group id="product" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Product Settings</label>
+                <field id="attributes" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Use Product Attributes</label>
+                    <comment>Will provide more content for InstantSearch+ to provide relevant results to your customers.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

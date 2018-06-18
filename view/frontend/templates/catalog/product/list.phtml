@@ -1,0 +1,9 @@
+<script>
+    var __isp_fulltext_search_obj = {
+        uuid: "<?php echo $block->getApiUUID(); ?>",
+        store_id: <?php echo $block->getStoreId(); ?>,
+        query: "<?php echo $block->getSearchQuery(); ?>",
+        formkey: "<?php echo $block->getFormKey(); ?>"
+    };
+</script>
+<?php echo $block->getSearchResults(); ?>
