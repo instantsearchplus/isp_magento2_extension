@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2016 Instantsearchplus. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="catalog_product_save_after">
+        <observer name="batch_observer" instance="Autocompleteplus\Autosuggest\Observer\ProductSave" />
+    </event>
+    <event name="catalog_product_delete_before">
+        <observer name="batch_delete_observer" instance="Autocompleteplus\Autosuggest\Observer\ProductDelete" />
+    </event>
+    <event name="catalog_product_import_bunch_save_after">
+        <observer name="bunch_observer" instance="Autocompleteplus\Autosuggest\Observer\ProductImport"/>
+    </event>
+    <event name="catalog_product_attribute_update_before">
+        <observer name="batch_update_observer" instance="Autocompleteplus\Autosuggest\Observer\ProductUpdate"/>
+    </event>
+</config>
