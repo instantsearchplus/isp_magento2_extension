@@ -73,6 +73,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     protected $helper;
 
     /**
+     * @var \Autocompleteplus\Autosuggest\Helper\Batches
+     */
+    protected $batchesHelper;
+
+    /**
      * @var \Magento\ConfigurableProduct\Helper\Data
      */
     protected $configurableHelper;
@@ -241,6 +246,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
+        \Autocompleteplus\Autosuggest\Helper\Batches $batchesHelper,
         \Autocompleteplus\Autosuggest\Helper\Data $helper,
         \Magento\ConfigurableProduct\Helper\Data $configurableHelper,
         \Autocompleteplus\Autosuggest\Xml\Generator $xmlGenerator,
@@ -269,6 +275,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $this->storeManager = $storeManagerInterface;
         $this->helper = $helper;
+        $this->batchesHelper = $batchesHelper;
         $this->productFactory = $productFactory;
         $this->reviewModel = $reviewModel;
         $this->xmlGenerator = $xmlGenerator;
@@ -848,20 +855,23 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $count,
         $storeId,
         $from,
-        $to
+        $to,
+        $page
     ) {
         /**
          * Load and filter the batches
          */
         $batchCollection = $this->getBatchCollection();
-        $batchCollection->addFieldToFilter('update_date', [
-            'from'  =>  $from,
-            'to'    =>  $to
-        ])->addFieldToFilter('store_id', $storeId);
+        $filter = array('from' => $from);
+        if ($to > 0) {
+            $filter['to'] = $to;
+        }
+        $batchCollection
+            ->addFieldToFilter('update_date', $filter)
+            ->addFieldToFilter('store_id', $storeId);
         $batchCollection->setOrder('update_date');
-
-        $batchCollection->setPageSize($count);
-        $batchCollection->setCurPage(1);
+        $offset = $page == 1 ? 0 : ($page - 1) * $count;
+        $batchCollection->getSelect()->limit($count, $offset);
 
         /**
          * Set required data for retrieving OrdersPerProduct
@@ -1102,6 +1112,23 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
                 $priceRange = $this->getPriceRange($product);
             }
+
+            $specialFromDate = $product->getSpecialFromDate();
+            $specialToDate = $product->getSpecialToDate();
+            $specialPrice = $product->getSpecialPrice();
+            $nowDateGmt = strtotime('now');
+            if (!is_null($specialPrice) && $specialPrice != false) {
+                $this->scheduleDistantUpdate($specialFromDate, $specialToDate, $nowDateGmt, $product);
+            }
+
+            if ($updatedate && $updatedate > $nowDateGmt) {
+                $lastModifiedDate = strtotime(
+                    (string) $product->getUpdatedAt()
+                );
+            } else {
+                $lastModifiedDate = $updatedate;
+            }
+
             $finalPrice = $this->getProductFinalPrice($product);
             $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
             $xmlAttributes = [
@@ -1119,8 +1146,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'selleable' => $product->isSalable()
             ];
 
-            if ($updatedate != 0) {
-                $xmlAttributes['updatedate'] = $updatedate;
+            if ($lastModifiedDate != 0) {
+                $xmlAttributes['updatedate'] = $lastModifiedDate;
             }
             if ($storeId != null) {
                 $xmlAttributes['storeid'] = $storeId;
@@ -1254,6 +1281,51 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $attributeElem);
             $this->createChild('attribute_label', false,
                 'configurable_simple_skus', $attributeElem);
+        }
+    }
+
+    /**
+     * @param $specialFromDate
+     * @param $specialToDate
+     */
+    protected function scheduleDistantUpdate($specialFromDate, $specialToDate, $nowDateGmt, $product)
+    {
+        $specialFromDateGmt = null;
+        if ($specialFromDate != null) {
+            $localDate = new \DateTime($specialFromDate, new \DateTimeZone(
+                    $this->helper->getTimezone($this->getStoreId())
+                )
+            );
+            $specialFromDateGmt = $localDate->getTimestamp();
+        }
+        if ($specialFromDateGmt && $specialFromDateGmt > $nowDateGmt) {
+            $this->batchesHelper->writeProductUpdate(
+                $product,
+                $product->getId(),
+                $this->getStoreId(),
+                $specialFromDateGmt,
+                $product->getSku()
+            );
+        } else if ($specialToDate != null) {
+            $localDate = new \DateTime($specialToDate, new \DateTimeZone(
+                    $this->helper->getTimezone($this->getStoreId())
+                )
+            );
+            $hour = $localDate->format('H');
+            $mins = $localDate->format('i');
+            if ($hour == '00' && $mins == '00') {
+                $localDate->modify('+86700 seconds'); //make "to" limit inclusive and another 5 minutes for safety
+            }
+            $specialToDateGmt = $localDate->getTimestamp();
+            if ($specialToDateGmt > $nowDateGmt) {
+                $this->batchesHelper->writeProductUpdate(
+                    $product,
+                    $product->getId(),
+                    $this->getStoreId(),
+                    $specialToDateGmt,
+                    $product->getSku()
+                );
+            }
         }
     }
 }

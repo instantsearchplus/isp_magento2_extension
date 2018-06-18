@@ -98,7 +98,7 @@ class ProductUpdate implements ObserverInterface
      * @param \Magento\Framework\Registry $registry
      */
     public function __construct(
-        \Autocompleteplus\Autosuggest\Helper\Data $helper,
+        \Autocompleteplus\Autosuggest\Helper\Batches $helper,
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
         \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
@@ -149,7 +149,7 @@ class ProductUpdate implements ObserverInterface
                     //recording disabled item as deleted
                     if (($product->getStatus() == '2' && !array_key_exists('status', $attributes_data))
                         || (array_key_exists('status', $attributes_data) && $attributes_data['status'] == 2)) {
-                        $this->helper->writeProductDeletion($sku, $productId, 0, $product);
+                        $this->helper->writeProductDeletion($sku, $productId, 0, $dt, $product);
                         continue;
                     }
                     $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds'))

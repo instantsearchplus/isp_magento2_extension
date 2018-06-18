@@ -58,10 +58,11 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
         $count = $this->getRequest()->getParam('count', 100);
         $storeId = $this->getRequest()->getParam('store_id', 1);
         $from = $this->getRequest()->getParam('from');
-        $to = $this->getRequest()->getParam('to', $this->date->gmtTimestamp());
+        $to = $this->getRequest()->getParam('to', false);
+        $page = $this->getRequest()->getParam('page', 1);
 
         $catalogXml = $this->xmlGenerator
-            ->renderUpdatesCatalogXml($count, $storeId, $from, $to);
+            ->renderUpdatesCatalogXml($count, $storeId, $from, $to, $page);
 
         $om = \Magento\Framework\App\ObjectManager::getInstance();
         $response = $om->get('Magento\Framework\App\ResponseInterface');

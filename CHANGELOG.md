@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.4.4] - 2017-11-14 10:02:00
+### Changed
+- Legacy code cleanup
+
+## [4.4.3] - 2017-11-13 12:02:00
+### Added
+- Batches helper, that is responsible for insert/update batches table
+- Pagination in sendupdated requests
+- Special price from/to support
+
 ## [4.4.2] - 2017-10-24 09:25:00
 ### Changed
 - 2.0.* compatibility: Use \Magento\Customer\Model\ResourceModel\Group\Collection class to get all customer groups.

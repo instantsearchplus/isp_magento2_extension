@@ -71,11 +71,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $resourceConfig;
 
     /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory
-     */
-    protected $batchCollectionFactory;
-
-    /**
      * @var \Magento\Catalog\Model\Product
      */
     protected $productModel;
@@ -91,14 +86,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $date;
 
     /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
-     */
-    protected $batchCollection;
-
-    /**
      * @var \Magento\Framework\App\ProductMetadataInterface
      */
     protected $productMetaData;
+
+    protected $_storeTime;
 
     const ENABLED = 'autosuggest/general/enabled';
     const PRODUCT_ATTRIBUTES = 'autosuggest/product/attributes';
@@ -118,22 +110,22 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Store\Model\StoresConfig $storesConfig,
         \Autocompleteplus\Autosuggest\Helper\Api $api,
         \Magento\Config\Model\ResourceModel\Config $resourceConfig,
-        \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
         \Magento\Catalog\Model\Product $productModel,
         \Autocompleteplus\Autosuggest\Model\Batch $batchModel,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Magento\Framework\App\ProductMetadataInterface $productMetaData
+        \Magento\Framework\App\ProductMetadataInterface $productMetaData,
+        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezone
     ) {
         $this->moduleList = $moduleList;
         $this->storeManager = $storeManager;
         $this->storesConfig = $storesConfig;
         $this->api = $api;
         $this->resourceConfig = $resourceConfig;
-        $this->batchCollectionFactory = $batchCollectionFactory;
         $this->productModel = $productModel;
         $this->batchModel = $batchModel;
         $this->date = $date;
         $this->productMetaData = $productMetaData;
+        $this->_storeTime = $timezone;
         parent::__construct($context);
     }
 
@@ -208,6 +200,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
+    public function getTimezone($storeId = 0)
+    {
+        return $this->_storeTime->getConfigTimezone('store', $storeId);
+    }
+
     public function getSearchLayered($scopeId = 0)
     {
         return $this->scopeConfig->getValue(
@@ -241,14 +238,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function isInstalled()
     {
         return !!(strlen($this->getApiUUID()) > 0);
-    }
-
-    public function getBatchCollection()
-    {
-        $batchCollection = $this->batchCollectionFactory->create();
-        $this->batchCollection = $batchCollection;
-
-        return $this->batchCollection;
     }
 
     public function getMultiStoreData()
@@ -333,49 +322,5 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $dataArr['email'] = $storeMail;
         }
         return $dataArr;
-    }
-
-    public function writeProductDeletion($sku, $productId, $storeId, $product = null)
-    {
-        $dt = $this->date->gmtTimestamp();
-        try {
-            if (!$product) {
-                $product = $this->productModel->load($productId);
-            }
-
-            $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds')) ?
-                $product->getStoreIds() : [$storeId];
-        } catch (\Exception $e) {
-            $this->logger->critical($e);
-            $productStores = [$storeId];
-        }
-
-        if ($sku == null) {
-            $sku = 'dummy_sku';
-        }
-
-        foreach ($productStores as $productStore) {
-            $batchCollection = $this->getBatchCollection();
-            $batchCollection->addFieldToFilter('product_id', $productId)
-                ->addFieldToFilter('store_id', $productStore)
-                ->setPageSize(1);
-
-            if ($batchCollection->getSize() > 0) {
-                $batch = $batchCollection->getFirstItem();
-                $batch->setUpdateDate($dt)
-                    ->setAction('remove')
-                    ->setProductId($productId)
-                    ->setStoreId($productStore)
-                    ->save();
-            } else {
-                $batch = $this->batchModel;
-                $batch->setUpdateDate($dt)
-                    ->setAction('remove')
-                    ->setProductId($productId)
-                    ->setStoreId($productStore)
-                    ->setSku($sku)
-                    ->save();
-            }
-        }
     }
 }

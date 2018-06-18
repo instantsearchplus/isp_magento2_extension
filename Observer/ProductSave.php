@@ -47,14 +47,9 @@ class ProductSave implements ObserverInterface
     /**
      * Catalog helper
      *
-     * @var \Magento\Catalog\Helper\Catalog
+     * @var \Autocompleteplus\Autosuggest\Helper\Batches
      */
     protected $helper;
-
-    /**
-     * @var \Magento\ConfigurableProduct\Model\Product\Type\Configurable
-     */
-    protected $configurable;
 
     /**
      * @var \Psr\Log\LoggerInterface
@@ -65,15 +60,6 @@ class ProductSave implements ObserverInterface
      * @var \Magento\Framework\Stdlib\DateTime\DateTime
      */
     protected $date;
-
-    /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory
-     */
-    protected $batchCollectionFactory;
-
-    protected $productModel;
-
-    protected $batchModel;
 
     /**
      * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
@@ -91,30 +77,15 @@ class ProductSave implements ObserverInterface
      * @param \Autocompleteplus\Autosuggest\Model\Batch $batchModel
      */
     public function __construct(
-        \Autocompleteplus\Autosuggest\Helper\Data $helper,
-        \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
+        \Autocompleteplus\Autosuggest\Helper\Batches $helper,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
-        \Magento\Catalog\Model\Product $productModel,
-        \Autocompleteplus\Autosuggest\Model\Batch $batchModel
+        \Magento\Framework\Stdlib\DateTime\DateTime $date
     ) {
         $this->helper = $helper;
-        $this->configurable = $configurable;
         $this->logger = $logger;
         $this->date = $date;
-        $this->batchCollectionFactory = $batchCollectionFactory;
-        $this->productModel = $productModel;
-        $this->batchModel = $batchModel;
     }
 
-    public function getBatchCollection()
-    {
-        $batchCollection = $this->batchCollectionFactory->create();
-        $this->batchCollection = $batchCollection;
-
-        return $this->batchCollection;
-    }
 
     /**
      * Update products
@@ -129,98 +100,24 @@ class ProductSave implements ObserverInterface
         $storeId = $product->getStoreId();
         $productId = $product->getId();
         $sku = $product->getSku();
+        $dt = $this->date->gmtTimestamp();
         if (is_array($origData) &&
             array_key_exists('sku', $origData)) {
             $oldSku = $origData['sku'];
             if ($sku != $oldSku) {
-                $this->helper->writeProductDeletion($oldSku, $productId, 0, $product);
+                $this->helper->writeProductDeletion($oldSku, $productId, 0, $dt, $product);
             }
         }
 
         //recording disabled item as deleted
         if ($product->getStatus() == '2') {
-            $this->helper->writeProductDeletion($sku, $productId, 0, $product);
+            $this->helper->writeProductDeletion($sku, $productId, 0, $dt, $product);
             return $this;
         }
 
-        $dt = $this->date->gmtTimestamp();
-        try {
-            try {
-                if (!$product) {
-                    $product = $this->productModel->load($productId);
-                }
-
-                $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds')) ? $product->getStoreIds() : [$storeId];
-            } catch (\Exception $e) {
-
-                $this->logger->critical($e);
-                $productStores = [$storeId];
-            }
-
-            $simpleProducts = [];
-            if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
-                $simpleProducts = $this->configurable->getParentIdsByChild($product->getId());
-            }
-
-            foreach ($productStores as $productStore) {
-                $batches = $this->getBatchCollection()
-                    ->addFieldToFilter('product_id', $productId)
-                    ->addFieldToFilter('store_id', $productStore)
-                    ->setPageSize(1);
-
-                if ($batches->getSize() > 0) {
-                    $batch = $batches->getFirstItem();
-                    $batch->setUpdateDate($dt)
-                        ->setAction('update')
-                        ->setProductId($productId)
-                        ->setStoreId($productStore)
-                        ->save();
-                } else {
-                    $batch = $this->batchModel;
-                    $batch->setUpdateDate($dt)
-                        ->setAction('update')
-                        ->setProductId($productId)
-                        ->setStoreId($productStore)
-                        ->setSku($sku)
-                        ->save();
-                }
-
-                if (is_array($simpleProducts) && count($simpleProducts) > 0) {
-                    foreach ($simpleProducts as $configurableProduct) {
-                        $batchCollection = $this->getBatchCollection();
-                        $batchCollection->addFieldToFilter(
-                            'product_id',
-                            $configurableProduct
-                        )
-                            ->addFieldToFilter('store_id', $productStore)
-                            ->setPageSize(1);
-
-                        if ($batchCollection->getSize() > 0) {
-                            $batch = $batchCollection->getFirstItem();
-                            if ($batch->getAction() !== 'remove') {
-                                $batch->setUpdateDate($dt)
-                                    ->setAction('update')
-                                    ->setProductId($configurableProduct)
-                                    ->setStoreId($productStore)
-                                    ->save();
-                            }
-                        } else {
-                            $batch = $this->batchModel;
-
-                            $batch->setUpdateDate($dt)
-                                ->setProductId($configurableProduct)
-                                ->setAction('update')
-                                ->setStoreId($productStore)
-                                ->setSku('ISP_NO_SKU')
-                                ->save();
-                        }
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            $this->logger->critical($e);
-        }
+        $this->helper->writeProductUpdate($product, $productId, $storeId, $dt, $sku);
 
         return $this;
     }
+
 }
