@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.4.12] - 2018-04-30 14:42:00
+### Fixed
+- Set ASC order in update batches fetch
+
 ## [4.4.11] - 2018-04-30 14:42:00
 ### Added
 - Debug route to get batch by product id

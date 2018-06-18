@@ -908,7 +908,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $batchCollection
             ->addFieldToFilter('update_date', $filter)
             ->addFieldToFilter('store_id', $storeId);
-        $batchCollection->setOrder('update_date');
+        $batchCollection->setOrder('update_date', 'ASC');
         $offset = $page == 1 ? 0 : ($page - 1) * $count;
         $batchCollection->getSelect()->limit($count, $offset);
 
