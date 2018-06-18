@@ -22,6 +22,7 @@
 namespace Autocompleteplus\Autosuggest\Helper;
 
 use \Magento\Store\Model\ScopeInterface;
+use \Magento\Framework\App\Config\ScopeConfigInterface;
 
 /**
  * Data
@@ -108,11 +109,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const PRODUCT_ATTRIBUTES = 'autosuggest/product/attributes';
     const PRODUCT_IMAGE_FIELD = 'autosuggest/product/image_field';
     const XML_PATH_SEARCH_LAYERED = 'autosuggest/search/layered';
+    const XML_FORM_URL_CONFIG = 'autosuggest/search/miniform_change';
     const MODULE_NAME = 'Autocompleteplus_Autosuggest';
     const XML_PATH_API_ENDPOINT = 'autosuggest/api/endpoint';
     const XML_PATH_DASHBOARD_ENDPOINT = 'autosuggest/dashboard/endpoint';
     const XML_PATH_DASHBOARD_PARAMS = 'autosuggest/dashboard/params';
-
+    const SCOPE_CONFIG_STORES = 'stores';
+    
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
         \Magento\Framework\Module\ModuleListInterface $moduleList,
@@ -164,7 +167,18 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function canUseSearchLayered()
     {
-        return $this->scopeConfig->getValue(self::XML_PATH_SEARCH_LAYERED);
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_SEARCH_LAYERED,
+            self::SCOPE_CONFIG_STORES
+        );
+    }
+
+    public function canUseMiniFormRewrite()
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_FORM_URL_CONFIG,
+            self::SCOPE_CONFIG_STORES
+        );
     }
 
     public function getDashboardParams()
@@ -198,6 +212,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->scopeConfig->getValue(self::XML_PATH_SEARCH_LAYERED, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $scopeId);
     }
 
+    public function setMiniFormRewrite($enabled, $scope = 'default', $scopeId = 0)
+    {
+        $this->resourceConfig->saveConfig(
+            self::XML_FORM_URL_CONFIG,
+            intval($enabled),
+            $scope,
+            $scopeId
+        );
+        return $this;
+    }
+    
     public function setSearchLayered($enabled, $scope = 'default', $scopeId = 0)
     {
         $this->resourceConfig->saveConfig(

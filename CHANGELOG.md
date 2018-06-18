@@ -41,3 +41,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Compilation errors in Serp Block class.
+
+## [4.1.0] - 2016-12-12 00:00:00
+### Changed
+- Optimizing products send.
+- Wrap serp template call into try/catch.
+
+### Added
+- Add route for seo friendly search url.
+- Add miniform url switch.
+- Link to isp dashboard with custom font icon.
+- Add configurable product price range.
+
+### Fixed
+- Fix base image fetch.
+- Fix configurable product prices fetch.

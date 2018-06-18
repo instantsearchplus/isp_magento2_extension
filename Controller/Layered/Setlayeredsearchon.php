@@ -12,6 +12,7 @@ class Setlayeredsearchon extends \Autocompleteplus\Autosuggest\Controller\Layere
         $scope = $request->getParam('scope', 'stores');
         $scopeId = $request->getParam('store_id', 1);
         $result = $this->resultJsonFactory->create();
+        $mini_form_url_instantsearchplus = $request->getParam('mini_form_url_instantsearchplus', '0');
 
         if (!$this->isValid($uuid, $authKey)) {
             $response = [
@@ -22,6 +23,12 @@ class Setlayeredsearchon extends \Autocompleteplus\Autosuggest\Controller\Layere
         }
         
         $this->helper->setSearchLayered(true, $scope, $scopeId);
+        if ($mini_form_url_instantsearchplus === '1') {
+            $this->helper->setMiniFormRewrite(true, $scope, $scopeId);
+        } else {
+            $this->helper->setMiniFormRewrite(false, $scope, $scopeId);
+        }
+        
         $this->clearCache();
 
         $response = [

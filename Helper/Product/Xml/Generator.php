@@ -22,6 +22,8 @@
 namespace Autocompleteplus\Autosuggest\Helper\Product\Xml;
 
 use Magento\Framework\App;
+use Magento\Framework\UrlInterface;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 
 /**
  * Generator
@@ -204,6 +206,23 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected $categoryCollection;
 
+    /**
+     * @var array caches attribute values for select attribute
+     */
+    protected $attributesValuesCache;
+
+    /**
+     * @var array caches attribute names for each set
+     */
+    protected $attributesSetsCache;
+
+    /**
+     * @var Magento\Eav\Api\AttributeManagementInterface
+     */
+    protected $productAttributeManagementInterface;
+
+    const ISPKEY = 'ISPKEY_';
+
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Data $helper,
@@ -224,7 +243,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory  $productCollectionFactory,
         \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
         \Magento\Sales\Model\ResourceModel\Order\Item\Collection $orderItemCollection,
-        \Magento\Framework\Stdlib\DateTime\DateTime $date
+        \Magento\Framework\Stdlib\DateTime\DateTime $date,
+        \Magento\Eav\Api\AttributeManagementInterface $productAttributeManagementInterface
     )
     {
         $this->storeManager = $storeManagerInterface;
@@ -246,12 +266,17 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->batchCollectionFactory = $batchCollectionFactory;
         $this->orderItemCollection = $orderItemCollection;
         $this->date = $date;
-        
+        $this->productAttributeManagementInterface = $productAttributeManagementInterface;
+
         $this->xmlGenerator->setRootElementName('catalog');
         $this->xmlGenerator->setRootAttributes([
             'version'   =>  $this->helper->getVersion(),
             'magento'   =>  $this->helper->getMagentoVersion()
         ]);
+
+        $this->attributesValuesCache = array();
+        $this->attributesSetsCache = array();
+
         parent::__construct($context);
     }
 
@@ -545,17 +570,37 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $action = $attr->getAttributeCode();
         $is_filterable = $attr->getIsFilterable();
         $attribute_label = $attr->getFrontendLabel();
-        $attrValue = null;
+        $attrValue = $product->getData($action);
+
+        if (!array_key_exists($action, $this->attributesValuesCache)) {
+            $this->attributesValuesCache[$action] = array();
+        }
 
         switch ($attr->getFrontendInput()) {
             case 'select':
-                $attrValue = method_exists($product, 'getAttributeText') ?
-                    $product->getAttributeText($action) : $this->getProduct()->getData($action);
+                if (method_exists($product, 'getAttributeText')) {
+                    /**
+                     * We generate key for cached attributes array
+                     * we make it as string to avoid null to be a key
+                     */
+                    $attrValidKey = $attrValue != null ? self::ISPKEY.$attrValue : self::ISPKEY;
+
+                    if (!array_key_exists($attrValidKey, $this->attributesValuesCache[$action])) {
+                        $attrValueText = $product->getAttributeText($action);
+
+                        $this->attributesValuesCache[$action][$attrValidKey] = $attrValueText;
+                        $attrValue = $attrValueText;
+                    } else {
+                        $attrValueText = $this->attributesValuesCache[$action][$attrValidKey];
+
+                        $attrValue = $attrValueText;
+                    }
+                }
+
                 break;
             case 'textarea':
             case 'price':
             case 'text':
-                $attrValue = $product->getData($action);
                 break;
             case 'multiselect':
                 $attrValue = $product->getResource()
@@ -580,7 +625,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     public function renderProductVariantXml($product, $productElem)
     {
         if ($this->helper->canUseProductAttributes()) {
-            if ($product->getTypeId() == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
+            if ($product->getTypeId() == Configurable::TYPE_CODE) {
                 $variants = [];
                 $configurableAttributes = $this->getConfigurableAttributes($product);
                 foreach ($configurableAttributes as $attrName => $confAttrN) {
@@ -683,8 +728,17 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         foreach ($productCollection as $product)
         {
             $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
-            $_baseImage = $this->image->init($product, 'product_base_image')->getUrl();
+            $_baseImage = $this->storeManager
+                    ->getStore()
+                    ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
+                . 'catalog/product' . $product->getImage();
+            
+            $priceRange = array('price_min' => 0, 'price_max' => 0);
 
+            if ($product->getTypeId() == Configurable::TYPE_CODE) {
+                $priceRange = $this->getPriceRange($product);
+            }
+            
             $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
             $productElem = $this->createChild('product', [
                 'thumbs'     =>  $_thumbs,
@@ -694,9 +748,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'currency'   =>  $this->getCurrencyCode(),
                 'visibility' =>  $product->getVisibility(),
                 'selleable'  =>  $product->isSalable(),
-                'price'      =>  $product->getPrice(),
-                'price_min'  =>  $product->getMinimalPrice(),
-                'price_max'  =>  $product->getPrice(),
+                'price'      => $product->getFinalPrice(),
+                'price_min'  => ($priceRange['price_min']),
+                'price_max'  => ($priceRange['price_max']),
                 'url'        =>  $product->getProductUrl(true),
                 'action'     =>  'insert'
             ], false, $this->xmlGenerator->getSimpleXml());
@@ -734,8 +788,24 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->dateTime->timestamp($product->getUpdatedAt()), $productElem);
 
             if ($this->helper->canUseProductAttributes()) {
+                $attributeSetId = $product->getAttributeSetId();
+
+                if (!array_key_exists($attributeSetId, $this->attributesSetsCache)) {
+                    $this->attributesSetsCache[$attributeSetId] = array();
+                    $setAttributes = $this->productAttributeManagementInterface->getAttributes(
+                        \Magento\Catalog\Api\Data\ProductAttributeInterface::ENTITY_TYPE_CODE,
+                        $attributeSetId
+                    );
+
+                    foreach ($setAttributes as $attrFromSet) {
+                        $this->attributesSetsCache[$attributeSetId][] = $attrFromSet->getAttributeCode();
+                    }
+                }
+
                 foreach ($this->getProductAttributes() as $attr) {
-                    $this->renderAttributeXml($attr, $product, $productElem);
+                    if (in_array($attr->getAttributeCode(), $this->attributesSetsCache[$attributeSetId])) {
+                        $this->renderAttributeXml($attr, $product, $productElem);
+                    }
                 }
             }
 
@@ -744,7 +814,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     implode(',', $this->getProductParentIds($product)), $productElem);
             }
 
-            if ($product->getTypeId() == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
+            if ($product->getTypeId() == Configurable::TYPE_CODE) {
                 $this->createChild('simpleproducts', false,
                     implode(',', $this->getConfigurableChildrenIds($product)), $productElem);
 
@@ -831,8 +901,17 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     $product = $this->loadProductById($productId, $batchStoreId);
                     if ($product) {
                         $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
-                        $_baseImage = $this->image->init($product, 'product_base_image')->getUrl();
+                        $_baseImage = $this->storeManager
+                                ->getStore()
+                                ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
+                            . 'catalog/product' . $product->getImage();
 
+                        $priceRange = array('price_min' => 0, 'price_max' => 0);
+
+                        if ($product->getTypeId() == Configurable::TYPE_CODE) {
+                            $priceRange = $this->getPriceRange($product);
+                        }
+                        
                         $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
                         $productElement = $this->createChild('product', [
                             'updatedate' => ($batch->getUpdateDate()),
@@ -842,9 +921,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             'thumbs'     => $_thumbs,
                             'base_image' => $_baseImage,
                             'url'        => $product->getProductUrl(true),
-                            'price'      => $product->getPrice(),
-                            'price_min'  => $product->getMinimalPrice(),
-                            'price_max'  => $product->getPrice(),
+                            'price'      => $product->getFinalPrice(),
+                            'price_min'  => ($priceRange['price_min']),
+                            'price_max'  => ($priceRange['price_max']),
                             'type'       => $product->getTypeId(),
                             'currency'   => $this->getCurrencyCode(),
                         ], false, $this->xmlGenerator->getSimpleXml());
@@ -940,8 +1019,17 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         foreach ($productCollection as $product)
         {
             $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
-            $_baseImage = $this->image->init($product, 'product_base_image')->getUrl();
+            $_baseImage = $this->storeManager
+                    ->getStore()
+                    ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
+                . 'catalog/product' . $product->getImage();
 
+            $priceRange = array('price_min' => 0, 'price_max' => 0);
+            
+            if ($product->getTypeId() == Configurable::TYPE_CODE) {
+                $priceRange = $this->getPriceRange($product);
+            }
+            
             $productElem = $this->createChild('product', [
                 'thumbs'           =>  $_thumbs,
                 'base_image'       =>  $_baseImage,
@@ -950,9 +1038,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'currency'         =>  $this->getCurrencyCode(),
                 'visibility'       =>  $product->getVisibility(),
                 'selleable'        =>  $product->isSalable(),
-                'price'            =>  $product->getPrice(),
-                'price_min'        =>  $product->getMinimalPrice(),
-                'price_max'        =>  $product->getPrice(),
+                'price'            =>  $product->getFinalPrice(),
+                'price_min'        => ($priceRange['price_min']),
+                'price_max'        => ($priceRange['price_max']),
                 'url'              =>  $product->getProductUrl(true),
                 'action'           =>  'getbyid',
                 'get_by_id_status' =>  1
@@ -1019,7 +1107,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     implode(',', $this->getProductParentIds($product)), $productElem);
             }
 
-            if ($product->getTypeId() == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
+            if ($product->getTypeId() == Configurable::TYPE_CODE) {
                 $this->createChild('simpleproducts', false,
                     implode(',', $this->getConfigurableChildrenIds($product)), $productElem);
 
@@ -1034,6 +1122,38 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $this->xmlGenerator->generateXml();
+    }
+
+    /**
+     * GetPriceRange
+     *
+     * @return array
+     */
+    public function getPriceRange($product)
+    {
+        $min_price = 2147483647;
+        $max_price = 0;
+        
+        foreach($product->getTypeInstance()->getUsedProducts($product) as $childProduct) {
+            $childPrice = $childProduct->getFinalPrice();
+            
+            if ($childPrice < $min_price) {
+                $min_price = $childPrice;
+            }
+
+            if ($childPrice > $max_price) {
+                $max_price = $childPrice;
+            }
+        }
+
+        if ($min_price == 2147483647) {
+            $min_price = 0;
+        }
+
+        return array(
+            'price_min' => $min_price,
+            'price_max' => $max_price,
+        );
     }
 
     protected function _getPurchasePopularity($orderCount, $product)

@@ -99,10 +99,7 @@ class ProductCollection
         $this->logger = $logger;
         $this->catalogSession = $catalogSession;
 
-        $laeyeredTmp = $this->scopeConfig->getValue(
-            'autocompleteplus/config/layered',
-            ScopeInterface::SCOPE_STORE
-        );
+        $laeyeredTmp = $this->helper->canUseSearchLayered();
 
         if (isset($laeyeredTmp) && $laeyeredTmp == '1') {
             $this->is_layered_enabled = true;

@@ -102,12 +102,17 @@ class ListProduct extends Template
 
     public function getSearchResults()
     {
-        $template=$this->cacheManager->load('autocomplete_template_serp');
+        $template = $this->cacheManager->load('autocomplete_template_serp');
 
-        if(!$template) {
+        if (!$template) {
             $template = $this->helper->fetchProductListingData();
-
-            $this->cacheManager->save($template, 'autocomplete_template_serp',array("autocomplete_cache"), self::SERP_PAGE_TEMPLATE_LIFETIME);
+            
+            $this->cacheManager->save(
+                $template,
+                'autocomplete_template_serp',
+                array("autocomplete_cache"),
+                self::SERP_PAGE_TEMPLATE_LIFETIME
+            );
         }
 
         return $template;

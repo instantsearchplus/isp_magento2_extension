@@ -201,14 +201,22 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     public function fetchProductListingData()
     {           
         $this->setUrl($this->getApiEndpoint() . '/ma_load_search_page');
-        $response = $this->buildRequest([
-            'isp_platform' => 'magento',
-            'r' => '002'
-        ]);
-        $responseData = json_decode($response->getBody());
-        if ($responseData->html) {
-            return $responseData->html;
+        
+        try {
+            $response = $this->buildRequest(
+                [
+                'isp_platform' => 'magento',
+                'r' => '002'
+                ]
+            );
+            $responseData = json_decode($response->getBody());
+            if ($responseData->html) {
+                return $responseData->html;
+            }
+        } catch (\Exception $e) {
+            return false;
         }
+
         return false;
     }
 
