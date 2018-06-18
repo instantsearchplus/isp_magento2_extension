@@ -21,7 +21,7 @@ class Send extends \Autocompleteplus\Autosuggest\Controller\Products
     {
         $offset = $this->getRequest()->getParam('offset', 0);
         $count = $this->getRequest()->getParam('count', 100);
-        $storeId = $this->getRequest()->getParam('store_id', 1);
+        $storeId = $this->getRequest()->getParam('store', 1);
         $orders = $this->getRequest()->getParam('orders', false);
         $interval = $this->getRequest()->getParam('month_interval', 12);
         $checksum = $this->getRequest()->getParam('checksum', false);

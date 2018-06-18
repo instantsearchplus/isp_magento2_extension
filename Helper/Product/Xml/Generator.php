@@ -349,7 +349,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         return $this->productCollection;
     }
-    
+
     public function getCategoryCollection()
     {
         if (!$this->categoryCollection) {
@@ -387,7 +387,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $this->attributeCollection = $this->attributeFactory->create();
             $entityType = $this->catalogProductFactory->create()->getResource()->getEntityType();
             $entityTypeId = $entityType->getId();
-            $this->attributeCollection->addFieldToFilter('is_user_defined', 1);
             $this->attributeCollection->setEntityTypeFilter($entityTypeId);
         }
 
@@ -632,36 +631,41 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $this->attributesValuesCache[$action] = array();
         }
 
-        switch ($attr->getFrontendInput()) {
-            case 'select':
-                if (method_exists($product, 'getAttributeText')) {
-                    /**
-                     * We generate key for cached attributes array
-                     * we make it as string to avoid null to be a key
-                     */
-                    $attrValidKey = $attrValue != null ? self::ISPKEY.$attrValue : self::ISPKEY;
+        if (!is_array($attrValue)) {
+            switch ($attr->getFrontendInput()) {
+                case 'select':
+                    if (method_exists($product, 'getAttributeText')) {
+                        /**
+                         * We generate key for cached attributes array
+                         * we make it as string to avoid null to be a key
+                         */
+                        $attrValidKey = $attrValue != null ? self::ISPKEY.$attrValue : self::ISPKEY;
 
-                    if (!array_key_exists($attrValidKey, $this->attributesValuesCache[$action])) {
-                        $attrValueText = $product->getAttributeText($action);
+                        if (!array_key_exists($attrValidKey, $this->attributesValuesCache[$action])) {
+                            $attrValueText = $product->getAttributeText($action);
 
-                        $this->attributesValuesCache[$action][$attrValidKey] = $attrValueText;
-                        $attrValue = $attrValueText;
-                    } else {
-                        $attrValueText = $this->attributesValuesCache[$action][$attrValidKey];
+                            $this->attributesValuesCache[$action][$attrValidKey] = $attrValueText;
+                            $attrValue = $attrValueText;
+                        } else {
+                            $attrValueText = $this->attributesValuesCache[$action][$attrValidKey];
 
-                        $attrValue = $attrValueText;
+                            $attrValue = $attrValueText;
+                        }
                     }
-                }
 
-                break;
-            case 'textarea':
-            case 'price':
-            case 'text':
-                break;
-            case 'multiselect':
-                $attrValue = $product->getResource()
-                    ->getAttribute($action)->getFrontend()->getValue($product);
-                break;
+                    break;
+                case 'textarea':
+                case 'price':
+                case 'text':
+                    break;
+                case 'multiselect':
+                    $attrValue = $product->getResource()
+                        ->getAttribute($action)->getFrontend()->getValue($product);
+                    break;
+            }
+
+        } else {
+            $attrValue = json_encode($attrValue);
         }
 
         if ($attrValue) {
@@ -707,8 +711,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                          */
                         $stockitem = $this->stockRegistry
                             ->getStockItem(
-                            $child_product->getId(),
-                            $product->getStore()->getWebsiteId()
+                                $child_product->getId(),
+                                $product->getStore()->getWebsiteId()
                             );
 
                         $is_variant_in_stock = ($stockitem->getIsInStock()) ? 1 : 0;
@@ -742,7 +746,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             if (
                                 !in_array($attribute['store_label'], $variants)
                                 && !in_array($attribute['frontend_label'], $variants)
-                                ) {
+                            ) {
                                 continue;
                             }
 
@@ -775,7 +779,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->setOrders($orders);
         $this->setInterval($interval);
         $this->setChecksum($checksum);
-        
+
         $productCollection = $this->getProductCollection();
 
         $productCollection->getSelect()->limit($count, $offset);
@@ -795,13 +799,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     ->getStore()
                     ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
                 . 'catalog/product' . $product->getImage();
-            
+
             $priceRange = array('price_min' => 0, 'price_max' => 0);
 
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
                 $priceRange = $this->getPriceRange($product);
             }
-            
+
             $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
             $productElem = $this->createChild('product', [
                 'thumbs'     =>  $_thumbs,
@@ -811,7 +815,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'currency'   =>  $this->getCurrencyCode(),
                 'visibility' =>  $product->getVisibility(),
                 'selleable'  =>  $product->isSalable(),
-                'price'      =>  $product->getFinalPrice(),
+                'price'      =>  $product->getPriceInfo()
+                    ->getPrice('final_price')
+                    ->getValue(),
                 'price_min'  => ($priceRange['price_min']),
                 'price_max'  => ($priceRange['price_max']),
                 'url'        =>  $product->getProductUrl(true),
@@ -886,11 +892,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
             $this->createChild('categories', false,
                 implode(';', $this->getCategoryPathsByProduct($product)), $productElem);
-            
+
             $this->createChild('meta_title', false,
-                    strval($product->getMetaTitle()), $productElem);
+                strval($product->getMetaTitle()), $productElem);
             $this->createChild('meta_description', false,
-                    strval($product->getMetaDescription()), $productElem);
+                strval($product->getMetaDescription()), $productElem);
 
             $this->renderTieredPrices($product, $productElem);
         }
@@ -976,7 +982,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         if ($product->getTypeId() == Configurable::TYPE_CODE) {
                             $priceRange = $this->getPriceRange($product);
                         }
-                        
+
                         $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
                         $productElement = $this->createChild('product', [
                             'updatedate' => ($batch->getUpdateDate()),
@@ -986,7 +992,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             'thumbs'     => $_thumbs,
                             'base_image' => $_baseImage,
                             'url'        => $product->getProductUrl(true),
-                            'price'      => $product->getFinalPrice(),
+                            'price'      => $product->getPriceInfo()
+                                ->getPrice('final_price')
+                                ->getValue(),
                             'price_min'  => ($priceRange['price_min']),
                             'price_max'  => ($priceRange['price_max']),
                             'type'       => $product->getTypeId(),
@@ -1023,13 +1031,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                                 $this->renderAttributeXml($attr, $product, $productElement);
                             }
                         }
-                        
+
                         // TODO: missing categories from the XML
-                        
+
                         $this->createChild('meta_title', false,
-                                strval($product->getMetaTitle()), $productElement);
+                            strval($product->getMetaTitle()), $productElement);
                         $this->createChild('meta_description', false,
-                                strval($product->getMetaDescription()), $productElement);
+                            strval($product->getMetaDescription()), $productElement);
 
                         $this->renderTieredPrices($product, $productElement);
 
@@ -1072,8 +1080,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $productCollection->addAttributeToFilter('entity_id', ['in'  =>  $ids]);
         $productCollection->joinTable('catalog_product_relation', 'child_id=entity_id', [
-                'parent_id' => 'parent_id'
-            ], null, 'left')
+            'parent_id' => 'parent_id'
+        ], null, 'left')
             ->addAttributeToFilter([
                 [
                     'attribute' => 'parent_id',
@@ -1096,11 +1104,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 . 'catalog/product' . $product->getImage();
 
             $priceRange = array('price_min' => 0, 'price_max' => 0);
-            
+
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
                 $priceRange = $this->getPriceRange($product);
             }
-            
+
             $productElem = $this->createChild('product', [
                 'thumbs'           =>  $_thumbs,
                 'base_image'       =>  $_baseImage,
@@ -1109,7 +1117,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'currency'         =>  $this->getCurrencyCode(),
                 'visibility'       =>  $product->getVisibility(),
                 'selleable'        =>  $product->isSalable(),
-                'price'            =>  $product->getFinalPrice(),
+                'price'            =>  $product->getPriceInfo()
+                    ->getPrice('final_price')
+                    ->getValue(),
                 'price_min'        => ($priceRange['price_min']),
                 'price_max'        => ($priceRange['price_max']),
                 'url'              =>  $product->getProductUrl(true),
@@ -1186,7 +1196,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $this->createChild('categories', false, implode(';', $this->getCategoryPathsByProduct($product)), $productElem);
-            
+
             $this->createChild('meta_title', false, strval($product->getMetaTitle()), $productElem);
 
             $this->createChild('meta_description', false, strval($product->getMetaDescription()), $productElem);
@@ -1208,27 +1218,27 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     protected function renderTieredPrices($product, $productXmlElem) {
 
         if (is_array($product->getData('tier_price'))
-        && count($product->getData('tier_price')) > 0) {
+            && count($product->getData('tier_price')) > 0) {
             $tieredPricesElem = $this->createChild(
-                    'tiered_prices',
-                    false,
-                    false,
-                    $productXmlElem
-                );
+                'tiered_prices',
+                false,
+                false,
+                $productXmlElem
+            );
 
             foreach ($product->getData('tier_price') as $trP) {
                 $this->createChild(
-                        'tiered_price',
-                        array(
-                            'cust_group' => array_key_exists($trP['cust_group'], $this->_customersGroups) ?
-                                $this->_customersGroups[$trP['cust_group']] : $trP['cust_group'],
-                            'cust_group_id' => $trP['cust_group'],
-                            'price' => $trP['price'],
-                            'min_qty' => $trP['price_qty']
-                        ),
-                        false,
-                        $tieredPricesElem
-                    );
+                    'tiered_price',
+                    array(
+                        'cust_group' => array_key_exists($trP['cust_group'], $this->_customersGroups) ?
+                            $this->_customersGroups[$trP['cust_group']] : $trP['cust_group'],
+                        'cust_group_id' => $trP['cust_group'],
+                        'price' => $trP['price'],
+                        'min_qty' => $trP['price_qty']
+                    ),
+                    false,
+                    $tieredPricesElem
+                );
             }
 
         }
@@ -1243,10 +1253,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $min_price = 2147483647;
         $max_price = 0;
-        
+
         foreach($product->getTypeInstance()->getUsedProducts($product) as $childProduct) {
             $childPrice = $childProduct->getFinalPrice();
-            
+
             if ($childPrice < $min_price) {
                 $min_price = $childPrice;
             }

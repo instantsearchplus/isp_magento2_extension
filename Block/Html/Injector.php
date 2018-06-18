@@ -125,9 +125,12 @@ class Injector extends \Magento\Framework\View\Element\Template
             'sessionID' =>  $this->getSessionId(),
             'is_user_logged_in'=> $this->isLoggedInUser(),
             'QuoteID'   =>  $this->cart->getQuote()->getId(),
-            'customer_group_id' => $this->customerSession
-                ->getCustomerGroupId()
         ];
+
+        if ($this->customerSession->isLoggedIn()) {
+            $parameters['customer_group_id'] = $this->customerSession
+                ->getCustomerGroupId();
+        }
 
         if ($this->getCurrentProduct()) {
             $parameters = array_merge(

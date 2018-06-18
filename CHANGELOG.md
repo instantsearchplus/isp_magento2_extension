@@ -72,3 +72,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fix wrong product id in updates xml.
 - Fix compilation errors.
+
+## [4.2.1] - 2017-04-19 00:00:00
+### Changed
+- Use magento notificatiaon system.
+- Sync product attributes that are sytem defined as well as user defined.
+
+### Added
+- Added support for attributes which have array value type.
+
+### Fixed
+- Store id in products_send.

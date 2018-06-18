@@ -97,9 +97,10 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
         $result = $this->resultJsonFactory->create();
         if (!$this->_formKeyValidator->validate($this->getRequest())) {
             $responseData = [
-            'success' => false,
-            'message' => 'Form keys do not match!'
+                'success' => false,
+                'message' => 'Form keys do not match!'
             ];
+            $this->messageManager->addErrorMessage('Form keys do not match!');
             return $result->setData($responseData);
         }
 
@@ -109,9 +110,9 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
             if (isset($params['qty'])) {
                 $filter = new \Zend_Filter_LocalizedToNormalized(
                     [
-                      'locale' => $this->_objectManager
-                          ->get('Magento\Framework\Locale\ResolverInterface')
-                          ->getLocale()
+                        'locale' => $this->_objectManager
+                            ->get('Magento\Framework\Locale\ResolverInterface')
+                            ->getLocale()
                     ]
                 );
                 $params['qty'] = $filter->filter($params['qty']);
@@ -128,6 +129,7 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
                     'success' => false,
                     'message' => 'Product is not valid!'
                 ];
+                $this->messageManager->addErrorMessage('Product is not valid!');
                 return $result->setData($responseData);
             }
 
@@ -144,27 +146,31 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
             $this->_eventManager->dispatch(
                 'checkout_cart_add_product_complete',
                 [
-                  'product' => $product,
-                  'request' => $this->getRequest(),
-                  'response' => $this->getResponse()
+                    'product' => $product,
+                    'request' => $this->getRequest(),
+                    'response' => $this->getResponse()
                 ]
             );
-
+            $message = __(
+                'You added %1 to your shopping cart.',
+                $product->getName()
+            );
             $responseData = [
                 'success' => true,
-                'message' => 'Item was added to cart!'
+                'message' => $message
             ];
+            $this->messageManager->addSuccessMessage($message);
             return $result->setData($responseData);
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
             if ($this->_checkoutSession->getUseNotice(true)) {
-                $this->messageManager->addNotice(
+                $this->messageManager->addNoticeMessage(
                     $this->_objectManager->get('Magento\Framework\Escaper')
                         ->escapeHtml($e->getMessage())
                 );
             } else {
                 $messages = array_unique(explode("\n", $e->getMessage()));
                 foreach ($messages as $message) {
-                    $this->messageManager->addError(
+                    $this->messageManager->addErrorMessage(
                         $this->_objectManager->get('Magento\Framework\Escaper')
                             ->escapeHtml($message)
                     );
@@ -181,6 +187,9 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
             return $result->setData($responseData);
         } catch (\Exception $e) {
             $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
+            $this->messageManager->addErrorMessage(
+                'We can\'t add this item to your cart right now.'
+            );
             $responseData = [
                 'success' => false,
                 'message' => $this->_objectManager->get('Magento\Framework\Escaper')
