@@ -1,6 +1,7 @@
 <?php
 
 namespace Autocompleteplus\Autosuggest\Controller\Products;
+
 use Magento\Store\Model\ScopeInterface;
 
 class Changeserp extends \Autocompleteplus\Autosuggest\Controller\Products
@@ -31,8 +32,7 @@ class Changeserp extends \Autocompleteplus\Autosuggest\Controller\Products
         \Autocompleteplus\Autosuggest\Helper\Data $helper,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
-    )
-    {
+    ) {
         $this->resultJsonFactory = $resultJsonFactory;
         $this->helper = $helper;
         $this->scopeConfig = $scopeConfig;
@@ -55,7 +55,7 @@ class Changeserp extends \Autocompleteplus\Autosuggest\Controller\Products
         switch ($serpReq) {
             case 'status':
                 $status = $this->helper->getSearchLayered($storeId);
-                return $result->setData(array('current_status' => $status));
+                return $result->setData([ 'current_status' => $status ]);
                 break;
             default:
                 $this->helper->setSearchLayered(boolval($serpReq), 'stores', $storeId);
@@ -63,12 +63,12 @@ class Changeserp extends \Autocompleteplus\Autosuggest\Controller\Products
                 break;
         }
 
-        $resp = array(
+        $resp = [
             'request_state' => $serpReq,
             'new_state' => $status,
             'site_url' => $storeUrl,
             'status' => $status
-        );
+        ];
 
         $this->cacheTypeList->cleanType('config');
 

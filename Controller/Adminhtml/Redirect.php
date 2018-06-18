@@ -16,8 +16,7 @@ abstract class Redirect extends \Magento\Backend\App\Action
         \Magento\Backend\Model\View\Result\ForwardFactory $resultForwardFactory,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Autocompleteplus\Autosuggest\Helper\Data $helper
-    )
-    {
+    ) {
         $this->resultPageFactory = $resultPageFactory;
         $this->resultForwardFactory = $resultForwardFactory;
         $this->resultRedirectFactory = $context->getResultRedirectFactory();

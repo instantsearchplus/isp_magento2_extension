@@ -24,8 +24,7 @@ class Getbyid extends \Autocompleteplus\Autosuggest\Controller\Productsbyid
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator,
         \Magento\Framework\App\ResponseInterface $responseInterface
-    )
-    {
+    ) {
         $this->resultJsonFactory = $resultJsonFactory;
         $this->xmlGenerator = $xmlGenerator;
         $this->responseInterface = $responseInterface;
@@ -39,11 +38,11 @@ class Getbyid extends \Autocompleteplus\Autosuggest\Controller\Productsbyid
         $id = $request->getParam('id', 1);
 
         if (!$id) {
-            $returnArr = array(
+            $returnArr = [
                 'status' => self::STATUS_FAILURE,
                 'error_code' => self::MISSING_PARAMETER,
                 'error_details' => __('The "id" parameter is mandatory'),
-            );
+            ];
             $result = $this->resultJsonFactory->create();
             return $result->setData($returnArr);
         }

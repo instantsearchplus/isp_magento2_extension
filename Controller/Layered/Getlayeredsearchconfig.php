@@ -13,18 +13,18 @@ class Getlayeredsearchconfig extends \Autocompleteplus\Autosuggest\Controller\La
         $result = $this->resultJsonFactory->create();
 
         if (!$this->isValid($uuid, $authKey)) {
-            $response = array(
+            $response = [
                 'status' => 'error: Authentication failed'
-            );
+            ];
             $result->setData($response);
             return $result;
         }
 
         $currentState = $this->helper->getSearchLayered($scopeId);
 
-        $response = array(
+        $response = [
             'current_state' => $currentState
-        );
+        ];
 
         $result->setData($response);
         return $result;

@@ -208,11 +208,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->batchCollectionFactory = $batchCollectionFactory;
         $this->orderItemCollection = $orderItemCollection;
         $this->date = $date;
+        
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
+        $mageVersion = $productMetadata->getVersion(); //will return the magento version
+        
         $this->xmlGenerator->setRootElementName('catalog');
-        $this->xmlGenerator->setRootAttributes(array(
+        $this->xmlGenerator->setRootAttributes([
             'version'   =>  $this->helper->getVersion(),
-            'magento'   =>  \Magento\Framework\AppInterface::VERSION
-        ));
+            'magento'   =>  $mageVersion
+        ]);
         parent::__construct($context);
     }
 
@@ -237,7 +242,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $this->categoryCollection
                 ->setStoreId($this->getStoreId())
                 ->addAttributeToSelect('*')
-                ->addAttributeToFilter('is_active', array('eq' => true));
+                ->addAttributeToFilter('is_active', ['eq' => true]);
         }
 
         return $this->categoryCollection;
@@ -298,12 +303,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $select = $salesOrderItemCollection->getSelect();
         $select->reset(\Magento\Framework\DB\Select::COLUMNS);
         $select->columns('SUM(qty_ordered) AS qty_ordered');
-        $select->where(new \Zend_Db_Expr('store_id = ' . $this->getStoreId()));
-        $select->where(new \Zend_Db_Expr('product_id IN (' . $productIds . ')'));
-        $select->where(new \Zend_Db_Expr('created_at BETWEEN NOW() - INTERVAL ' . $this->getInterval() . ' MONTH AND NOW()'));
-        $select->group(array('product_id'));
+        $select->where('store_id = ?', $this->getStoreId());
+        $select->where('product_id IN (?)', $productIds);
+        $select->where('created_at BETWEEN NOW() - INTERVAL ? MONTH AND NOW()', $this->getInterval());
+        $select->group(['product_id']);
 
-        $products = array();
+        $products = [];
 
         foreach ($salesOrderItemCollection as $item) {
             $products[$item['product_id']] = (int)$item['qty_ordered'];
@@ -414,7 +419,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         // Collect options applicable to the configurable product
         $productAttributeOptions = $product->getTypeInstance()->getConfigurableAttributesAsArray($product);
-        $configurableAttributes = array();
+        $configurableAttributes = [];
 
         foreach ($productAttributeOptions as $productAttribute) {
             $attributeFull = $this->catalogConfig->getAttribute(\Magento\Catalog\Model\Product::ENTITY, $productAttribute['attribute_code']);
@@ -435,7 +440,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getConfigurableChildrenIds($product)
     {
-        $configurableChildrenIds = array();
+        $configurableChildrenIds = [];
         foreach ($this->getConfigurableChildren($product) as $child) {
             $configurableChildrenIds[] = $child->getId();
             if ($product->isInStock()) {
@@ -457,15 +462,15 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     public function getCategoryMap()
     {
         if (!$this->_categories) {
-            $categoryMap = array();
+            $categoryMap = [];
             $categories = $this->getCategoryCollection();
 
             foreach ($categories as $category) {
-                $categoryMap[] = array(
+                $categoryMap[] = [
                     'id' => $category->getId(),
                     'path' => $category->getPath(),
                     'parent_id' => $category->getParentId(),
-                );
+                ];
             }
             $this->_categories = $categoryMap;
         }
@@ -486,7 +491,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     isset($path[0]) &&
                     $path[0] != $rootCategoryId
                 ) {
-                    return array();
+                    return [];
                 }
                 //we want more specific categories first
                 return implode(':', array_reverse($path));
@@ -525,10 +530,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         if ($attrValue) {
-            $attributeElem = $this->createChild('attribute', array(
+            $attributeElem = $this->createChild('attribute', [
                 'is_filterable' => $is_filterable,
                 'name' => $attr->getAttributeCode()
-            ), false, $productElem);
+            ], false, $productElem);
 
             $this->createChild('attribute_values', false,
                 $attrValue,
@@ -542,21 +547,21 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         if ($this->helper->canUseProductAttributes()) {
             if ($product->getTypeId() == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
-                $variants = array();
+                $variants = [];
                 $configurableAttributes = $this->getConfigurableAttributes($product);
                 foreach ($configurableAttributes as $attrName => $confAttrN) {
                     if (is_array($confAttrN) && array_key_exists('values', $confAttrN)) {
                         $variants[] = $attrName;
                         $values = implode(' , ', $confAttrN['values']);
-                        $this->createChild('attribute', array(
+                        $this->createChild('attribute', [
                             'is_configurable' => 1,
                             'is_filterable' => $confAttrN['is_filterable'],
                             'name' => $attrName
-                        ), $values, $productElem);
+                        ], $values, $productElem);
                     }
                 }
 
-                $simple_products_price = array();
+                $simple_products_price = [];
 
                 if (count($variants) > 0) {
                     $variantElem = $this->createChild('variants', false, false, $productElem);
@@ -582,14 +587,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         $variant_price = (array_key_exists($child_product->getId(), $simple_products_price)) ?
                             $simple_products_price[$child_product->getId()] : '';
 
-                        $productVariation = $this->createChild('variant', array(
+                        $productVariation = $this->createChild('variant', [
                             'id' => $child_product->getId(),
                             'type' => $child_product->getTypeId(),
                             'visibility' => $is_variant_visible,
                             'is_in_stock' => $is_variant_in_stock,
                             'is_seallable' => $is_variant_sellable,
                             'price' => $variant_price
-                        ), false, $variantElem);
+                        ], false, $variantElem);
 
                         $this->createChild('name', false,
                             $child_product->getName(), $productVariation);
@@ -600,13 +605,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                                 continue;
                             }
 
-                            $this->createChild('variant_attribute', array(
+                            $this->createChild('variant_attribute', [
                                 'is_configurable' => 1,
                                 'is_filterable' => $attribute->getIsFilterable(),
                                 'name' => $attribute['store_label'],
                                 'name_code' => $attribute->getId(),
                                 'value_code' => $child_product->getData($attribute->getAttributeCode())
-                            ), $attribute->getFrontend()->getValue($child_product), $productVariation
+                            ], $attribute->getFrontend()->getValue($child_product), $productVariation
                             );
                         }
                     }
@@ -640,23 +645,24 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         foreach ($productCollection as $product)
         {
-            $purchasePopularity = (int)isset($orderCount[$product->getId()]) ? $orderCount[$product->getId()] : 0;
-            $productElem = $this->createChild('product', array(
-                'thumbs'    =>  $this->image->init($product, 'product_thumbnail_image')->getUrl(),
-                'base_image'    =>  $this->image->init($product, 'product_base_image')->getUrl(),
-                'id'    =>  $product->getId(),
-                'type'  =>  $product->getTypeId(),
-                'currency'  =>  $this->getCurrencyCode(),
-                'visibility'    =>  $product->getVisibility(),
-                'selleable' =>  $product->isSalable(),
-                'price' =>  $product->getFinalPrice(),
-                'price_min' =>  $product->getMinimalPrice(),    // TODO: the min/max prices are not correct 
-                'price_max' =>  $product->getPrice(),           // TODO: the min/max prices are not correct 
-                'url'   =>  $product->getProductUrl(true),
-                'action'    =>  'insert',
-                'store' => $this->getStoreId(),
-                'store_id' => $this->getStoreId()
-            ), false, $this->xmlGenerator->getSimpleXml());
+            $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
+            $_baseImage = $this->image->init($product, 'product_base_image')->getUrl();
+
+            $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
+            $productElem = $this->createChild('product', [
+                'thumbs'     =>  $_thumbs,
+                'base_image' =>  $_baseImage,
+                'id'         =>  $product->getId(),
+                'type'       =>  $product->getTypeId(),
+                'currency'   =>  $this->getCurrencyCode(),
+                'visibility' =>  $product->getVisibility(),
+                'selleable'  =>  $product->isSalable(),
+                'price'      =>  $product->getPrice(),
+                'price_min'  =>  $product->getMinimalPrice(),
+                'price_max'  =>  $product->getPrice(),
+                'url'        =>  $product->getProductUrl(true),
+                'action'     =>  'insert'
+            ], false, $this->xmlGenerator->getSimpleXml());
 
             $this->createChild('description', false,
                 strval($product->getDescription()), $productElem);
@@ -671,6 +677,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 strval($product->getSku()), $productElem);
 
             $ratingSummary = $product->getRatingSummary();
+
             if ($ratingSummary) {
                 $this->createChild('review', false,
                     intval($ratingSummary->getRatingSummary()), $productElem);
@@ -681,8 +688,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
             $this->createChild('purchase_popularity', false, intval($purchasePopularity), $productElem);
 
-            $this->createChild('product_status', false,
-                intval(($product->getStatus() == \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED) ? '1' : '0'), $productElem);
+            $_isEnabled = $this->_getProductEnabledString($product);
+            $this->createChild('product_status', false, $_isEnabled, $productElem);
 
             $this->createChild('creation_date', false,
                 $this->dateTime->timestamp($product->getCreatedAt()), $productElem);
@@ -721,12 +728,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function makeRemoveRow($batch)
     {
-        $productElement = $this->createChild('product', array(
-            'updatedate' =>  $batch->getUpdateDate(),
+        $timeOffset = $this->date->calculateOffset('Asia/Jerusalem');
+        $productElement = $this->createChild('product', [
+            'updatedate' =>  ($batch->getUpdateDate() + $timeOffset),
             'action'    =>  $batch->getAction(),
             'id'    =>  $batch->getId(),
             'storeid'   =>  $batch->getStoreId()
-        ), false, $this->xmlGenerator->getSimpleXml());
+        ], false, $this->xmlGenerator->getSimpleXml());
 
         $this->createChild('sku', false, $batch->getSku(), $productElement);
         $this->createChild('id', false, $batch->getProductId(), $productElement);
@@ -742,11 +750,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
          * Load and filter the batches
          */
         $batchCollection = $this->getBatchCollection();
-        $batchCollection->addFieldToFilter('update_date', array(
+        $batchCollection->addFieldToFilter('update_date', [
             'from'  =>  $from,
-            'to'    =>  $to
-        ))->addFieldToFilter('store_id', $storeId);
-        $batchCollection->setOrder('update_date', 'ASC');
+            'to'    =>  $toInUtc
+        ])->addFieldToFilter('store_id', $storeId);
+        $batchCollection->setOrder('update_date');
 
         $batchCollection->setPageSize($count);
         $batchCollection->setCurPage(1);
@@ -762,14 +770,18 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
          */
         $orderCount = $this->getOrdersPerProduct();
 
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
+        $mageVersion = $productMetadata->getVersion(); //will return the magento version
+
         /**
          * We need to reset the root attributes on <catalog />
          */
-        $this->xmlGenerator->setRootAttributes(array(
+        $this->xmlGenerator->setRootAttributes([
             'version'   =>  $this->helper->getVersion(),
-            'magento'   =>  \Magento\Framework\AppInterface::VERSION,
+            'magento'   =>  $mageVersion,
             'fromdatetime'  =>  $from
-        ));
+        ]);
 
         foreach ($batchCollection as $batch) {
             $productId = $batch->getProductId();
@@ -785,21 +797,24 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 if ($productId) {
                     $product = $this->loadProductById($productId, $batchStoreId);
                     if ($product) {
-                        $purchasePopularity = (int)isset($orderCount[$product->getId()]) ? $orderCount[$product->getId()] : 0;
-                        $productElement = $this->createChild('product', array(
-                            'updatedate' => $batch->getUpdateDate(),
-                            'action' => $batch->getAction(),
-                            'id' => $batch->getId(),
-                            'storeid' => $batch->getStoreId(),
-                            'thumbs' => $this->image->init($product, 'product_thumbnail_image')->getUrl(),
-                            'base_image' => $this->image->init($product, 'product_base_image')->getUrl(),
-                            'url' => $product->getProductUrl(true),
-                            'price' => $product->getPrice(),
-                            'price_min' => $product->getMinimalPrice(),
-                            'price_max' => $product->getPrice(),
-                            'type' => $product->getTypeId(),
-                            'currency' => $this->getCurrencyCode(),
-                        ), false, $this->xmlGenerator->getSimpleXml());
+                        $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
+                        $_baseImage = $this->image->init($product, 'product_base_image')->getUrl();
+
+                        $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
+                        $productElement = $this->createChild('product', [
+                            'updatedate' => ($batch->getUpdateDate() + $timeOffset),
+                            'action'     => $batch->getAction(),
+                            'id'         => $batch->getId(),
+                            'storeid'    => $batch->getStoreId(),
+                            'thumbs'     => $_thumbs,
+                            'base_image' => $_baseImage,
+                            'url'        => $product->getProductUrl(true),
+                            'price'      => $product->getPrice(),
+                            'price_min'  => $product->getMinimalPrice(),
+                            'price_max'  => $product->getPrice(),
+                            'type'       => $product->getTypeId(),
+                            'currency'   => $this->getCurrencyCode(),
+                        ], false, $this->xmlGenerator->getSimpleXml());
 
                         $this->createChild('description', false,
                             strval($product->getDescription()), $productElement);
@@ -814,8 +829,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
                         $this->createChild('purchase_popularity', false, intval($purchasePopularity), $productElement);
 
-                        $this->createChild('product_status', false,
-                            intval(($product->getStatus() == \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED) ? '1' : '0'), $productElement);
+                        $this->createChild('product_status', false, $this->_getProductEnabledString($product), $productElement);
 
                         $this->createChild('newfrom', false,
                             $this->dateTime->timestamp($product->getNewsFromDate()), $productElement);
@@ -859,13 +873,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function renderCatalogByIds($ids, $storeId = 0)
     {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
+        $mageVersion = $productMetadata->getVersion(); //will return the magento version
         /**
          * We need to reset the root attributes on <catalog />
          */
-        $this->xmlGenerator->setRootAttributes(array(
+        $this->xmlGenerator->setRootAttributes([
             'version'   =>  $this->helper->getVersion(),
-            'magento'   =>  \Magento\Framework\AppInterface::VERSION
-        ));
+            'magento'   =>  $mageVersion
+        ]);
 
         $productCollection = $this->getProductCollection();
 
@@ -874,36 +891,39 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $productCollection->setStoreId($storeId);
         }
 
-        $productCollection->addAttributeToFilter('entity_id', array('in'  =>  $ids));
-        $productCollection->joinTable('catalog_product_relation', 'child_id=entity_id', array(
+        $productCollection->addAttributeToFilter('entity_id', ['in'  =>  $ids]);
+        $productCollection->joinTable('catalog_product_relation', 'child_id=entity_id', [
                 'parent_id' => 'parent_id'
-            ), null, 'left')
-            ->addAttributeToFilter(array(
-                array(
+            ], null, 'left')
+            ->addAttributeToFilter([
+                [
                     'attribute' => 'parent_id',
                     'null' => null
-                )
-            ));
+                ]
+            ]);
 
         $this->appendReviews();
 
         foreach ($productCollection as $product)
         {
-            $productElem = $this->createChild('product', array(
-                'thumbs'    =>  $this->image->init($product, 'product_thumbnail_image')->getUrl(),
-                'base_image'    =>  $this->image->init($product, 'product_base_image')->getUrl(),
-                'id'    =>  $product->getId(),
-                'type'  =>  $product->getTypeId(),
-                'currency'  =>  $this->getCurrencyCode(),
-                'visibility'    =>  $product->getVisibility(),
-                'selleable' =>  $product->isSalable(),
-                'price' =>  $product->getPrice(),
-                'price_min' =>  $product->getMinimalPrice(),
-                'price_max' =>  $product->getPrice(),
-                'url'   =>  $product->getProductUrl(true),
-                'action'    =>  'getbyid',
-                'get_by_id_status'  =>  1
-            ), false, $this->xmlGenerator->getSimpleXml());
+            $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
+            $_baseImage = $this->image->init($product, 'product_base_image')->getUrl();
+
+            $productElem = $this->createChild('product', [
+                'thumbs'           =>  $_thumbs,
+                'base_image'       =>  $_baseImage,
+                'id'               =>  $product->getId(),
+                'type'             =>  $product->getTypeId(),
+                'currency'         =>  $this->getCurrencyCode(),
+                'visibility'       =>  $product->getVisibility(),
+                'selleable'        =>  $product->isSalable(),
+                'price'            =>  $product->getPrice(),
+                'price_min'        =>  $product->getMinimalPrice(),
+                'price_max'        =>  $product->getPrice(),
+                'url'              =>  $product->getProductUrl(true),
+                'action'           =>  'getbyid',
+                'get_by_id_status' =>  1
+            ], false, $this->xmlGenerator->getSimpleXml());
 
             $this->createChild('description', false,
                 strval($product->getDescription()), $productElem);
@@ -926,13 +946,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     intval($ratingSummary->getReviewsCount()), $productElem);
             }
 
-            $this->createChild('product_status', false,
-                intval(($product->getStatus() == \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED) ? '1' : '0'), $productElem);
+            $this->createChild('product_status', false, $this->_getProductEnabledString($product), $productElem);
 
-            $this->createChild('creation_date', false,
-                $this->dateTime->timestamp($product->getCreatedAt()), $productElem);
-            $this->createChild('updated_date', false,
-                $this->dateTime->timestamp($product->getUpdatedAt()), $productElem);
+            $this->createChild('creation_date', false, $this->dateTime->timestamp($product->getCreatedAt()), $productElem);
+            $this->createChild('updated_date', false, $this->dateTime->timestamp($product->getUpdatedAt()), $productElem);
 
             if ($this->helper->canUseProductAttributes()) {
                 foreach ($this->getProductAttributes() as $attr) {
@@ -952,15 +969,23 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->renderProductVariantXml($product, $productElem);
             }
 
-            $this->createChild('categories', false,
-                implode(';', $this->getCategoryPathsByProduct($product)), $productElem);
+            $this->createChild('categories', false, implode(';', $this->getCategoryPathsByProduct($product)), $productElem);
             
-            $this->createChild('meta_title', false,
-                    strval($product->getMetaTitle()), $productElement);
-            $this->createChild('meta_description', false,
-                    strval($product->getMetaDescription()), $productElement);
+            $this->createChild('meta_title', false, strval($product->getMetaTitle()), $productElement);
+
+            $this->createChild('meta_description', false, strval($product->getMetaDescription()), $productElement);
         }
 
         return $this->xmlGenerator->generateXml();
+    }
+
+    protected function _getPurchasePopularity($orderCount, $product)
+    {
+        return (int)isset($orderCount[$product->getId()]) ? $orderCount[$product->getId()] : 0;
+    }
+
+    protected function _getProductEnabledString($product)
+    {
+        return intval(($product->getStatus() == \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED) ? '1' : '0');
     }
 }

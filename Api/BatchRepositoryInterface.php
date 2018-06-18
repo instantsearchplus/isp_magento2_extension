@@ -4,6 +4,7 @@ namespace Autocompleteplus\Autosuggest\Api;
 
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\App\Router\ActionList\Reader;
+
 /**
  * Autosuggest Batch CRUD interface.
  * @api

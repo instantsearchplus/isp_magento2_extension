@@ -9,8 +9,7 @@ class Getispuuid extends \Autocompleteplus\Autosuggest\Controller\Products
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Api $apiHelper
-    )
-    {
+    ) {
         $this->apiHelper = $apiHelper;
         parent::__construct($context);
     }

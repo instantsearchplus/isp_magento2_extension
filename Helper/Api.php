@@ -1,6 +1,7 @@
 <?php
 
 namespace Autocompleteplus\Autosuggest\Helper;
+
 use Magento\Framework\HTTP\ZendClientFactory;
 use \Magento\Store\Model\ScopeInterface;
 
@@ -29,8 +30,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         ZendClientFactory $httpClientFactory,
         \Magento\Config\Model\ResourceModel\Config $resourceConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
-    )
-    {
+    ) {
         $this->curlFactory = $curlFactory;
         $this->httpClientFactory = $httpClientFactory;
         $this->resourceConfig = $resourceConfig;
@@ -73,7 +73,6 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
                 0
             );
         } else {
-//             throw new Exception('Tried setting invalid UUID value for InstantSearch+.');
             throw new \Magento\Framework\Exception('Tried setting invalid UUID value for InstantSearch+.');
         }
     }
@@ -144,23 +143,23 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
             ScopeInterface::SCOPE_STORE
         );
         $this->setUrl($this->getApiEndpoint() . '/install_error');
-        $response = $this->buildRequest(array(
+        $response = $this->buildRequest([
             'site'  => $siteUrl,
             'msg'   => $message,
             'email' => $email,
             'multistore'    => $this->helper->getMultiStoreJson(),
             'f' => $this->helper->getVersion()
-        ));
+        ]);
         return $response;
     }
 
     public function fetchProductListingData()
     {
         $this->setUrl($this->getApiEndpoint() . '/ma_load_search_page');
-        $response = $this->buildRequest(array(
+        $response = $this->buildRequest([
             'isp_platform' => 'magento',
             'r' => '002'
-        ));
+        ]);
         $responseData = json_decode($response->getBody());
         if ($responseData->html) {
             return $responseData->html;
@@ -177,10 +176,10 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         );
 
         $this->setUrl($this->getApiEndpoint() . '/update_uuid');
-        $response = $this->buildRequest(array(
+        $response = $this->buildRequest([
             'store_id'  =>  $storeId,
             'site_url'  =>  $siteUrl
-        ));
+        ]);
         $responseData = json_decode($response->getBody());
         if ($this->validateUUID($responseData->uuid)) {
             $this->setApiUUID($responseData->uuid);

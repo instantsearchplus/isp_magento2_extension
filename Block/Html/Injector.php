@@ -59,23 +59,29 @@ class Injector extends \Magento\Framework\View\Element\Template
     
     public function getSrc()
     {
-        $parameters = array(
-            'mage_v' => \Magento\Framework\AppInterface::VERSION,
+        //Updated to use object manager
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
+        $mageVersion = $productMetadata->getVersion(); //will return the magento version
+        //$mageVersion = \Magento\Framework\App\ProductMetadata::getVersion();
+        
+        $parameters = [
+            'mage_v' => $mageVersion,
             'ext_v' => $this->helper->getVersion(),
             'store' => $this->_storeManager->getStore()->getId(),
             'UUID' => $this->apiHelper->getApiUUID(),
             'is_admin_user' =>  0,
             'sessionID' =>  $this->getSessionId(),
-            'QuoteID'   =>  $this->cart->getQuote()->getId(),
-            'is_user_logged_in'=> $this->isLoggedInUser()
-        );
+            'is_user_logged_in'=> $this->isLoggedInUser(),
+            'QuoteID'   =>  $this->cart->getQuote()->getId()
+        ];
 
         if ($this->getCurrentProduct()) {
-            $parameters = array_merge($parameters, array(
+            $parameters = array_merge($parameters, [
                 'product_url' => $this->getCurrentProduct()->getProductUrl(),
                 'product_sku' => $this->getCurrentProduct()->getSku(),
                 'product_id' => $this->getCurrentProduct()->getId(),
-            ));
+            ]);
         }
 
         return self::AUTOCOMPLETE_JS_URL.'?'.http_build_query($parameters, '', '&');

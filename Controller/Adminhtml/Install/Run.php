@@ -1,11 +1,11 @@
 <?php
 
 namespace Autocompleteplus\Autosuggest\Controller\Adminhtml\Install;
+
 use \Magento\Store\Model\ScopeInterface;
 
 class Run extends \Autocompleteplus\Autosuggest\Controller\Adminhtml\Install
 {
-
     /**
      * Get product version
      *
@@ -16,7 +16,10 @@ class Run extends \Autocompleteplus\Autosuggest\Controller\Adminhtml\Install
         return $this->productMetadata->getVersion();
     }
 
-    public function execute() {
+    public function execute()
+    {
+
+        $result = $this->resultRedirectFactory->create();
         $params =
             [
                 'site'       => $this->scopeConfig->getValue(
@@ -35,15 +38,17 @@ class Run extends \Autocompleteplus\Autosuggest\Controller\Adminhtml\Install
         $apiRequest->setUrl($apiRequest->getApiEndpoint() . '/install');
         $apiRequest->setRequestType(\Zend_Http_Client::POST);
         $response = $apiRequest->buildRequest($params);
+
+
         if ($responseData = json_decode($response->getBody())) {
-            
+
             /*
              * Validate uuid exists
              */
             if (!$responseData->uuid || strlen($responseData->uuid) > 50) {
                 $this->api->sendError('Could not get license string.');
                 $this->messageManager->addError(__('Something went wrong when trying to install InstantSearch+'));
-                $this->_redirect('admin/dashboard/index');
+                $result->setPath('adminhtml/dashboard/index');
                 return $this;
             }
 
@@ -53,7 +58,8 @@ class Run extends \Autocompleteplus\Autosuggest\Controller\Adminhtml\Install
         } else {
             $this->messageManager->addError(__('Something went wrong when trying to install InstantSearch+'));
         }
-        $this->_redirect('adminhtml/dashboard/index');
-        return $this;
+        //$this->_redirect('adminhtml/dashboard/index');
+        $result->setPath('adminhtml/dashboard/index');
+        return $result;
     }
 }

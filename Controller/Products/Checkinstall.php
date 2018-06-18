@@ -11,8 +11,7 @@ class Checkinstall extends \Autocompleteplus\Autosuggest\Controller\Products
         \Magento\Framework\App\Action\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Data $helper,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-    )
-    {
+    ) {
         $this->helper = $helper;
         $this->resultJsonFactory = $resultJsonFactory;
         parent::__construct($context);
@@ -25,9 +24,9 @@ class Checkinstall extends \Autocompleteplus\Autosuggest\Controller\Products
     {
         /** @var \Magento\Framework\Controller\Result\Json $result */
         $result = $this->resultJsonFactory->create();
-        $result->setData(array(
+        $result->setData([
             'isInstalled'   =>  $this->helper->isInstalled()
-        ));
+        ]);
         return $result;
     }
 }

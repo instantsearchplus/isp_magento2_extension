@@ -1,9 +1,10 @@
 <script>
     var __isp_fulltext_search_obj = {
-        uuid: "<?php echo $block->getApiUUID(); ?>",
-        store_id: <?php echo $block->getStoreId(); ?>,
-        query: "<?php echo $block->getSearchQuery(); ?>",
-        formkey: "<?php echo $block->getFormKey(); ?>"
+        uuid: "<?php /* @noEscape */ echo $block->getApiUUID(); ?>",
+        store_id: <?php /* @noEscape */ echo $block->getStoreId(); ?>,
+        query: "<?php /* @noEscape */ echo $block->getSearchQuery(); ?>",
+        formkey: "<?php /* @noEscape */ echo $block->getFormKey(); ?>"
     };
 </script>
-<?php echo $block->getSearchResults(); ?>
+<?php $results = $block->getSearchResults(); ?>
+<?php echo $block->escapeQuote($results); ?>

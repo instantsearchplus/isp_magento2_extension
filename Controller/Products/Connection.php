@@ -6,8 +6,7 @@ class Connection extends \Autocompleteplus\Autosuggest\Controller\Products
 {
     public function __construct(
         \Magento\Framework\App\Action\Context $context
-    )
-    {
+    ) {
         parent::__construct($context);
     }
 

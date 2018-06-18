@@ -18,8 +18,7 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
         \Magento\Framework\App\Action\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator,
         \Magento\Framework\Stdlib\DateTime\DateTime $date
-    )
-    {
+    ) {
         $this->xmlGenerator = $xmlGenerator;
         $this->date = $date;
         parent::__construct($context);

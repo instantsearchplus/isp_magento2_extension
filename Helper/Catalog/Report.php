@@ -64,13 +64,13 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
     public function getEnabledProducts()
     {
         return $this->getProductCollection()->addAttributeToFilter('status',
-            array('eq'  =>  \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED));
+            ['eq'  =>  \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED]);
     }
 
     public function getDisabledProducts()
     {
         return $this->getProductCollection()->addAttributeToFilter('status',
-            array('eq'  =>  \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_DISABLED));
+            ['eq'  =>  \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_DISABLED]);
     }
 
     public function getVisibleInCatalogProducts()
@@ -105,10 +105,10 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $collection = $this->getEnabledProducts();
         $collection->addAttributeToFilter('visibility',
-            array(
-                array('finset'  =>  3),
-                array('finset'  =>  4)
-            ));
+            [
+                ['finset'  =>  3],
+                ['finset'  =>  4]
+            ]);
         return $collection->getSize();
     }
 }

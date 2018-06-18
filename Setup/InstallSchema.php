@@ -65,7 +65,7 @@ class InstallSchema implements InstallSchemaInterface
             )
             ->addIndex(
                 $installer->getIdxName('autosuggest_batch_index', ['product_id', 'store_id']),
-                ['product_id','store_id']
+                ['product_id', 'store_id']
             )
             ->setComment('InstantSearch+ Batches');
         $installer->getConnection()->createTable($batchTable);
@@ -109,7 +109,7 @@ class InstallSchema implements InstallSchemaInterface
             )
             ->addIndex(
                 $installer->getIdxName('autosuggest_checksum_index', ['product_id', 'store_id']),
-                ['product_id','store_id']
+                ['product_id', 'store_id']
             )
             ->setComment('InstantSearch+ Checksum');
         $installer->getConnection()->createTable($checksumTable);
@@ -167,7 +167,7 @@ class InstallSchema implements InstallSchemaInterface
             )
             ->addIndex(
                 $installer->getIdxName('instantsearch_pusher_index', ['entity_id', 'store_id']),
-                ['entity_id','store_id']
+                ['entity_id', 'store_id']
             )
             ->setComment('InstantSearch+ Pusher');
         $installer->getConnection()->createTable($pusherTable);

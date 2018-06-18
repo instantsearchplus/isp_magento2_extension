@@ -73,8 +73,7 @@ class Checkdeleted extends \Autocompleteplus\Autosuggest\Controller\Products
         \Magento\Framework\Model\ResourceModel\Iterator $resourceIterator,
         \Autocompleteplus\Autosuggest\Model\ChecksumFactory $checksumFactory,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-    )
-    {
+    ) {
         $this->helper = $helper;
         $this->apiHelper = $apiHelper;
         $this->date = $date;
@@ -106,20 +105,20 @@ class Checkdeleted extends \Autocompleteplus\Autosuggest\Controller\Products
         $productUpdates = array_values($collection->getColumnValues(\Autocompleteplus\Autosuggest\Api\Data\ChecksumInterface::PRODUCT_ID));
 
         $productCollection = $this->productCollectionFactory->create();
-        $productCollection->addFieldToFilter('entity_id', array('in' => $productUpdates));
+        $productCollection->addFieldToFilter('entity_id', ['in' => $productUpdates]);
         $foundProducts = $productCollection->getAllIds();
 
         $difference = array_diff($productUpdates, $foundProducts);
 
         foreach ($difference as $productId) {
-            $this->helper->writeProductDeletion(NULL, $productId, $storeId);
+            $this->helper->writeProductDeletion(null, $productId, $storeId);
         }
 
-        $responseData = array('removed_ids' => $difference,
+        $responseData = ['removed_ids' => $difference,
             'uuid' => $this->apiHelper->getApiUUID(),
             'store_id' => $storeId,
             'latency' => time() - $timeStamp
-        );
+        ];
 
         $result = $this->resultJsonFactory->create();
         return $result->setData($responseData);

@@ -13,8 +13,7 @@ class Send extends \Autocompleteplus\Autosuggest\Controller\Categories
         \Magento\Store\Model\StoreManagerInterface $storeManagerInterface,
         \Autocompleteplus\Autosuggest\Helper\Category\Json\Generator $jsonGenerator,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-    )
-    {
+    ) {
         $this->jsonGenerator = $jsonGenerator;
         $this->storeManager = $storeManagerInterface;
         $this->resultJsonFactory = $resultJsonFactory;

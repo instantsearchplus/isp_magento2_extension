@@ -15,8 +15,7 @@ abstract class Layered extends \Magento\Framework\App\Action\Action
         \Autocompleteplus\Autosuggest\Helper\Data $helper,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
-    )
-    {
+    ) {
         $this->apiHelper = $apiHelper;
         $this->helper = $helper;
         $this->resultJsonFactory = $resultJsonFactory;
@@ -27,8 +26,7 @@ abstract class Layered extends \Magento\Framework\App\Action\Action
     public function isValid($uuid, $authKey)
     {
         if ($this->apiHelper->getApiUUID() == $uuid &&
-            $this->apiHelper->getApiAuthenticationKey() == $authKey)
-        {
+            $this->apiHelper->getApiAuthenticationKey() == $authKey) {
             return true;
         }
         return false;

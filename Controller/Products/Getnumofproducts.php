@@ -40,8 +40,7 @@ class Getnumofproducts extends \Autocompleteplus\Autosuggest\Controller\Products
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Autocompleteplus\Autosuggest\Helper\Api $apiHelper,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-    )
-    {
+    ) {
         $this->catalogReport = $catalogReport;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->apiHelper = $apiHelper;

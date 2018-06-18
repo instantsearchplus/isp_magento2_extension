@@ -1,6 +1,7 @@
 <?php
 
 namespace Autocompleteplus\Autosuggest\Helper;
+
 use \Magento\Store\Model\ScopeInterface;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
@@ -81,8 +82,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Catalog\Model\Product $productModel,
         \Autocompleteplus\Autosuggest\Model\Batch $batchModel,
         \Magento\Framework\Stdlib\DateTime\DateTime $date
-    )
-    {
+    ) {
         $this->moduleList = $moduleList;
         $this->storeManager = $storeManager;
         $this->storesConfig = $storesConfig;
@@ -178,7 +178,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $websites = $this->storeManager->getWebsites();
         $multistoreData = [];
         $storeData = [];
-        $mageVersion = \Magento\Framework\AppInterface::VERSION;
+        //Updated to use object manager
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
+        $mageVersion = $productMetadata->getVersion(); //will return the magento version
+        //$mageVersion = \Magento\Framework\App\ProductMetadata::getVersion();
         $extVersion = $this->getVersion();
         $version = [
             'mage' => $mageVersion,
@@ -196,7 +200,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             'trans_email/ident_support/email',
             ScopeInterface::SCOPE_STORE
         );
-        $storesArr = array();
+        $storesArr = [];
         foreach ($websites as $website) {
             $stores = $website->getStores();
             foreach ($stores as $store) {
@@ -327,10 +331,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $product = $this->productModel->load($productId);
             }
 
-            $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds')) ? $product->getStoreIds() : array($storeId);
+            $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds')) ? $product->getStoreIds() : [$storeId];
         } catch (\Exception $e) {
             $this->logger->critical($e);
-            $productStores = array($storeId);
+            $productStores = [$storeId];
         }
 
         if ($sku == null) {

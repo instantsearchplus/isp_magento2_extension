@@ -62,8 +62,7 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
         \Magento\Store\Model\StoreManagerInterface $storeManagerInterface,
         \Magento\Framework\Module\ModuleList $moduleList,
         \Magento\Framework\Module\Manager $moduleManager
-    )
-    {
+    ) {
         $this->productCollection = $productCollectionFactory;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->helper = $helper;
@@ -73,13 +72,17 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
         $this->storeManager = $storeManagerInterface;
         $this->moduleList = $moduleList;
         $this->moduleManager = $moduleManager;
-            parent::__construct($context);
+        parent::__construct($context);
     }
 
     public function execute()
     {
         $getModules = $this->getRequest()->getParam('modules', false);
-        $mageVers = \Magento\Framework\AppInterface::VERSION;
+
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
+        $mageVersion = $productMetadata->getVersion(); //will return the magento version
+
         $moduleVers = $this->helper->getVersion();
         $mageEdition = $this->productMetadataInterface->getEdition();
         $uuid = $this->apiHelper->getApiUUID();
@@ -89,7 +92,7 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
         );
         $storeId = $this->storeManager->getStore()->getId();
         $modules = $this->moduleList->getAll();
-        $installedModules = array();
+        $installedModules = [];
 
         $productCollection = $this->productCollection->create();
         $numProducts = $productCollection
@@ -97,7 +100,7 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
             ->getSize();
 
         if ($getModules) {
-            $installedModules = array_filter($modules, function($name){
+            $installedModules = array_filter($modules, function ($name) {
                 $isMagentoModule = (substr($name, 0, 7) == 'Magento');
                 $isEnabled = $this->moduleManager->isEnabled($name);
                 $isOutputEnabled = $this->moduleManager->isOutputEnabled($name);
@@ -105,8 +108,8 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
             }, \ARRAY_FILTER_USE_KEY);
         }
 
-        $responseData = array(
-            'mage' => $mageVers,
+        $responseData = [
+            'mage' => $mageVersion,
             'ext' => $moduleVers,
             'num_of_products' => $numProducts,
             'edition' => $mageEdition,
@@ -114,7 +117,7 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
             'site_url' => $siteUrl,
             'store_id' => $storeId,
             'modules' => $installedModules,
-        );
+        ];
 
         $result = $this->resultJsonFactory->create();
         return $result->setData($responseData);

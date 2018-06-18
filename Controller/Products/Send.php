@@ -12,8 +12,7 @@ class Send extends \Autocompleteplus\Autosuggest\Controller\Products
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator
-    )
-    {
+    ) {
         $this->xmlGenerator = $xmlGenerator;
         parent::__construct($context);
     }

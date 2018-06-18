@@ -22,8 +22,7 @@ abstract class Install extends \Magento\Backend\App\Action
         \Autocompleteplus\Autosuggest\Helper\Data $helper,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
         \Autocompleteplus\Autosuggest\Helper\Api $api
-    )
-    {
+    ) {
         $this->resultPageFactory = $resultPageFactory;
         $this->resultForwardFactory = $resultForwardFactory;
         $this->resultRedirectFactory = $context->getResultRedirectFactory();

@@ -3,7 +3,7 @@
     function updateautocomplete() {
         var email = $('autocompleteplus_config_store_email').value || ='no@email.com';
 
-        new Ajax.Request('<?php echo $this->getAjaxCheckUrl() ?>', {
+        new Ajax.Request('<?php echo $block->getAjaxCheckUrl() ?>', {
             method:     'post',
             parameters: { email: email },
             onSuccess: function( transport ) {
@@ -17,4 +17,4 @@
     //]]>
 </script>
 
-<?php echo $this->getButtonHtml() ?>
+<?php echo $block->getButtonHtml() ?>

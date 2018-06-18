@@ -14,9 +14,9 @@ class Setlayeredsearchon extends \Autocompleteplus\Autosuggest\Controller\Layere
         $result = $this->resultJsonFactory->create();
 
         if (!$this->isValid($uuid, $authKey)) {
-            $response = array(
+            $response = [
                 'status' => 'error: Authentication failed'
-            );
+            ];
             $result->setData($response);
             return $result;
         }
@@ -24,10 +24,10 @@ class Setlayeredsearchon extends \Autocompleteplus\Autosuggest\Controller\Layere
         $this->helper->setSearchLayered(true, $scope, $scopeId);
         $this->clearCache();
 
-        $response = array(
+        $response = [
             'new_state' => 1,
             'status' => 'ok',
-        );
+        ];
 
         $result->setData($response);
         return $result;

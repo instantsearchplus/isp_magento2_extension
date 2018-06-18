@@ -38,8 +38,7 @@ class ProductDelete implements ObserverInterface
         \Autocompleteplus\Autosuggest\Helper\Data $helper,
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
         \Psr\Log\LoggerInterface $logger
-    )
-    {
+    ) {
         $this->helper = $helper;
         $this->configurable = $configurable;
         $this->logger = $logger;

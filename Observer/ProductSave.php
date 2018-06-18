@@ -53,8 +53,7 @@ class ProductSave implements ObserverInterface
         \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
         \Magento\Catalog\Model\Product $productModel,
         \Autocompleteplus\Autosuggest\Model\Batch $batchModel
-    )
-    {
+    ) {
         $this->helper = $helper;
         $this->configurable = $configurable;
         $this->logger = $logger;
@@ -102,16 +101,16 @@ class ProductSave implements ObserverInterface
                     $product = $this->productModel->load($productId);
                 }
 
-                $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds')) ? $product->getStoreIds() : array($storeId);
+                $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds')) ? $product->getStoreIds() : [$storeId];
             } catch (\Exception $e) {
+
                 $this->logger->critical($e);
-                $productStores = array($storeId);
+                $productStores = [$storeId];
             }
 
-            $simpleProducts = array();
-            if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE){
+            $simpleProducts = [];
+            if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
                 $simpleProducts = $this->configurable->getParentIdsByChild($product->getId());
-
             }
 
             foreach ($productStores as $productStore) {

@@ -29,8 +29,7 @@ class ListProduct extends Template
         \Magento\Store\Model\StoreManagerInterface $storeManagerInterface,
         \Magento\Framework\Data\Form\FormKey $formKey,
         array $data = []
-    )
-    {
+    ) {
         $this->storeManager = $storeManagerInterface;
         $this->request = $request;
         $this->response = $response;

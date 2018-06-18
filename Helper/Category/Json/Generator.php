@@ -21,8 +21,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Catalog\Model\ResourceModel\Category\Tree $categoryTree,
         \Magento\Store\Model\StoreManagerInterface $storeManagerInterface,
         \Magento\Catalog\Api\CategoryRepositoryInterface $categoryRepository
-    )
-    {
+    ) {
         $this->storeManager = $storeManagerInterface;
         $this->categoryFactory = $categoryFactory;
         $this->categoryTree = $categoryTree;
@@ -45,17 +44,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $thumbnail = '';
 
-        /*try {
-            if ($thumbImg = $node->getThumbnail()) {
-                $thumbnail = sprintf('%scatalog/category/%s', $mediaUrl, $node->getThumbnail());
-            }
-        } catch (Exception $e) {
-            Mage::logException($e);
-        }*/
-
         $category = $this->categoryRepository->get($node->getId(), $store);
 
-        $result = array(
+        $result = [
             'category_id' => $node->getId(),
             'image' => sprintf('%scatalog/category/%s', $mediaUrl, $node->getImage()),
             'thumbnail' => $thumbnail,
@@ -64,8 +55,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             'name'        => $node->getName(),
             'url_path'    => $category->getUrl(),
             'is_active'   => $node->getIsActive(),
-            'children'    => array(),
-        );
+            'children'    => [],
+        ];
 
         foreach ($node->getChildren() as $child) {
             $result['children'][] = $this->nodeToArray($child, $mediaUrl, $baseUrl, $store);
@@ -89,7 +80,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $collection
             ->setStoreId($storeId)
             ->addAttributeToSelect('*')
-            ->addAttributeToFilter('is_active', array('eq'  =>  true));
+            ->addAttributeToFilter('is_active', ['eq'  =>  true]);
 
         $tree->addCollectionData($collection, true);
         $mediaUrl = $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA);

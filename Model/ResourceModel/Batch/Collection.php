@@ -1,6 +1,7 @@
 <?php
 
 namespace Autocompleteplus\Autosuggest\Model\ResourceModel\Batch;
+
 use Autocompleteplus\Autosuggest\Model\ResourceModel\AbstractCollection;
 
 class Collection extends AbstractCollection
