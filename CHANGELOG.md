@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.4.7] - 2018-01-01 10:02:00
+### Added
+- Option to print ids
+- Meta keywors support
+
+### Fixed
+- Add minimal price to collection count to get accurate results in Getnumofproducts request
+
 ## [4.4.6] - 2017-11-27 10:02:00
 ### Fixed
 - Api product updates support

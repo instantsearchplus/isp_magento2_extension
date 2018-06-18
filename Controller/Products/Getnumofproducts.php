@@ -55,6 +55,8 @@ class Getnumofproducts extends \Autocompleteplus\Autosuggest\Controller\Products
             $storeId = $this->getRequest()->getParam('store', false);
         }
 
+        $get_ids = $this->getRequest()->getParam('get_ids', '0');
+
         $this->catalogReport->setStoreId($storeId);
 
         $storeUrl = $this->scopeConfig->getValue(
@@ -71,6 +73,10 @@ class Getnumofproducts extends \Autocompleteplus\Autosuggest\Controller\Products
             'site_url' => $storeUrl,
             'store_id' => $this->catalogReport->getCurrentStoreId()
         ];
+
+        if ($get_ids === '1') {
+            $responseArr['ids'] = $this->catalogReport->getSearchableProductsIds();
+        }
 
         $result = $this->resultJsonFactory->create();
         return $result->setData($responseArr);

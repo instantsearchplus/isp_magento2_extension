@@ -118,7 +118,10 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getVisibleInSearchProducts()
     {
-        return $this->getEnabledProducts()->setVisibility($this->productVisibility->getVisibleInSearchIds());
+        return $this->getEnabledProducts()
+            ->addMinimalPrice()
+            ->addFinalPrice()
+            ->setVisibility($this->productVisibility->getVisibleInSearchIds());
     }
 
     public function getDisabledProductsCount()
@@ -137,6 +140,19 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $collection = $this->getVisibleInSearchProducts();
         return $collection->getSize();
+    }
+
+    public function getSearchableProductsIds()
+    {
+        $collection = $this->getVisibleInSearchProducts();
+        $ids = array();
+        foreach($collection as $product) {
+            $ids[] = array(
+                'id' => $product->getID(),
+                'sku' => $product->getSku()
+            );
+        }
+        return $ids;
     }
 
     public function getSecondarySearchableProductsCount()

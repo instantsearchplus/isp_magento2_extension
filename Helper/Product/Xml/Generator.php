@@ -1241,6 +1241,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 strval($product->getMetaTitle()), $productElem);
             $this->createChild('meta_description', false,
                 strval($product->getMetaDescription()), $productElem);
+            $this->createChild('meta_keywords', false,
+                strval($product->getMetaKeyword()), $productElem);
 
             $this->renderTieredPrices($product, $productElem);
 
