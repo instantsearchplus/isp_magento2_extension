@@ -66,6 +66,8 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected $batchCollection;
 
+    protected $objectManager;
+
     public function __construct(
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
         \Psr\Log\LoggerInterface $logger,
@@ -78,6 +80,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         $this->batchCollectionFactory = $batchCollectionFactory;
         $this->productModel = $productModel;
         $this->batchModel = $batchModel;
+        $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
     }
 
     public function getBatchCollection()
@@ -129,7 +132,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                         ->setStoreId($productStore)
                         ->save();
                 } else {
-                    $batch = $this->batchModel;
+                    $batch = $this->objectManager->create('\Autocompleteplus\Autosuggest\Model\Batch');
                     $batch->setUpdateDate($dt)
                         ->setAction('update')
                         ->setProductId($productId)
@@ -158,8 +161,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                                     ->save();
                             }
                         } else {
-                            $batch = $this->batchModel;
-
+                            $batch = $this->objectManager->create('\Autocompleteplus\Autosuggest\Model\Batch');
                             $batch->setUpdateDate($dt)
                                 ->setProductId($configurableProduct)
                                 ->setAction('update')

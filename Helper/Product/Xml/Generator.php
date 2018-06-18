@@ -856,6 +856,40 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->createChild('id', false, $batch->getProductId(), $productElement);
     }
 
+    public function getSingleBatchTableRecord($id, $store_id) {
+        /**
+         * Load and filter the batches
+         */
+        $batchCollection = $this->getBatchCollection();
+        $batchCollection
+            ->addFieldToFilter('product_id', $id)
+            ->addFieldToFilter('store_id', $store_id);
+        $batchCollection->setOrder('update_date');
+
+        $max_update_date = 0;
+        $batches = array();
+
+        foreach ($batchCollection as $batch) {
+            if (intval($batch['update_date']) > $max_update_date) {
+                $max_update_date = $batch['update_date'];
+            }
+            $batches[] = array(
+                'product_id' => $batch['product_id'],
+                'action' => $batch['action'],
+                'update_date' => $batch['update_date'],
+                'store_id' => $batch['store_id']
+            );
+        }
+
+        return json_encode(
+            array(
+                'max_update_date' => $max_update_date,
+                'batches' => $batches
+            )
+        );
+
+    }
+
     public function renderUpdatesCatalogXml(
         $count,
         $storeId,
