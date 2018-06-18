@@ -126,3 +126,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Syncing attribute with missing frontend_label.
+
+## [4.4.1] - 2017-10-03 14:00:00
+### Added
+- Cart page and Success pages webhooks.
+- MSRP support.
+- Added miniform_change flag to vers request.

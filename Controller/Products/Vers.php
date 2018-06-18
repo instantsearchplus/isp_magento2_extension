@@ -111,6 +111,7 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
             'site_url' => $siteUrl,
             'store_id' => $storeId,
             'modules' => $installedModules,
+            'miniform_change' => $this->helper->canUseMiniFormRewrite()
         ];
 
         $result = $this->resultJsonFactory->create();

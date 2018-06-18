@@ -332,7 +332,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'special_from_date',
                 'special_to_date',
                 'sku',
-                'tier_price'
+                'tier_price',
+                'msrp'
             );
 
             if ($this->helper->canUseProductAttributes()) {
@@ -1124,9 +1125,15 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             if ($storeId != null) {
                 $xmlAttributes['storeid'] = $storeId;
             }
+
             $regularPrice = $product->getPrice();
-            if ($finalPrice < $regularPrice) {
-                $xmlAttributes['price_compare_at_price'] = $regularPrice;
+            $msrp = round(floatval($product->getMsrp()), 2);
+            if ($finalPrice < $regularPrice || $msrp > $finalPrice) {
+                if ($msrp < $regularPrice) {
+                    $xmlAttributes['price_compare_at_price'] = $regularPrice;
+                } else {
+                    $xmlAttributes['price_compare_at_price'] = $msrp;
+                }
             }
 
             $productElem = $this->createChild('product', $xmlAttributes, false, $this->xmlGenerator->getSimpleXml());
