@@ -15,4 +15,7 @@
     <event name="checkout_onepage_controller_success_action">
         <observer name="batch_observer" instance="Autocompleteplus\Autosuggest\Observer\Webhook" />
     </event>
+    <event name="isp_catalog_product_save_after">
+        <observer name="batch_observer" instance="Autocompleteplus\Autosuggest\Observer\IspProductSave" />
+    </event>
 </config>

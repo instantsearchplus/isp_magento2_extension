@@ -18,4 +18,7 @@
     <event name="catalog_product_attribute_update_before">
         <observer name="batch_update_observer" instance="Autocompleteplus\Autosuggest\Observer\ProductUpdate"/>
     </event>
+    <event name="isp_catalog_product_save_after">
+        <observer name="batch_observer" instance="Autocompleteplus\Autosuggest\Observer\IspProductSave" />
+    </event>
 </config>
