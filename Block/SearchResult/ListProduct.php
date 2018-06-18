@@ -4,9 +4,12 @@ namespace Autocompleteplus\Autosuggest\Block\SearchResult;
 
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Magento\Framework\Cache;
 
 class ListProduct extends Template
 {
+    const SERP_PAGE_TEMPLATE_LIFETIME = 60;
+
     protected $helper;
 
     /**
@@ -20,6 +23,7 @@ class ListProduct extends Template
     protected $response;
     protected $storeManager;
     protected $formKey;
+    protected $cacheManager;
 
     public function __construct(
         Context $context,
@@ -28,6 +32,7 @@ class ListProduct extends Template
         \Magento\Framework\App\Request\Http $request,
         \Magento\Store\Model\StoreManagerInterface $storeManagerInterface,
         \Magento\Framework\Data\Form\FormKey $formKey,
+        \Magento\Framework\App\CacheInterface $cacheManager,
         array $data = []
     ) {
         $this->storeManager = $storeManagerInterface;
@@ -35,6 +40,7 @@ class ListProduct extends Template
         $this->response = $response;
         $this->helper = $helper;
         $this->formKey = $formKey;
+        $this->cacheManager = $cacheManager;
         parent::__construct($context, $data);
     }
 
@@ -59,7 +65,15 @@ class ListProduct extends Template
     }
 
     public function getSearchResults()
-    {
-        return $this->helper->fetchProductListingData();
+    {    
+        $template=$this->cacheManager->load('autocomplete_template_serp');
+ 
+        if(!$template) {
+            $template = $this->helper->fetchProductListingData();
+        	
+            $this->cacheManager->save($template, 'autocomplete_template_serp',array("autocomplete_cache"), self::SERP_PAGE_TEMPLATE_LIFETIME);
+        }
+        
+        return $template;
     }
 }

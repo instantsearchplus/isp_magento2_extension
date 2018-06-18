@@ -58,15 +58,9 @@ class Injector extends \Magento\Framework\View\Element\Template
     }
     
     public function getSrc()
-    {
-        //Updated to use object manager
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
-        $mageVersion = $productMetadata->getVersion(); //will return the magento version
-        //$mageVersion = \Magento\Framework\App\ProductMetadata::getVersion();
-        
+    {       
         $parameters = [
-            'mage_v' => $mageVersion,
+            'mage_v' => $this->helper->getMagentoVersion(),
             'ext_v' => $this->helper->getVersion(),
             'store' => $this->_storeManager->getStore()->getId(),
             'UUID' => $this->apiHelper->getApiUUID(),

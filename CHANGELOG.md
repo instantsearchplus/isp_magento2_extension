@@ -21,3 +21,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Magento version in xml.
 - Orders per product query.
+
+## [4.0.9] - 2016-09-25 15:43:19
+### Changed
+- Make api-endpoint hardcoded.
+- Add timeout in seconds as buildRequest method parameter.
+- Use productMetaData object instead of objectManager.
+- Make Install Call to acp-magento at extension installtion.
+- Keep serp template in cache for 1 minute.

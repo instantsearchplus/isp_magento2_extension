@@ -50,7 +50,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getApiEndpoint()
     {
-        return $this->scopeConfig->getValue(self::API_ENDPOINT);
+        return 'https://acp-magento.appspot.com';
     }
 
     public function setApiAuthenticationKey($authKey)
@@ -107,9 +107,9 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->requestType = $type;
     }
-
-    public function buildRequest($requestData = [])
-    {
+    
+    public function buildRequest($requestData = [] , $timeout=2)
+    {                    
         /** @var \Magento\Framework\HTTP\ZendClient $client */
         $client = $this->httpClientFactory->create();
         $responseBody = [];
@@ -117,7 +117,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         $client->setUri($this->getUrl());
         $client->setConfig(
             [
-                'timeout'   => 2
+                'timeout'   => $timeout
             ]
         );
 
@@ -154,7 +154,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     public function fetchProductListingData()
-    {
+    {           
         $this->setUrl($this->getApiEndpoint() . '/ma_load_search_page');
         $response = $this->buildRequest([
             'isp_platform' => 'magento',

@@ -60,6 +60,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
      */
     protected $batchCollection;
+    
+    /**
+     * @var \Magento\Framework\App\ProductMetadataInterface
+     */
+    protected $productMetaData;
 
     const ENABLED = 'autosuggest/general/enabled';
     const PRODUCT_ATTRIBUTES = 'autosuggest/product/attributes';
@@ -81,7 +86,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Autocompleteplus\Autosuggest\Model\Checksum $checksumModel,
         \Magento\Catalog\Model\Product $productModel,
         \Autocompleteplus\Autosuggest\Model\Batch $batchModel,
-        \Magento\Framework\Stdlib\DateTime\DateTime $date
+        \Magento\Framework\Stdlib\DateTime\DateTime $date,
+        \Magento\Framework\App\ProductMetadataInterface $productMetaData
     ) {
         $this->moduleList = $moduleList;
         $this->storeManager = $storeManager;
@@ -93,6 +99,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productModel = $productModel;
         $this->batchModel = $batchModel;
         $this->date = $date;
+        $this->productMetaData = $productMetaData;
         parent::__construct($context);
     }
 
@@ -100,6 +107,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->moduleList
             ->getOne(self::MODULE_NAME)['setup_version'];
+    }
+    
+    public function getMagentoVersion()
+    {
+        return $this->productMetaData->getVersion();
     }
 
     public function getEnabled()
@@ -178,11 +190,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $websites = $this->storeManager->getWebsites();
         $multistoreData = [];
         $storeData = [];
-        //Updated to use object manager
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
-        $mageVersion = $productMetadata->getVersion(); //will return the magento version
-        //$mageVersion = \Magento\Framework\App\ProductMetadata::getVersion();
+
+        $mageVersion = $this->getMagentoVersion(); //will return the magento version
         $extVersion = $this->getVersion();
         $version = [
             'mage' => $mageVersion,

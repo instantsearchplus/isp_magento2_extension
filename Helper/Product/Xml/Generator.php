@@ -209,14 +209,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->orderItemCollection = $orderItemCollection;
         $this->date = $date;
         
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
-        $mageVersion = $productMetadata->getVersion(); //will return the magento version
-        
         $this->xmlGenerator->setRootElementName('catalog');
         $this->xmlGenerator->setRootAttributes([
             'version'   =>  $this->helper->getVersion(),
-            'magento'   =>  $mageVersion
+            'magento'   =>  $this->helper->getMagentoVersion()
         ]);
         parent::__construct($context);
     }
@@ -752,7 +748,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $batchCollection = $this->getBatchCollection();
         $batchCollection->addFieldToFilter('update_date', [
             'from'  =>  $from,
-            'to'    =>  $toInUtc
+            'to'    =>  $to
         ])->addFieldToFilter('store_id', $storeId);
         $batchCollection->setOrder('update_date');
 
@@ -770,16 +766,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
          */
         $orderCount = $this->getOrdersPerProduct();
 
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
-        $mageVersion = $productMetadata->getVersion(); //will return the magento version
-
         /**
          * We need to reset the root attributes on <catalog />
          */
         $this->xmlGenerator->setRootAttributes([
             'version'   =>  $this->helper->getVersion(),
-            'magento'   =>  $mageVersion,
+            'magento'   =>  $this->helper->getMagentoVersion(),
             'fromdatetime'  =>  $from
         ]);
 
@@ -802,7 +794,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
                         $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
                         $productElement = $this->createChild('product', [
-                            'updatedate' => ($batch->getUpdateDate() + $timeOffset),
+                            'updatedate' => ($batch->getUpdateDate()),
                             'action'     => $batch->getAction(),
                             'id'         => $batch->getId(),
                             'storeid'    => $batch->getStoreId(),
@@ -873,15 +865,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function renderCatalogByIds($ids, $storeId = 0)
     {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
-        $mageVersion = $productMetadata->getVersion(); //will return the magento version
         /**
          * We need to reset the root attributes on <catalog />
          */
         $this->xmlGenerator->setRootAttributes([
             'version'   =>  $this->helper->getVersion(),
-            'magento'   =>  $mageVersion
+            'magento'   =>  $this->helper->getMagentoVersion()
         ]);
 
         $productCollection = $this->getProductCollection();

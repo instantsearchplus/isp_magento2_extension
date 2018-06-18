@@ -79,10 +79,7 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
     {
         $getModules = $this->getRequest()->getParam('modules', false);
 
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
-        $mageVersion = $productMetadata->getVersion(); //will return the magento version
-
+        $mageVersion = $this->helper->getMagentoVersion();
         $moduleVers = $this->helper->getVersion();
         $mageEdition = $this->productMetadataInterface->getEdition();
         $uuid = $this->apiHelper->getApiUUID();
