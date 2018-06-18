@@ -206,7 +206,10 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
             $response = $this->buildRequest(
                 [
                 'isp_platform' => 'magento',
-                'r' => '002'
+                'r' => '002',
+                'uuid' => $this->getApiUUID(),
+                'store_id' => $this->storeManager->getStore()->getId(),
+                'm2' => 1
                 ]
             );
             $responseData = json_decode($response->getBody());

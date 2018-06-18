@@ -90,3 +90,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Removed
 - Checksum api.
+
+## [4.3.2] - 2017-07-11 00:00:00
+### Changed
+- Refactor product rendering at catalog sync.
+- Treat disabled product as deleted.
+
+### Added
+- Full page cache support.
+- Added additional frontend call to bring dynamic js params.
+- Grouped product pricing support.
+- Search of configurable product by skus of simple products.
+- Add UUID and store_id to get Serp template request.
+- Add ProductView event handler for adding product sku to js injection.
+
+### Fixed
+- Product removal store id.
+
+## Removed
+- Attribute cacheable from blocks.
+- Checksum files.
+- Code duplication.

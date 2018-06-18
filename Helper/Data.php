@@ -94,7 +94,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
      */
     protected $batchCollection;
-    
+
     /**
      * @var \Magento\Framework\App\ProductMetadataInterface
      */
@@ -110,7 +110,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_PATH_DASHBOARD_ENDPOINT = 'autosuggest/dashboard/endpoint';
     const XML_PATH_DASHBOARD_PARAMS = 'autosuggest/dashboard/params';
     const SCOPE_CONFIG_STORES = 'stores';
-    
+
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
         \Magento\Framework\Module\ModuleListInterface $moduleList,
@@ -137,12 +137,20 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         parent::__construct($context);
     }
 
+    public function getStoreUrl()
+    {
+        return $this->scopeConfig->getValue(
+            'web/unsecure/base_url',
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
     public function getVersion()
     {
         return $this->moduleList
             ->getOne(self::MODULE_NAME)['setup_version'];
     }
-    
+
     public function getMagentoVersion()
     {
         return $this->productMetaData->getVersion();
@@ -218,7 +226,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         );
         return $this;
     }
-    
+
     public function setSearchLayered($enabled, $scope = 'default', $scopeId = 0)
     {
         $this->resourceConfig->saveConfig(
@@ -338,7 +346,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds')) ?
-                 $product->getStoreIds() : [$storeId];
+                $product->getStoreIds() : [$storeId];
         } catch (\Exception $e) {
             $this->logger->critical($e);
             $productStores = [$storeId];
@@ -351,7 +359,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         foreach ($productStores as $productStore) {
             $batchCollection = $this->getBatchCollection();
             $batchCollection->addFieldToFilter('product_id', $productId)
-                ->addFieldToFilter('store_id', $storeId)
+                ->addFieldToFilter('store_id', $productStore)
                 ->setPageSize(1);
 
             if ($batchCollection->getSize() > 0) {

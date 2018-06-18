@@ -1,7 +1,25 @@
 <?php
 
 namespace Autocompleteplus\Autosuggest\Controller\Products;
-
+/**
+ * Sendupdated
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * PHP version 5
+ *
+ * @category Mage
+ *
+ * @package   Instantsearchplus
+ * @author    Fast Simon <info@instantsearchplus.com>
+ * @copyright 2017 Fast Simon (http://www.instantsearchplus.com)
+ * @license   Open Software License (OSL 3.0)*
+ * @link      http://opensource.org/licenses/osl-3.0.php
+ */
 class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
 {
     /**
@@ -14,6 +32,12 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
      */
     protected $date;
 
+    /**
+     * Sendupdated constructor.
+     * @param \Magento\Framework\App\Action\Context $context
+     * @param \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator
+     * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
+     */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator,
@@ -24,6 +48,11 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
         parent::__construct($context);
     }
 
+    /**
+     * Method execute
+     *
+     * @return void
+     */
     public function execute()
     {
         $count = $this->getRequest()->getParam('count', 100);
@@ -31,10 +60,10 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
         $from = $this->getRequest()->getParam('from');
         $to = $this->getRequest()->getParam('to', $this->date->gmtTimestamp());
 
-        $catalogXml = $this->xmlGenerator->renderUpdatesCatalogXml($count, $storeId, $from, $to);
+        $catalogXml = $this->xmlGenerator
+            ->renderUpdatesCatalogXml($count, $storeId, $from, $to);
 
         $om = \Magento\Framework\App\ObjectManager::getInstance();
-        /** @var \Magento\Framework\App\ResponseInterface|\Magento\Framework\App\Response\Http $response */
         $response = $om->get('Magento\Framework\App\ResponseInterface');
 
         $response->setHeader('Content-type', 'text/xml');

@@ -83,10 +83,7 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
         $moduleVers = $this->helper->getVersion();
         $mageEdition = $this->productMetadataInterface->getEdition();
         $uuid = $this->apiHelper->getApiUUID();
-        $siteUrl = $this->scopeConfig->getValue(
-            'web/unsecure/base_url',
-            ScopeInterface::SCOPE_STORE
-        );
+        $siteUrl = $this->helper->getStoreUrl();
         $storeId = $this->storeManager->getStore()->getId();
         $modules = $this->moduleList->getAll();
         $installedModules = [];

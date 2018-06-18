@@ -18,7 +18,7 @@
             </action>
         </referenceBlock>
         <referenceContainer name="content">
-            <block class="Autocompleteplus\Autosuggest\Block\SearchResult\ListProduct" cacheable="false" ifconfig="autosuggest/search/layered" name="autosuggest.results" template="Autocompleteplus_Autosuggest::catalog/product/list.phtml"/>
+            <block class="Autocompleteplus\Autosuggest\Block\SearchResult\ListProduct" ifconfig="autosuggest/search/layered" name="autosuggest.results" template="Autocompleteplus_Autosuggest::catalog/product/list.phtml"/>
         </referenceContainer>
     </body>
 </page>

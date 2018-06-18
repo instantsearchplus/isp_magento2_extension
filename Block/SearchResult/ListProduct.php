@@ -83,7 +83,6 @@ class ListProduct extends Template
         $this->helper = $helper;
         $this->formKey = $formKey;
         $this->cacheManager = $context->getCache();
-        $this->_isScopePrivate = true;
         $this->logger = $context->getLogger();
         parent::__construct($context, $data);
     }

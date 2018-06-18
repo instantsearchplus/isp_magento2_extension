@@ -8,7 +8,8 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceBlock name="head.additional">
-            <block cacheable="false" class="Autocompleteplus\Autosuggest\Block\Html\Injector" name="autosuggest.injector" template="Autocompleteplus_Autosuggest::html/injector.phtml" />
+            <block class="Autocompleteplus\Autosuggest\Block\Html\Injector" name="autosuggest.injector" template="Autocompleteplus_Autosuggest::html/injector.phtml" >
+            </block>
         </referenceBlock>
     </body>
 </page>

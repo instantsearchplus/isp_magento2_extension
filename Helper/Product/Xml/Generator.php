@@ -24,6 +24,7 @@ namespace Autocompleteplus\Autosuggest\Helper\Product\Xml;
 use Magento\Framework\App;
 use Magento\Framework\UrlInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\GroupedProduct\Model\Product\Type\Grouped;
 
 /**
  * Generator
@@ -135,6 +136,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      * @var \Magento\ConfigurableProduct\Model\Product\Type\Configurable
      */
     protected $configurable;
+
+    /**
+     * @var \Magento\GroupedProduct\Model\Product\Type\Grouped
+     */
+    protected $grouped;
 
     /**
      * @var \Magento\Catalog\Model\CategoryFactory
@@ -249,6 +255,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Catalog\Helper\Image $image,
         \Magento\Catalog\Model\ProductFactory $catalogProductFactory,
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
+        \Magento\GroupedProduct\Model\Product\Type\Grouped $grouped,
         \Magento\Catalog\Model\CategoryFactory $categoryFactory,
         \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory  $productCollectionFactory,
         \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
@@ -274,6 +281,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->image = $image;
         $this->catalogProductFactory = $catalogProductFactory;
         $this->configurable = $configurable;
+        $this->grouped = $grouped;
         $this->categoryFactory = $categoryFactory;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->batchCollectionFactory = $batchCollectionFactory;
@@ -685,6 +693,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 }
 
                 if (count($variants) > 0) {
+                    $simpleSkusArr = array();
                     $variantElem = $this->createChild('variants', false, false, $productElem);
                     foreach ($this->getConfigurableChildren($product) as $child_product) {
 
@@ -733,17 +742,31 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             ) {
                                 continue;
                             }
-
+                            $variant_name = isset($attribute['store_label'])? $attribute['store_label'] : $attribute['frontend_label'];
                             $this->createChild('variant_attribute', [
                                 'is_configurable' => 1,
                                 'is_filterable' => $attribute->getIsFilterable(),
-                                'name' => $attribute['store_label'],
+                                'name' => $variant_name,
                                 'name_code' => $attribute->getId(),
                                 'value_code' => $child_product->getData($attribute->getAttributeCode())
                             ], $attribute->getFrontend()->getValue($child_product), $productVariation
                             );
                         }
+
+                        if ($is_variant_sellable == 1) {
+                            $simpleSkusArr[] = $child_product->getSku();
+                        }
                     }
+
+                    $attributeElem = $this->createChild('attribute', [
+                        'is_filterable' => 0,
+                        'name' => 'configurable_simple_skus'
+                    ], false, $productElem);
+                    $this->createChild('attribute_values', false,
+                        implode(',', $simpleSkusArr),
+                        $attributeElem);
+                    $this->createChild('attribute_label', false,
+                        'configurable_simple_skus', $attributeElem);
                 }
             }
         }
@@ -755,7 +778,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $storeId,
         $orders,
         $interval
-        )
+    )
     {
         $this->setOffset($offset);
         $this->setCount($count);
@@ -777,111 +800,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         foreach ($productCollection as $product)
         {
-            $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
-            $_baseImage = $this->storeManager
-                    ->getStore()
-                    ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
-                . 'catalog/product' . $product->getImage();
-
-            $priceRange = array('price_min' => 0, 'price_max' => 0);
-
-            if ($product->getTypeId() == Configurable::TYPE_CODE) {
-                $priceRange = $this->getPriceRange($product);
-            }
-
-            $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
-            $productElem = $this->createChild('product', [
-                'thumbs'     =>  $_thumbs,
-                'base_image' =>  $_baseImage,
-                'id'         =>  $product->getId(),
-                'type'       =>  $product->getTypeId(),
-                'currency'   =>  $this->getCurrencyCode(),
-                'visibility' =>  $product->getVisibility(),
-                'selleable'  =>  $product->isSalable(),
-                'price'      =>  $product->getPriceInfo()
-                    ->getPrice('final_price')
-                    ->getValue(),
-                'price_min'  => ($priceRange['price_min']),
-                'price_max'  => ($priceRange['price_max']),
-                'url'        =>  $product->getProductUrl(true),
-                'action'     =>  'insert'
-            ], false, $this->xmlGenerator->getSimpleXml());
-
-            $this->createChild('description', false,
-                strval($product->getDescription()), $productElem);
-
-            $this->createChild('short', false,
-                strval($product->getShortDescription()), $productElem);
-
-            $this->createChild('name', false,
-                strval($product->getName()), $productElem);
-
-            $this->createChild('sku', false,
-                strval($product->getSku()), $productElem);
-
-            $ratingSummary = $product->getRatingSummary();
-
-            if ($ratingSummary) {
-                $this->createChild('review', false,
-                    intval($ratingSummary->getRatingSummary()), $productElem);
-
-                $this->createChild('review_count', false,
-                    intval($ratingSummary->getReviewsCount()), $productElem);
-            }
-
-            $this->createChild('purchase_popularity', false, intval($purchasePopularity), $productElem);
-
-            $_isEnabled = $this->_getProductEnabledString($product);
-            $this->createChild('product_status', false, $_isEnabled, $productElem);
-
-            $this->createChild('creation_date', false,
-                $this->dateTime->timestamp($product->getCreatedAt()), $productElem);
-            $this->createChild('updated_date', false,
-                $this->dateTime->timestamp($product->getUpdatedAt()), $productElem);
-
-            if ($this->helper->canUseProductAttributes()) {
-                $attributeSetId = $product->getAttributeSetId();
-
-                if (!array_key_exists($attributeSetId, $this->attributesSetsCache)) {
-                    $this->attributesSetsCache[$attributeSetId] = array();
-                    $setAttributes = $this->productAttributeManagementInterface->getAttributes(
-                        \Magento\Catalog\Api\Data\ProductAttributeInterface::ENTITY_TYPE_CODE,
-                        $attributeSetId
-                    );
-
-                    foreach ($setAttributes as $attrFromSet) {
-                        $this->attributesSetsCache[$attributeSetId][] = $attrFromSet->getAttributeCode();
-                    }
-                }
-
-                foreach ($this->getProductAttributes() as $attr) {
-                    if (in_array($attr->getAttributeCode(), $this->attributesSetsCache[$attributeSetId])) {
-                        $this->renderAttributeXml($attr, $product, $productElem);
-                    }
-                }
-            }
-
-            if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
-                $this->createChild('product_parents', false,
-                    implode(',', $this->getProductParentIds($product)), $productElem);
-            }
-
-            if ($product->getTypeId() == Configurable::TYPE_CODE) {
-                $this->createChild('simpleproducts', false,
-                    implode(',', $this->getConfigurableChildrenIds($product)), $productElem);
-
-                $this->renderProductVariantXml($product, $productElem);
-            }
-
-            $this->createChild('categories', false,
-                implode(';', $this->getCategoryPathsByProduct($product)), $productElem);
-
-            $this->createChild('meta_title', false,
-                strval($product->getMetaTitle()), $productElem);
-            $this->createChild('meta_description', false,
-                strval($product->getMetaDescription()), $productElem);
-
-            $this->renderTieredPrices($product, $productElem);
+            $this->renderProduct($product, $orderCount, 'insert');
         }
 
         return $this->xmlGenerator->generateXml();
@@ -893,7 +812,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $productElement = $this->createChild('product', [
             'updatedate' =>  ($batch->getUpdateDate() + $timeOffset),
             'action'    =>  $batch->getAction(),
-            'id'    =>  $batch->getId(),
+            'id'    =>  $batch->getProductId(),
             'storeid'   =>  $batch->getStoreId()
         ], false, $this->xmlGenerator->getSimpleXml());
 
@@ -905,8 +824,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $count,
         $storeId,
         $from,
-        $to)
-    {
+        $to
+    ) {
         /**
          * Load and filter the batches
          */
@@ -953,77 +872,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             if ($batch->getAction() == 'update') {
                 if ($productId) {
                     $product = $this->loadProductById($productId, $batchStoreId);
-                    if ($product) {
-                        $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
-                        $_baseImage = $this->storeManager
-                                ->getStore()
-                                ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
-                            . 'catalog/product' . $product->getImage();
-
-                        $priceRange = array('price_min' => 0, 'price_max' => 0);
-
-                        if ($product->getTypeId() == Configurable::TYPE_CODE) {
-                            $priceRange = $this->getPriceRange($product);
-                        }
-
-                        $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
-                        $productElement = $this->createChild('product', [
-                            'updatedate' => ($batch->getUpdateDate()),
-                            'action'     => $batch->getAction(),
-                            'id'         => $product->getId(),
-                            'storeid'    => $batch->getStoreId(),
-                            'thumbs'     => $_thumbs,
-                            'base_image' => $_baseImage,
-                            'url'        => $product->getProductUrl(true),
-                            'price'      => $product->getPriceInfo()
-                                ->getPrice('final_price')
-                                ->getValue(),
-                            'price_min'  => ($priceRange['price_min']),
-                            'price_max'  => ($priceRange['price_max']),
-                            'type'       => $product->getTypeId(),
-                            'currency'   => $this->getCurrencyCode(),
-                        ], false, $this->xmlGenerator->getSimpleXml());
-
-                        $this->createChild('description', false,
-                            strval($product->getDescription()), $productElement);
-
-                        $this->createChild('short', false,
-                            strval($product->getShortDescription()), $productElement);
-
-                        $this->createChild('name', false,
-                            strval($product->getName()), $productElement);
-                        $this->createChild('sku', false,
-                            strval($product->getSku()), $productElement);
-
-                        $this->createChild('purchase_popularity', false, intval($purchasePopularity), $productElement);
-
-                        $this->createChild('product_status', false, $this->_getProductEnabledString($product), $productElement);
-
-                        $this->createChild('newfrom', false,
-                            $this->dateTime->timestamp($product->getNewsFromDate()), $productElement
+                    if ($product && $product->getId() > 0) {
+                        $this->renderProduct(
+                            $product,
+                            $orderCount,
+                            'update',
+                            $batch->getUpdateDate(),
+                            $batch->getStoreId()
                         );
-                        $this->createChild('creation_date', false,
-                            $this->dateTime->timestamp($product->getCreatedAt()), $productElement
-                        );
-                        $this->createChild('updated_date', false,
-                            $this->dateTime->timestamp($product->getUpdatedAt()), $productElement
-                        );
-
-                        if ($this->helper->canUseProductAttributes()) {
-                            foreach ($this->getProductAttributes() as $attr) {
-                                $this->renderAttributeXml($attr, $product, $productElement);
-                            }
-                        }
-
-                        // TODO: missing categories from the XML
-
-                        $this->createChild('meta_title', false,
-                            strval($product->getMetaTitle()), $productElement);
-                        $this->createChild('meta_description', false,
-                            strval($product->getMetaDescription()), $productElement);
-
-                        $this->renderTieredPrices($product, $productElement);
-
                     } else {
                         $batch->setAction('remove');
                         $this->makeRemoveRow($batch);
@@ -1080,111 +936,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         foreach ($productCollection as $product)
         {
-            $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
-            $_baseImage = $this->storeManager
-                    ->getStore()
-                    ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
-                . 'catalog/product' . $product->getImage();
-
-            $priceRange = array('price_min' => 0, 'price_max' => 0);
-
-            if ($product->getTypeId() == Configurable::TYPE_CODE) {
-                $priceRange = $this->getPriceRange($product);
-            }
-
-            $productElem = $this->createChild('product', [
-                'thumbs'           =>  $_thumbs,
-                'base_image'       =>  $_baseImage,
-                'id'               =>  $product->getId(),
-                'type'             =>  $product->getTypeId(),
-                'currency'         =>  $this->getCurrencyCode(),
-                'visibility'       =>  $product->getVisibility(),
-                'selleable'        =>  $product->isSalable(),
-                'price'            =>  $product->getPriceInfo()
-                    ->getPrice('final_price')
-                    ->getValue(),
-                'price_min'        => ($priceRange['price_min']),
-                'price_max'        => ($priceRange['price_max']),
-                'url'              =>  $product->getProductUrl(true),
-                'action'           =>  'getbyid',
-                'get_by_id_status' =>  1
-            ], false, $this->xmlGenerator->getSimpleXml());
-
-            $this->createChild(
-                'description',
-                false,
-                (string)($product->getDescription()),
-                $productElem
-            );
-
-            $this->createChild(
-                'short',
-                false,
-                (string)($product->getShortDescription()),
-                $productElem
-            );
-
-            $this->createChild(
-                'name',
-                false,
-                (string)($product->getName()),
-                $productElem
-            );
-
-            $this->createChild(
-                'sku',
-                false,
-                (string)($product->getSku()),
-                $productElem
-            );
-
-            $ratingSummary = $product->getRatingSummary();
-            if ($ratingSummary) {
-                $this->createChild(
-                    'review',
-                    false,
-                    (int)($ratingSummary->getRatingSummary()),
-                    $productElem
-                );
-
-                $this->createChild(
-                    'review_count',
-                    false,
-                    (int)($ratingSummary->getReviewsCount()),
-                    $productElem
-                );
-            }
-
-            $this->createChild('product_status', false, $this->_getProductEnabledString($product), $productElem);
-
-            $this->createChild('creation_date', false, $this->dateTime->timestamp($product->getCreatedAt()), $productElem);
-            $this->createChild('updated_date', false, $this->dateTime->timestamp($product->getUpdatedAt()), $productElem);
-
-            if ($this->helper->canUseProductAttributes()) {
-                foreach ($this->getProductAttributes() as $attr) {
-                    $this->renderAttributeXml($attr, $product, $productElem);
-                }
-            }
-
-            if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
-                $this->createChild('product_parents', false,
-                    implode(',', $this->getProductParentIds($product)), $productElem);
-            }
-
-            if ($product->getTypeId() == Configurable::TYPE_CODE) {
-                $this->createChild('simpleproducts', false,
-                    implode(',', $this->getConfigurableChildrenIds($product)), $productElem);
-
-                $this->renderProductVariantXml($product, $productElem);
-            }
-
-            $this->createChild('categories', false, implode(';', $this->getCategoryPathsByProduct($product)), $productElem);
-
-            $this->createChild('meta_title', false, strval($product->getMetaTitle()), $productElem);
-
-            $this->createChild('meta_description', false, strval($product->getMetaDescription()), $productElem);
-
-            $this->renderTieredPrices($product, $productElem);
+            $this->renderProduct($product, array(), 'getbyid');
         }
 
         return $this->xmlGenerator->generateXml();
@@ -1267,5 +1019,174 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     protected function _getProductEnabledString($product)
     {
         return intval(($product->getStatus() == \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED) ? '1' : '0');
+    }
+
+    /**
+     * getProductFinalPrice this method allows to fetch product price
+     * according to product type specificality
+     *
+     * @param $product
+     *
+     * @return mixed
+     */
+    protected function getProductFinalPrice($product)
+    {
+        if ($product->getTypeId() == Grouped::TYPE_CODE) {
+            $products = $this->grouped->getAssociatedProducts($product);
+
+            $finalPrice = 0;
+            foreach ($products as $grProduct) {
+                $qty = intval($grProduct->getQty());
+                if ($qty > 0) {
+                    $prodPrice = floatval($grProduct->getPrice());
+                    if ($prodPrice == 0) {
+                        $prodPrice = $this->getProductFinalPrice($grProduct);
+                    }
+                    $finalPrice += $qty * $prodPrice;
+                }
+            }
+
+        } else {
+            $finalPrice = $product->getPriceInfo()->getPrice('final_price')
+                ->getValue();
+        }
+
+        return $finalPrice;
+    }
+
+    /**
+     * @param $product
+     * @param $orderCount
+     */
+    protected function renderProduct(
+        $product,
+        $orderCount=array(),
+        $action='update',
+        $updatedate=0,
+        $storeId=null
+    ) {
+        try {
+            $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
+            $_baseImage = $this->storeManager
+                    ->getStore()
+                    ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
+                . 'catalog/product' . $product->getImage();
+
+            $priceRange = array('price_min' => 0, 'price_max' => 0);
+
+            if ($product->getTypeId() == Configurable::TYPE_CODE) {
+                $priceRange = $this->getPriceRange($product);
+            }
+            $finalPrice = $this->getProductFinalPrice($product);
+            $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
+            $xmlAttributes = [
+                'action' => $action,
+                'id' => $product->getId(),
+                'thumbs' => $_thumbs,
+                'base_image' => $_baseImage,
+                'url' => $product->getProductUrl(true),
+                'price' => $finalPrice,
+                'price_min' => ($priceRange['price_min']),
+                'price_max' => ($priceRange['price_max']),
+                'type' => $product->getTypeId(),
+                'currency' => $this->getCurrencyCode(),
+                'visibility' => $product->getVisibility(),
+                'selleable' => $product->isSalable()
+            ];
+
+            if ($updatedate != 0) {
+                $xmlAttributes['updatedate'] = $updatedate;
+            }
+            if ($storeId != null) {
+                $xmlAttributes['storeid'] = $storeId;
+            }
+            $regularPrice = $product->getPrice();
+            if ($finalPrice < $regularPrice) {
+                $xmlAttributes['price_compare_at_price'] = $regularPrice;
+            }
+
+            $productElem = $this->createChild('product', $xmlAttributes, false, $this->xmlGenerator->getSimpleXml());
+
+            $this->createChild('description', false,
+                strval($product->getDescription()), $productElem);
+
+            $this->createChild('short', false,
+                strval($product->getShortDescription()), $productElem);
+
+            $this->createChild('name', false,
+                strval($product->getName()), $productElem);
+
+            $this->createChild('sku', false,
+                strval($product->getSku()), $productElem);
+
+            $ratingSummary = $product->getRatingSummary();
+
+            if ($ratingSummary) {
+                $this->createChild('review', false,
+                    intval($ratingSummary->getRatingSummary()), $productElem);
+
+                $this->createChild('review_count', false,
+                    intval($ratingSummary->getReviewsCount()), $productElem);
+            }
+
+            $this->createChild('purchase_popularity', false, intval($purchasePopularity), $productElem);
+
+            $_isEnabled = $this->_getProductEnabledString($product);
+            $this->createChild('product_status', false, $_isEnabled, $productElem);
+
+            $this->createChild('newfrom', false,
+                $this->dateTime->timestamp($product->getNewsFromDate()), $productElem
+            );
+            $this->createChild('creation_date', false,
+                $this->dateTime->timestamp($product->getCreatedAt()), $productElem);
+            $this->createChild('updated_date', false,
+                $this->dateTime->timestamp($product->getUpdatedAt()), $productElem);
+
+            if ($this->helper->canUseProductAttributes()) {
+                $attributeSetId = $product->getAttributeSetId();
+
+                if (!array_key_exists($attributeSetId, $this->attributesSetsCache)) {
+                    $this->attributesSetsCache[$attributeSetId] = array();
+                    $setAttributes = $this->productAttributeManagementInterface->getAttributes(
+                        \Magento\Catalog\Api\Data\ProductAttributeInterface::ENTITY_TYPE_CODE,
+                        $attributeSetId
+                    );
+
+                    foreach ($setAttributes as $attrFromSet) {
+                        $this->attributesSetsCache[$attributeSetId][] = $attrFromSet->getAttributeCode();
+                    }
+                }
+
+                foreach ($this->getProductAttributes() as $attr) {
+                    if (in_array($attr->getAttributeCode(), $this->attributesSetsCache[$attributeSetId])) {
+                        $this->renderAttributeXml($attr, $product, $productElem);
+                    }
+                }
+            }
+
+            if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
+                $this->createChild('product_parents', false,
+                    implode(',', $this->getProductParentIds($product)), $productElem);
+            }
+
+            if ($product->getTypeId() == Configurable::TYPE_CODE) {
+                $this->createChild('simpleproducts', false,
+                    implode(',', $this->getConfigurableChildrenIds($product)), $productElem);
+
+                $this->renderProductVariantXml($product, $productElem);
+            }
+
+            $this->createChild('categories', false,
+                implode(';', $this->getCategoryPathsByProduct($product)), $productElem);
+
+            $this->createChild('meta_title', false,
+                strval($product->getMetaTitle()), $productElem);
+            $this->createChild('meta_description', false,
+                strval($product->getMetaDescription()), $productElem);
+
+            $this->renderTieredPrices($product, $productElem);
+        } catch (\Exception $e) {
+            //continue
+        }
     }
 }
