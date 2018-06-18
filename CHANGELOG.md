@@ -56,3 +56,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fix base image fetch.
 - Fix configurable product prices fetch.
+
+## [4.2.0] - 2017-02-28 00:00:00
+### Changed
+- Make Serp and Injection blocks not cacheable.
+- Get products colletion with specified attributes only.
+- Get current stock status of simple product assigned to configurable.
+- Add minimal price (from index) to product collection.
+
+### Added
+- Add ajax add-to-cart from Serp.
+- Add tiered pricing support.
+- Add customer group id to js injection.
+
+### Fixed
+- Fix wrong product id in updates xml.
+- Fix compilation errors.

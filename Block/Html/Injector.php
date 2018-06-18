@@ -54,6 +54,7 @@ class Injector extends \Magento\Framework\View\Element\Template
     protected $cart;
     protected $deploymentConfig;
     protected $cookieManager;
+    protected $customerSession;
 
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
@@ -63,14 +64,17 @@ class Injector extends \Magento\Framework\View\Element\Template
         \Magento\Checkout\Model\Cart $cart,
         CookieManagerInterface $cookieManager,
         DeploymentConfig $deploymentConfig,
-        array $data)
-    {
+        \Magento\Customer\Model\Session $session,
+        array $data
+    ) {
         $this->helper = $helper;
         $this->apiHelper = $apiHelper;
         $this->registry = $registry;
         $this->cart = $cart;
         $this->deploymentConfig = $deploymentConfig;
         $this->cookieManager = $cookieManager;
+        $this->customerSession = $session;
+        $this->_isScopePrivate = true;
         parent::__construct($context, $data);
     }
 
@@ -86,15 +90,30 @@ class Injector extends \Magento\Framework\View\Element\Template
 
     public function getSessionId()
     {
-        return md5($this->cookieManager->getCookie(self::SESSION_COOKIE_NAME).$this->deploymentConfig->get(\Magento\Framework\Encryption\Encryptor::PARAM_CRYPT_KEY));
+        return md5(
+            $this->cookieManager->getCookie(
+                self::SESSION_COOKIE_NAME
+            ).$this->deploymentConfig->get(
+                \Magento\Framework\Encryption\Encryptor::PARAM_CRYPT_KEY
+            )
+        );
     }
-    
-    public function isLoggedInUser(){
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $customerSession = $objectManager->get('Magento\Customer\Model\Session');
-        return $customerSession->isLoggedIn();
+
+    /**
+     * IsLoggedInUser cheks if user is logged in
+     *
+     * @return mixed
+     */
+    public function isLoggedInUser()
+    {
+        return $this->customerSession->isLoggedIn();
     }
-    
+
+    /**
+     * GetSrc return script url with params
+     *
+     * @return string
+     */
     public function getSrc()
     {       
         $parameters = [
@@ -105,15 +124,19 @@ class Injector extends \Magento\Framework\View\Element\Template
             'is_admin_user' =>  0,
             'sessionID' =>  $this->getSessionId(),
             'is_user_logged_in'=> $this->isLoggedInUser(),
-            'QuoteID'   =>  $this->cart->getQuote()->getId()
+            'QuoteID'   =>  $this->cart->getQuote()->getId(),
+            'customer_group_id' => $this->customerSession
+                ->getCustomerGroupId()
         ];
 
         if ($this->getCurrentProduct()) {
-            $parameters = array_merge($parameters, [
-                'product_url' => $this->getCurrentProduct()->getProductUrl(),
-                'product_sku' => $this->getCurrentProduct()->getSku(),
-                'product_id' => $this->getCurrentProduct()->getId(),
-            ]);
+            $parameters = array_merge(
+                $parameters, [
+                    'product_url' => $this->getCurrentProduct()->getProductUrl(),
+                    'product_sku' => $this->getCurrentProduct()->getSku(),
+                    'product_id' => $this->getCurrentProduct()->getId(),
+                ]
+            );
         }
 
         return self::AUTOCOMPLETE_JS_URL.'?'.http_build_query($parameters, '', '&');

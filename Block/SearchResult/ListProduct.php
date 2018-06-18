@@ -59,6 +59,12 @@ class ListProduct extends Template
      * @var \Magento\Framework\App\Response\Http
      */
     protected $response;
+
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
+    protected $logger;
+
     protected $storeManager;
     protected $formKey;
     protected $cacheManager;
@@ -75,8 +81,10 @@ class ListProduct extends Template
         $this->request = $request;
         $this->response = $response;
         $this->helper = $helper;
-        $this->formKey = $formKey;  
+        $this->formKey = $formKey;
         $this->cacheManager = $context->getCache();
+        $this->_isScopePrivate = true;
+        $this->logger = $context->getLogger();
         parent::__construct($context, $data);
     }
 
@@ -100,21 +108,69 @@ class ListProduct extends Template
         return $this->formKey->getFormKey();
     }
 
-    public function getSearchResults()
+    /**
+     * Returns template of serp
+     * getSearchResults
+     *
+     * @param int $trials not more then 3 trials
+     *
+     * @return bool
+     */
+    public function getSearchResults($trials=1)
     {
         $template = $this->cacheManager->load('autocomplete_template_serp');
 
-        if (!$template) {
-            $template = $this->helper->fetchProductListingData();
-            
-            $this->cacheManager->save(
-                $template,
-                'autocomplete_template_serp',
-                array("autocomplete_cache"),
-                self::SERP_PAGE_TEMPLATE_LIFETIME
-            );
+        $template_age = $this->cacheManager->load('autocomplete_template_serp_age');
+        $template_age = floatval($template_age);
+        $now = strtotime('now');
+
+        if (($now - $template_age) > self::SERP_PAGE_TEMPLATE_LIFETIME
+            || !$template
+        ) {
+            try {
+                $template = $this->helper->fetchProductListingData();
+
+                $this->cacheManager->save(
+                    $template,
+                    'autocomplete_template_serp',
+                    array("autocomplete_cache")
+                );
+
+                $this->cacheManager->save(
+                    (string)$now,
+                    'autocomplete_template_serp_age',
+                    array("autocomplete_cache")
+                );
+                /**
+                 * Successefully brought template from acp.magento
+                 */
+                return $template;
+
+            } catch (\Zend_Http_Client_Exception $e) {
+                $this->logger->critical($e);
+                if (!$template) {
+                    if ($trials < 4) {
+                        $trials++;
+                        /**
+                         * Could not bring template from acp.magento
+                         * trying to get 2 more times
+                         */
+                        return $this->getSearchResults($trials);
+                    }
+                }
+                /**
+                 * Got an exception but there is an old template
+                 * or trials are over
+                 */
+                return $template;
+            }
+        } else {
+            /**
+             * Cached template is still fresh
+             * or it does not exists at all
+             */
+            return $template;
         }
 
-        return $template;
     }
 }

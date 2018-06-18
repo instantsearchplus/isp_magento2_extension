@@ -1,0 +1,13 @@
+@instantsearch-icons-admin__font-name-path: '@{baseDir}Autocompleteplus_Autosuggest/fonts/icomoon';
+@instantsearch-icons-admin__font-name : 'icomoon';
+.lib-font-face(
+    @family-name:@instantsearch-icons-admin__font-name,
+    @font-path: @instantsearch-icons-admin__font-name-path,
+    @font-weight: normal,
+    @font-style: normal
+);
+
+.admin__menu .item-instantsearch-dashboard > a:before {
+    font-family: @instantsearch-icons-admin__font-name;
+    content: "\e900" !important;
+}

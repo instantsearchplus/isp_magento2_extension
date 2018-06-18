@@ -217,9 +217,24 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     protected $attributesSetsCache;
 
     /**
-     * @var Magento\Eav\Api\AttributeManagementInterface
+     * @var \Magento\Eav\Api\AttributeManagementInterface
      */
     protected $productAttributeManagementInterface;
+
+    /**
+     * @var \Magento\CatalogInventory\Api\StockRegistryInterface
+     */
+    protected $stockRegistry;
+
+    /**
+     * @var \Magento\Catalog\Model\Product\AttributeSet\Options
+     */
+    protected $attrSetOPtions;
+
+    /**
+     * @var array keeps customer groups names and ids
+     */
+    protected $_customersGroups;
 
     const ISPKEY = 'ISPKEY_';
 
@@ -244,7 +259,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
         \Magento\Sales\Model\ResourceModel\Order\Item\Collection $orderItemCollection,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Magento\Eav\Api\AttributeManagementInterface $productAttributeManagementInterface
+        \Magento\Eav\Api\AttributeManagementInterface $productAttributeManagementInterface,
+        \Magento\Catalog\Model\Product\AttributeSet\Options $attrSetOPtions,
+        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
+        \Magento\Customer\Model\Customer\Source\Group $customerGroupManager
     )
     {
         $this->storeManager = $storeManagerInterface;
@@ -267,6 +285,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->orderItemCollection = $orderItemCollection;
         $this->date = $date;
         $this->productAttributeManagementInterface = $productAttributeManagementInterface;
+        $this->attrSetOPtions = $attrSetOPtions;
+        $this->stockRegistry = $stockRegistry;
 
         $this->xmlGenerator->setRootElementName('catalog');
         $this->xmlGenerator->setRootAttributes([
@@ -276,6 +296,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->attributesValuesCache = array();
         $this->attributesSetsCache = array();
+        $this->_customersGroups = array();
+
+        foreach($customerGroupManager->toOptionArray() as $custGr) {
+            $this->_customersGroups[$custGr['value']] = $custGr['label'];
+        }
 
         parent::__construct($context);
     }
@@ -284,7 +309,38 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         if (!$this->productCollection) {
             $productCollection = $this->productCollectionFactory->create();
-            $productCollection->addAttributeToSelect('*');
+
+            $attributesToSelect = array(
+                'store_id',
+                'name',
+                'description',
+                'short_description',
+                'visibility',
+                'thumbnail',
+                'image',
+                'small_image',
+                'url',
+                'status',
+                'updated_at',
+                'price',
+                'meta_title',
+                'meta_description',
+                'special_price',
+                'special_from_date',
+                'special_to_date',
+                'sku',
+                'tier_price'
+            );
+
+            if ($this->helper->canUseProductAttributes()) {
+                $customAttributes = $this->getProductAttributes();
+                foreach ($customAttributes as $attr) {
+                    if (!in_array($attr->getAttributeCode(), $attributesToSelect)) {
+                        $attributesToSelect[] = $attr->getAttributeCode();
+                    }
+                }
+            }
+            $productCollection->addAttributeToSelect($attributesToSelect);//'*'
 
             $productCollection->addStoreFilter($this->getStoreId());
             $productCollection->setStoreId($this->getStoreId());
@@ -640,8 +696,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     }
                 }
 
-                $simple_products_price = [];
-
                 if (count($variants) > 0) {
                     $variantElem = $this->createChild('variants', false, false, $productElem);
                     foreach ($this->getConfigurableChildren($product) as $child_product) {
@@ -651,8 +705,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                          *   //continue;
                          *  }
                          */
+                        $stockitem = $this->stockRegistry
+                            ->getStockItem(
+                            $child_product->getId(),
+                            $product->getStore()->getWebsiteId()
+                            );
 
-                        $is_variant_in_stock = ($child_product->getIsInStock()) ? 1 : 0;
+                        $is_variant_in_stock = ($stockitem->getIsInStock()) ? 1 : 0;
 
                         if (method_exists($child_product, 'isSaleable')) {
                             $is_variant_sellable = ($child_product->isSaleable()) ? 1 : 0;
@@ -666,24 +725,24 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             $is_variant_visible = '';
                         }
 
-                        $variant_price = (array_key_exists($child_product->getId(), $simple_products_price)) ?
-                            $simple_products_price[$child_product->getId()] : '';
-
                         $productVariation = $this->createChild('variant', [
                             'id' => $child_product->getId(),
                             'type' => $child_product->getTypeId(),
                             'visibility' => $is_variant_visible,
                             'is_in_stock' => $is_variant_in_stock,
                             'is_seallable' => $is_variant_sellable,
-                            'price' => $variant_price
+                            'price' => $child_product->getPrice()
                         ], false, $variantElem);
 
                         $this->createChild('name', false,
                             $child_product->getName(), $productVariation);
 
-                        $attributes = $child_product->getAttributes();
+                        $attributes = $this->getProductAttributes();
                         foreach ($attributes as $attribute) {
-                            if (!$attribute['is_configurable'] || !in_array($attribute['store_label'], $variants)) {
+                            if (
+                                !in_array($attribute['store_label'], $variants)
+                                && !in_array($attribute['frontend_label'], $variants)
+                                ) {
                                 continue;
                             }
 
@@ -721,6 +780,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $productCollection->getSelect()->limit($count, $offset);
 
+        $productCollection->addMinimalPrice()
+            ->addFinalPrice()
+            ->addTierPriceData();
+
         $this->appendReviews();
 
         $orderCount = $this->getOrdersPerProduct();
@@ -748,7 +811,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'currency'   =>  $this->getCurrencyCode(),
                 'visibility' =>  $product->getVisibility(),
                 'selleable'  =>  $product->isSalable(),
-                'price'      => $product->getFinalPrice(),
+                'price'      =>  $product->getFinalPrice(),
                 'price_min'  => ($priceRange['price_min']),
                 'price_max'  => ($priceRange['price_max']),
                 'url'        =>  $product->getProductUrl(true),
@@ -828,6 +891,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     strval($product->getMetaTitle()), $productElem);
             $this->createChild('meta_description', false,
                     strval($product->getMetaDescription()), $productElem);
+
+            $this->renderTieredPrices($product, $productElem);
         }
 
         return $this->xmlGenerator->generateXml();
@@ -916,7 +981,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         $productElement = $this->createChild('product', [
                             'updatedate' => ($batch->getUpdateDate()),
                             'action'     => $batch->getAction(),
-                            'id'         => $batch->getId(),
+                            'id'         => $product->getId(),
                             'storeid'    => $batch->getStoreId(),
                             'thumbs'     => $_thumbs,
                             'base_image' => $_baseImage,
@@ -965,7 +1030,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                                 strval($product->getMetaTitle()), $productElement);
                         $this->createChild('meta_description', false,
                                 strval($product->getMetaDescription()), $productElement);
-                        
+
+                        $this->renderTieredPrices($product, $productElement);
+
                     } else {
                         $batch->setAction('remove');
                         $this->makeRemoveRow($batch);
@@ -1013,6 +1080,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     'null' => null
                 ]
             ]);
+
+        $productCollection->addMinimalPrice()
+            ->addFinalPrice()
+            ->addTierPriceData();
 
         $this->appendReviews();
 
@@ -1119,9 +1190,48 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $this->createChild('meta_title', false, strval($product->getMetaTitle()), $productElem);
 
             $this->createChild('meta_description', false, strval($product->getMetaDescription()), $productElem);
+
+            $this->renderTieredPrices($product, $productElem);
         }
 
         return $this->xmlGenerator->generateXml();
+    }
+
+    /**
+     * renderTieredPrices
+     *
+     * @param $product
+     * @param $productXmlElem
+     *
+     * @return void
+     */
+    protected function renderTieredPrices($product, $productXmlElem) {
+
+        if (is_array($product->getData('tier_price'))
+        && count($product->getData('tier_price')) > 0) {
+            $tieredPricesElem = $this->createChild(
+                    'tiered_prices',
+                    false,
+                    false,
+                    $productXmlElem
+                );
+
+            foreach ($product->getData('tier_price') as $trP) {
+                $this->createChild(
+                        'tiered_price',
+                        array(
+                            'cust_group' => array_key_exists($trP['cust_group'], $this->_customersGroups) ?
+                                $this->_customersGroups[$trP['cust_group']] : $trP['cust_group'],
+                            'cust_group_id' => $trP['cust_group'],
+                            'price' => $trP['price'],
+                            'min_qty' => $trP['price_qty']
+                        ),
+                        false,
+                        $tieredPricesElem
+                    );
+            }
+
+        }
     }
 
     /**

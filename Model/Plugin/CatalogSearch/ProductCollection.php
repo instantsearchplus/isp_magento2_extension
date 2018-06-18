@@ -170,7 +170,7 @@ class ProductCollection
      * @return mixed
      */
     public function aroundAddSearchFilter(
-        \Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection\Interceptor $subject,
+        $subject,
         \Closure $proceed,
         $query
     ) {
@@ -273,7 +273,7 @@ class ProductCollection
      * @return mixed
      */
     public function aroundSetOrder(
-        \Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection\Interceptor $subject,
+        $subject,
         \Closure $proceed,
         $attribute,
         $dir = Select::SQL_ASC
