@@ -264,7 +264,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Eav\Api\AttributeManagementInterface $productAttributeManagementInterface,
         \Magento\Catalog\Model\Product\AttributeSet\Options $attrSetOPtions,
         \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
-        \Magento\Customer\Model\Customer\Source\Group $customerGroupManager
+        \Magento\Customer\Model\ResourceModel\Group\Collection $customerGroupManager
     )
     {
         $this->storeManager = $storeManagerInterface;
