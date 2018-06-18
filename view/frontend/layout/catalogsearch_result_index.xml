@@ -14,7 +14,7 @@
         </referenceBlock>
         <referenceBlock name="search.result">
             <action method="setTemplate" ifconfig="autosuggest/search/layered">
-                <argument name="template" xsi:type="string">Autocompleteplus_Autosuggest::catalogsearch/result_empty.phtml</argument>
+                <argument name="template" xsi:type="string">Autocompleteplus_Autosuggest::catalog/product/list.phtml</argument>
             </action>
         </referenceBlock>
         <referenceContainer name="content">

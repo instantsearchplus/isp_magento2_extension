@@ -11,7 +11,7 @@
                 <item name="instantsearchplus" xsi:type="array">
                     <item name="class" xsi:type="string">Autocompleteplus\Autosuggest\Controller\Router</item>
                     <item name="disable" xsi:type="boolean">false</item>
-                    <item name="sortOrder" xsi:type="string">22</item>
+                    <item name="sortOrder" xsi:type="string">99</item>
                 </item>
             </argument>
         </arguments>

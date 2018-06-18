@@ -291,11 +291,12 @@ class ProductCollection
                     $sort = "FIELD(e.entity_id, {$id_str}) {$dir}";
                     $subject->getSelect()->order(new \Zend_Db_Expr($sort));
                 }
+                return $subject;
             } else {
                 return $proceed($attribute, $dir);
             }
         }
 
-        return $subject;
+        return $proceed($attribute, $dir);
     }
 }
