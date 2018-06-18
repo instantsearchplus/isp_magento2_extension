@@ -22,12 +22,11 @@ class Getbyid extends \Autocompleteplus\Autosuggest\Controller\Productsbyid
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
-        \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator,
-        \Magento\Framework\App\ResponseInterface $responseInterface
+        \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator
     ) {
         $this->resultJsonFactory = $resultJsonFactory;
         $this->xmlGenerator = $xmlGenerator;
-        $this->responseInterface = $responseInterface;
+        $this->responseInterface = $context->getResponse();
         parent::__construct($context);
     }
 
@@ -46,7 +45,7 @@ class Getbyid extends \Autocompleteplus\Autosuggest\Controller\Productsbyid
             $result = $this->resultJsonFactory->create();
             return $result->setData($returnArr);
         }
-        
+
         $productIds = explode(',', $id);
         $xml = $this->xmlGenerator->renderCatalogByIds($productIds, $storeId);
         $this->responseInterface->setHeader('Content-type', 'text/xml');

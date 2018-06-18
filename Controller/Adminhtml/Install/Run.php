@@ -39,12 +39,7 @@ class Run extends \Autocompleteplus\Autosuggest\Controller\Adminhtml\Install
         $apiRequest->setRequestType(\Zend_Http_Client::POST);
         $response = $apiRequest->buildRequest($params);
 
-
         if ($responseData = json_decode($response->getBody())) {
-
-            /*
-             * Validate uuid exists
-             */
             if (!$responseData->uuid || strlen($responseData->uuid) > 50) {
                 $this->api->sendError('Could not get license string.');
                 $this->messageManager->addError(__('Something went wrong when trying to install InstantSearch+'));

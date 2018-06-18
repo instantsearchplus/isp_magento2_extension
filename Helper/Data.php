@@ -1,9 +1,47 @@
 <?php
+/**
+ * Data File
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * PHP version 5
+ *
+ * @category Mage
+ *
+ * @package   Instantsearchplus
+ * @author    Fast Simon <info@instantsearchplus.com>
+ * @copyright 2014 Fast Simon (http://www.instantsearchplus.com)
+ * @license   Open Software License (OSL 3.0)*
+ * @link      http://opensource.org/licenses/osl-3.0.php
+ */
 
 namespace Autocompleteplus\Autosuggest\Helper;
 
 use \Magento\Store\Model\ScopeInterface;
 
+/**
+ * Data
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * PHP version 5
+ *
+ * @category Mage
+ *
+ * @package   Instantsearchplus
+ * @author    Fast Simon <info@instantsearchplus.com>
+ * @copyright 2014 Fast Simon (http://www.instantsearchplus.com)
+ * @license   Open Software License (OSL 3.0)*
+ * @link      http://opensource.org/licenses/osl-3.0.php
+ */
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
     /**
@@ -136,6 +174,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         if (!$uuid || !$authKey) {
             return 'login';
         }
+
         return sprintf($this->scopeConfig->getValue(self::XML_PATH_DASHBOARD_PARAMS), $uuid, $authKey);
     }
 
@@ -237,20 +276,24 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 if (!$value['is_active']) {
                     continue;
                 }
+
                 $storeComplete = $value;
                 if (array_key_exists($key, $locales)) {
                     $storeComplete['lang'] = $locales[$key];
                 } else {
                     $storeComplete['lang'] = $locales[0];
                 }
+
                 if (array_key_exists($key, $storeUrls)) {
                     $storeComplete['url'] = $storeUrls[$key];
                 } else {
                     $storeComplete['url'] = $storeUrls[0];
                 }
+
                 if ($useStoreCode) {
                     $storeComplete['url'] = $storeUrls[0].$value['code'];
                 }
+
                 $storeData[] = $storeComplete;
             }
             $dataArr = [

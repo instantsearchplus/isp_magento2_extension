@@ -1,15 +1,54 @@
 <?php
+/**
+ * Api File
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * PHP version 5
+ *
+ * @category Mage
+ *
+ * @package   Instantsearchplus
+ * @author    Fast Simon <info@instantsearchplus.com>
+ * @copyright 2014 Fast Simon (http://www.instantsearchplus.com)
+ * @license   Open Software License (OSL 3.0)*
+ * @link      http://opensource.org/licenses/osl-3.0.php
+ */
 
 namespace Autocompleteplus\Autosuggest\Helper;
 
 use Magento\Framework\HTTP\ZendClientFactory;
 use \Magento\Store\Model\ScopeInterface;
 
+/**
+ * Api
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * PHP version 5
+ *
+ * @category Mage
+ *
+ * @package   Instantsearchplus
+ * @author    Fast Simon <info@instantsearchplus.com>
+ * @copyright 2014 Fast Simon (http://www.instantsearchplus.com)
+ * @license   Open Software License (OSL 3.0)*
+ * @link      http://opensource.org/licenses/osl-3.0.php
+ */
 class Api extends \Magento\Framework\App\Helper\AbstractHelper
 {
     const API_AUTHENTICATION_KEY = 'autosuggest/api/authentication_key';
     const API_UUID = 'autosuggest/api/uuid';
     const API_ENDPOINT = 'autosuggest/api/endpoint';
+    const API_ENDPOINT_URL = 'https://acp-magento.appspot.com';
 
     protected $curlFactory;
     protected $curlUrl;
@@ -50,7 +89,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getApiEndpoint()
     {
-        return 'https://acp-magento.appspot.com';
+        return self::API_ENDPOINT_URL;
     }
 
     public function setApiAuthenticationKey($authKey)
@@ -114,7 +153,13 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         $client = $this->httpClientFactory->create();
         $responseBody = [];
 
+        $client->setAdapter('\Zend_Http_Client_Adapter_Curl');
         $client->setUri($this->getUrl());
+        /**
+         * fix for localhost without ssl cert
+         * 'verifypeer'    => false,
+         * 'verifyhost'    => false
+         */
         $client->setConfig(
             [
                 'timeout'   => $timeout

@@ -29,3 +29,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Use productMetaData object instead of objectManager.
 - Make Install Call to acp-magento at extension installtion.
 - Keep serp template in cache for 1 minute.
+
+## [4.0.11] - 2016-09-25 15:43:19
+### Changed
+- Add file docs.
+- Specify Zend_Http_Client_Adapter_Curl as request adapter.
+- Add work around for missing ssl cert (localhost) in comment of buildRequest method.
+
+### Added
+- Basic search results mode (ids only).
+
+### Fixed
+- Compilation errors in Serp Block class.

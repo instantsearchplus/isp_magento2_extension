@@ -16,8 +16,6 @@ class Checksum extends \Autocompleteplus\Autosuggest\Controller\Products
 
     public function execute()
     {
-        //$collection = $this->categoryFactory->create()->getCollection();
-        //$collection->addFieldToSelect('*');
         // TODO: Implement execute() method.
     }
 }

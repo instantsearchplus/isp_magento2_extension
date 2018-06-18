@@ -1,9 +1,47 @@
 <?php
+/**
+ * Generator File
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * PHP version 5
+ *
+ * @category Mage
+ *
+ * @package   Instantsearchplus
+ * @author    Fast Simon <info@instantsearchplus.com>
+ * @copyright 2014 Fast Simon (http://www.instantsearchplus.com)
+ * @license   Open Software License (OSL 3.0)*
+ * @link      http://opensource.org/licenses/osl-3.0.php
+ */
 
 namespace Autocompleteplus\Autosuggest\Helper\Product\Xml;
 
 use Magento\Framework\App;
 
+/**
+ * Generator
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * PHP version 5
+ *
+ * @category Mage
+ *
+ * @package   Instantsearchplus
+ * @author    Fast Simon <info@instantsearchplus.com>
+ * @copyright 2014 Fast Simon (http://www.instantsearchplus.com)
+ * @license   Open Software License (OSL 3.0)*
+ * @link      http://opensource.org/licenses/osl-3.0.php
+ */
 class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 {
     /**
@@ -562,9 +600,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 if (count($variants) > 0) {
                     $variantElem = $this->createChild('variants', false, false, $productElem);
                     foreach ($this->getConfigurableChildren($product) as $child_product) {
-                        if (!in_array($product->getStoreId(), $child_product->getStoreIds())) {
-                            //continue;
-                        }
+
+                        /**
+                         *  if (!in_array($product->getStoreId(), $child_product->getStoreIds())) {
+                         *   //continue;
+                         *  }
+                         */
 
                         $is_variant_in_stock = ($child_product->getIsInStock()) ? 1 : 0;
 
@@ -632,7 +673,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->setChecksum($checksum);
         
         $productCollection = $this->getProductCollection();
-        // @codingStandardsIgnoreLine
+
         $productCollection->getSelect()->limit($count, $offset);
 
         $this->appendReviews();
@@ -824,11 +865,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         $this->createChild('product_status', false, $this->_getProductEnabledString($product), $productElement);
 
                         $this->createChild('newfrom', false,
-                            $this->dateTime->timestamp($product->getNewsFromDate()), $productElement);
+                            $this->dateTime->timestamp($product->getNewsFromDate()), $productElement
+                        );
                         $this->createChild('creation_date', false,
-                            $this->dateTime->timestamp($product->getCreatedAt()), $productElement);
+                            $this->dateTime->timestamp($product->getCreatedAt()), $productElement
+                        );
                         $this->createChild('updated_date', false,
-                            $this->dateTime->timestamp($product->getUpdatedAt()), $productElement);
+                            $this->dateTime->timestamp($product->getUpdatedAt()), $productElement
+                        );
 
                         if ($this->helper->canUseProductAttributes()) {
                             foreach ($this->getProductAttributes() as $attr) {
@@ -914,25 +958,49 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'get_by_id_status' =>  1
             ], false, $this->xmlGenerator->getSimpleXml());
 
-            $this->createChild('description', false,
-                strval($product->getDescription()), $productElem);
+            $this->createChild(
+                'description',
+                false,
+                (string)($product->getDescription()),
+                $productElem
+            );
 
-            $this->createChild('short', false,
-                strval($product->getShortDescription()), $productElem);
+            $this->createChild(
+                'short',
+                false,
+                (string)($product->getShortDescription()),
+                $productElem
+            );
 
-            $this->createChild('name', false,
-                strval($product->getName()), $productElem);
+            $this->createChild(
+                'name',
+                false,
+                (string)($product->getName()),
+                $productElem
+            );
 
-            $this->createChild('sku', false,
-                strval($product->getSku()), $productElem);
+            $this->createChild(
+                'sku',
+                false,
+                (string)($product->getSku()),
+                $productElem
+            );
 
             $ratingSummary = $product->getRatingSummary();
             if ($ratingSummary) {
-                $this->createChild('review', false,
-                    intval($ratingSummary->getRatingSummary()), $productElem);
+                $this->createChild(
+                    'review',
+                    false,
+                    (int)($ratingSummary->getRatingSummary()),
+                    $productElem
+                );
 
-                $this->createChild('review_count', false,
-                    intval($ratingSummary->getReviewsCount()), $productElem);
+                $this->createChild(
+                    'review_count',
+                    false,
+                    (int)($ratingSummary->getReviewsCount()),
+                    $productElem
+                );
             }
 
             $this->createChild('product_status', false, $this->_getProductEnabledString($product), $productElem);
@@ -960,9 +1028,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
             $this->createChild('categories', false, implode(';', $this->getCategoryPathsByProduct($product)), $productElem);
             
-            $this->createChild('meta_title', false, strval($product->getMetaTitle()), $productElement);
+            $this->createChild('meta_title', false, strval($product->getMetaTitle()), $productElem);
 
-            $this->createChild('meta_description', false, strval($product->getMetaDescription()), $productElement);
+            $this->createChild('meta_description', false, strval($product->getMetaDescription()), $productElem);
         }
 
         return $this->xmlGenerator->generateXml();

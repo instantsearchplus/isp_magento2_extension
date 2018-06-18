@@ -1,4 +1,23 @@
 <?php
+/**
+ * InstallSchema File
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * PHP version 5
+ *
+ * @category Mage
+ *
+ * @package   Instantsearchplus
+ * @author    Fast Simon <info@instantsearchplus.com>
+ * @copyright 2014 Fast Simon (http://www.instantsearchplus.com)
+ * @license   Open Software License (OSL 3.0)*
+ * @link      http://opensource.org/licenses/osl-3.0.php
+ */
 
 namespace Autocompleteplus\Autosuggest\Setup;
 
@@ -8,8 +27,25 @@ use Magento\Framework\Setup\InstallSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Store\Model\ScopeInterface;
+
 /**
- * @codeCoverageIgnore
+ * InstallSchema File
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * PHP version 5
+ *
+ * @category Mage
+ *
+ * @package   Instantsearchplus
+ * @author    Fast Simon <info@instantsearchplus.com>
+ * @copyright 2014 Fast Simon (http://www.instantsearchplus.com)
+ * @license   Open Software License (OSL 3.0)*
+ * @link      http://opensource.org/licenses/osl-3.0.php
  */
 class InstallSchema implements InstallSchemaInterface
 {
@@ -253,12 +289,15 @@ class InstallSchema implements InstallSchemaInterface
 
         $installer->endSetup();
 
-        $params = ['site'       => $this->scopeConfig->getValue(
-            'web/unsecure/base_url',
-            ScopeInterface::SCOPE_STORE),
+        $params = [
+            'site'       => $this->scopeConfig->getValue(
+                                'web/unsecure/base_url',
+                                ScopeInterface::SCOPE_STORE
+                                ),
             'email'      => $this->scopeConfig->getValue(
-                'trans_email/ident_support/email',
-                ScopeInterface::SCOPE_STORE),
+                                'trans_email/ident_support/email',
+                                ScopeInterface::SCOPE_STORE
+                                ),
             'f'          => $this->helper->getVersion(),
             'multistore' => json_encode($this->helper->getMultiStoreData())
         ];
@@ -280,6 +319,7 @@ class InstallSchema implements InstallSchemaInterface
                 $this->api->setApiUUID($responseData->uuid);
                 $this->api->setApiAuthenticationKey($responseData->authentication_key);
             }
+
         } catch (\Exception $e) {
             $this->logger->critical($e);
         }
