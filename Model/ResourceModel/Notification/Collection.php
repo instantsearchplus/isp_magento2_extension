@@ -52,7 +52,10 @@ class Collection extends AbstractCollection
      */
     protected function _construct()
     {
-        $this->_init('Autocompleteplus\Autosuggest\Model\Notification', 'Autocompleteplus\Autosuggest\Model\ResourceModel\Notification');
+        $this->_init(
+            'Autocompleteplus\Autosuggest\Model\Notification',
+            'Autocompleteplus\Autosuggest\Model\ResourceModel\Notification'
+        );
     }
 
     /**
@@ -62,6 +65,6 @@ class Collection extends AbstractCollection
      */
     public function toOptionArray()
     {
-        return $this->_toOptionArray('entity_id', 'checksum');
+        return $this->_toOptionArray('entity_id', 'message');
     }
 }

@@ -76,11 +76,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $batchCollectionFactory;
 
     /**
-     * @var \Autocompleteplus\Autosuggest\Model\Checksum
-     */
-    protected $checksumModel;
-
-    /**
      * @var \Magento\Catalog\Model\Product
      */
     protected $productModel;
@@ -124,7 +119,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Autocompleteplus\Autosuggest\Helper\Api $api,
         \Magento\Config\Model\ResourceModel\Config $resourceConfig,
         \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
-        \Autocompleteplus\Autosuggest\Model\Checksum $checksumModel,
         \Magento\Catalog\Model\Product $productModel,
         \Autocompleteplus\Autosuggest\Model\Batch $batchModel,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
@@ -136,7 +130,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->api = $api;
         $this->resourceConfig = $resourceConfig;
         $this->batchCollectionFactory = $batchCollectionFactory;
-        $this->checksumModel = $checksumModel;
         $this->productModel = $productModel;
         $this->batchModel = $batchModel;
         $this->date = $date;
@@ -209,7 +202,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getSearchLayered($scopeId = 0)
     {
-        return $this->scopeConfig->getValue(self::XML_PATH_SEARCH_LAYERED, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $scopeId);
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_SEARCH_LAYERED,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $scopeId
+        );
     }
 
     public function setMiniFormRewrite($enabled, $scope = 'default', $scopeId = 0)
@@ -295,8 +291,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $dataArr['site'] = $url;
             $dataArr['email'] = $storeMail;
         } else {
-            $storeUrls = $this->storesConfig->getStoresConfigByPath('web/unsecure/base_url');
-            $locales = $this->storesConfig->getStoresConfigByPath('general/locale/code');
+            $storeUrls = $this->storesConfig
+                ->getStoresConfigByPath('web/unsecure/base_url');
+            $locales = $this->storesConfig
+                ->getStoresConfigByPath('general/locale/code');
             foreach ($storesArr as $key => $value) {
                 if (!$value['is_active']) {
                     continue;
@@ -331,75 +329,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $dataArr;
     }
 
-    public function calculateChecksum($product)
-    {
-        $productId = $product->getId();
-        $productTitle = $product->getName();
-        $productDescription = $product->getDescription();
-        $productShortDescription = $product->getShortDescription();
-        $productUrl = $product->getUrlPath();
-        $productVisibility = $product->getVisibility();
-        $productInStock = $product->isInStock();
-        $productPrice = (float) $product->getPrice();
-        $productType = $product->getTypeID();
-
-        try {
-            $productThumbnail = '/'.$product->getImage();
-        } catch (\Exception $e) {
-            $productThumbnail = '';
-        }
-
-        $checksumString = $productId.$productTitle.$productDescription.$productShortDescription.$productUrl.
-            $productVisibility.$productInStock.$productPrice.$productThumbnail.$productType;
-
-        $checksum = md5($checksumString);
-
-        return $checksum;
-    }
-
-    public function updateSavedProductChecksum($productId, $sku, $storeId, $checksum)
-    {
-        if ($productId == null || $sku == null) {
-            return;
-        }
-
-        $checksumModel = $this->checksumModel;
-        $collection = $checksumModel->getCollection()
-            ->addFieldToFilter('product_id', $productId)
-            ->addFieldToFilter('store_id', $storeId);
-
-        $row = $collection->getFirstItem();
-
-        if ($collection->getSize() > 0) {
-            if ($row->getChecksum() != $checksum) {
-                $row->setChecksum($checksum)->save();
-            }
-        } else {
-            $checksumModel->setProductId($productId)
-                ->setSku($sku)
-                ->setStoreId($storeId)
-                ->setChecksum($checksum)
-                ->save();
-        }
-    }
-
-    public function updateDeletedProductChecksum($productId, $sku, $storeId)
-    {
-        if ($productId == null) {
-            return;
-        }
-
-        $checksumModel = $this->checksumModel;
-        $collection = $checksumModel->getCollection()
-            ->addFieldToFilter('product_id', $productId)
-            ->addFieldToFilter('store_id', $storeId);
-
-        if ($collection->getSize() > 0) {
-            $checksum = $collection->getFirstItem();
-            $checksum->delete();
-        }
-    }
-
     public function writeProductDeletion($sku, $productId, $storeId, $product = null)
     {
         $dt = $this->date->gmtTimestamp();
@@ -408,7 +337,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $product = $this->productModel->load($productId);
             }
 
-            $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds')) ? $product->getStoreIds() : [$storeId];
+            $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds')) ?
+                 $product->getStoreIds() : [$storeId];
         } catch (\Exception $e) {
             $this->logger->critical($e);
             $productStores = [$storeId];
@@ -421,7 +351,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         foreach ($productStores as $productStore) {
             $batchCollection = $this->getBatchCollection();
             $batchCollection->addFieldToFilter('product_id', $productId)
-                ->addFieldToFilter('store_id', $storeId);
+                ->addFieldToFilter('store_id', $storeId)
+                ->setPageSize(1);
 
             if ($batchCollection->getSize() > 0) {
                 $batch = $batchCollection->getFirstItem();
@@ -439,8 +370,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     ->setSku($sku)
                     ->save();
             }
-
-            $this->updateDeletedProductChecksum($productId, $sku, $productStore);
         }
     }
 }

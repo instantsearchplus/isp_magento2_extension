@@ -52,7 +52,10 @@ class Collection extends AbstractCollection
      */
     protected function _construct()
     {
-        $this->_init('Autocompleteplus\Autosuggest\Model\Pusher', 'Autocompleteplus\Autosuggest\Model\ResourceModel\Pusher');
+        $this->_init(
+            'Autocompleteplus\Autosuggest\Model\Pusher', 
+            'Autocompleteplus\Autosuggest\Model\ResourceModel\Pusher'
+        );
     }
 
     /**
@@ -62,6 +65,6 @@ class Collection extends AbstractCollection
      */
     public function toOptionArray()
     {
-        return $this->_toOptionArray('identifier', 'checksum');
+        return $this->_toOptionArray('entity_id', 'batch_number');
     }
 }

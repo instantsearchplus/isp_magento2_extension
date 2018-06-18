@@ -11,7 +11,7 @@
                 <resource id="Magento_Backend::stores">
                     <resource id="Magento_Backend::stores_settings">
                         <resource id="Magento_Config::config">
-                            <resource id="Autocompleteplus_Autosuggest::autosuggest"/>
+                            <resource id="Autocompleteplus_Autosuggest::autosuggest" title="InstantSearch+ Configuration"/>
                         </resource>
                     </resource>
                 </resource>

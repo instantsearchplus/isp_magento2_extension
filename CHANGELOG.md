@@ -83,3 +83,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Store id in products_send.
+
+## [4.2.2] - 2017-05-15 00:00:00
+### Fixed
+- Api roles bug fix.
+
+## Removed
+- Checksum api.

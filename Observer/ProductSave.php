@@ -154,7 +154,8 @@ class ProductSave implements ObserverInterface
             foreach ($productStores as $productStore) {
                 $batches = $this->getBatchCollection()
                     ->addFieldToFilter('product_id', $productId)
-                    ->addFieldToFilter('store_id', $productStore);
+                    ->addFieldToFilter('store_id', $productStore)
+                    ->setPageSize(1);
 
                 if ($batches->getSize() > 0) {
                     $batch = $batches->getFirstItem();
@@ -173,14 +174,15 @@ class ProductSave implements ObserverInterface
                         ->save();
                 }
 
-                $checksum = $this->helper->calculateChecksum($product);
-                $this->helper->updateSavedProductChecksum($productId, $sku, $productStore, $checksum);
-
                 if (is_array($simpleProducts) && count($simpleProducts) > 0) {
                     foreach ($simpleProducts as $configurableProduct) {
                         $batchCollection = $this->getBatchCollection();
-                        $batchCollection->addFieldToFilter('product_id', $configurableProduct)
-                            ->addFieldToFilter('store_id', $productStore);
+                        $batchCollection->addFieldToFilter(
+                            'product_id',
+                            $configurableProduct
+                        )
+                            ->addFieldToFilter('store_id', $productStore)
+                            ->setPageSize(1);
 
                         if ($batchCollection->getSize() > 0) {
                             $batch = $batchCollection->getFirstItem();

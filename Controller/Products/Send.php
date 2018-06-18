@@ -24,9 +24,8 @@ class Send extends \Autocompleteplus\Autosuggest\Controller\Products
         $storeId = $this->getRequest()->getParam('store', 1);
         $orders = $this->getRequest()->getParam('orders', false);
         $interval = $this->getRequest()->getParam('month_interval', 12);
-        $checksum = $this->getRequest()->getParam('checksum', false);
 
-        $catalogXml = $this->xmlGenerator->renderCatalogXml($offset, $count, $storeId, $orders, $interval, $checksum);
+        $catalogXml = $this->xmlGenerator->renderCatalogXml($offset, $count, $storeId, $orders, $interval);
 
         $om = \Magento\Framework\App\ObjectManager::getInstance();
         /** @var \Magento\Framework\App\ResponseInterface|\Magento\Framework\App\Response\Http $response */

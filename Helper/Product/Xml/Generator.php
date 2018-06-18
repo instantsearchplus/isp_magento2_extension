@@ -187,11 +187,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     protected $interval;
 
     /**
-     * @var string
-     */
-    protected $checksum;
-
-    /**
      * @var int
      */
     protected $pageNum;
@@ -461,12 +456,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         return $this;
     }
 
-    public function setChecksum($checksum)
-    {
-        $this->checksum = $checksum;
-        return $this;
-    }
-
     public function setPageNum($pageNum)
     {
         $this->pageNum = $pageNum;
@@ -496,11 +485,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     public function getInterval()
     {
         return $this->interval;
-    }
-
-    public function getChecksum()
-    {
-        return $this->checksum;
     }
 
     public function getPageNum()
@@ -770,15 +754,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $count,
         $storeId,
         $orders,
-        $interval,
-        $checksum)
+        $interval
+        )
     {
         $this->setOffset($offset);
         $this->setCount($count);
         $this->setStoreId($storeId);
         $this->setOrders($orders);
         $this->setInterval($interval);
-        $this->setChecksum($checksum);
 
         $productCollection = $this->getProductCollection();
 

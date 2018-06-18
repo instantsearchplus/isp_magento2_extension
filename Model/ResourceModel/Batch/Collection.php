@@ -52,7 +52,10 @@ class Collection extends AbstractCollection
      */
     protected function _construct()
     {
-        $this->_init('Autocompleteplus\Autosuggest\Model\Batch', 'Autocompleteplus\Autosuggest\Model\ResourceModel\Batch');
+        $this->_init(
+            'Autocompleteplus\Autosuggest\Model\Batch',
+            'Autocompleteplus\Autosuggest\Model\ResourceModel\Batch'
+        );
     }
 
     /**

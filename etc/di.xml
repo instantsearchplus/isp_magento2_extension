@@ -2,20 +2,16 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <preference for="Autocompleteplus\Autosuggest\Api\Data\BatchSearchResultsInterface"
                 type="Magento\Framework\Api\SearchResults" />
-    <preference for="Autocompleteplus\Autosuggest\Api\Data\ChecksumSearchResultsInterface"
-                type="Magento\Framework\Api\SearchResults" />
     <preference for="Autocompleteplus\Autosuggest\Api\Data\NotificationSearchResultsInterface"
                 type="Magento\Framework\Api\SearchResults" />
     <preference for="Autocompleteplus\Autosuggest\Api\Data\PusherSearchResultsInterface"
                 type="Magento\Framework\Api\SearchResults" />
 
     <preference for="Autocompleteplus\Autosuggest\Api\Data\BatchInterface" type="Autocompleteplus\Autosuggest\Model\Batch" />
-    <preference for="Autocompleteplus\Autosuggest\Api\Data\ChecksumInterface" type="Autocompleteplus\Autosuggest\Model\Checksum" />
     <preference for="Autocompleteplus\Autosuggest\Api\Data\NotificationInterface" type="Autocompleteplus\Autosuggest\Model\Notification" />
     <preference for="Autocompleteplus\Autosuggest\Api\Data\PusherInterface" type="Autocompleteplus\Autosuggest\Model\Pusher" />
 
     <preference for="Autocompleteplus\Autosuggest\Api\BatchRepositoryInterface" type="Autocompleteplus\Autosuggest\Model\BatchRepository" />
-    <preference for="Autocompleteplus\Autosuggest\Api\ChecksumRepositoryInterface" type="Autocompleteplus\Autosuggest\Model\ChecksumRepository" />
     <preference for="Autocompleteplus\Autosuggest\Api\NotificationRepositoryInterface" type="Autocompleteplus\Autosuggest\Model\NotificationRepository" />
     <preference for="Autocompleteplus\Autosuggest\Api\PusherRepositoryInterface" type="Autocompleteplus\Autosuggest\Model\PusherRepository" />
 
