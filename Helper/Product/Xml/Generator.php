@@ -242,6 +242,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected $_customersGroups;
 
+    protected $productVisibility;
+
     const ISPKEY = 'ISPKEY_';
 
     public function __construct(
@@ -270,7 +272,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Eav\Api\AttributeManagementInterface $productAttributeManagementInterface,
         \Magento\Catalog\Model\Product\AttributeSet\Options $attrSetOPtions,
         \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
-        \Magento\Customer\Model\ResourceModel\Group\Collection $customerGroupManager
+        \Magento\Customer\Model\ResourceModel\Group\Collection $customerGroupManager,
+        \Magento\Catalog\Model\Product\Visibility $productVisibility
     )
     {
         $this->storeManager = $storeManagerInterface;
@@ -297,6 +300,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productAttributeManagementInterface = $productAttributeManagementInterface;
         $this->attrSetOPtions = $attrSetOPtions;
         $this->stockRegistry = $stockRegistry;
+        $this->productVisibility = $productVisibility;
 
         $this->xmlGenerator->setRootElementName('catalog');
         $this->xmlGenerator->setRootAttributes([
@@ -315,7 +319,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         parent::__construct($context);
     }
 
-    public function getProductCollection()
+    public function getProductCollection($skipNotVisible = true)
     {
         if (!$this->productCollection) {
             $productCollection = $this->productCollectionFactory->create();
@@ -355,6 +359,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
             $productCollection->addStoreFilter($this->getStoreId());
             $productCollection->setStoreId($this->getStoreId());
+            if ($skipNotVisible) {
+                $productCollection->setVisibility($this->productVisibility->getVisibleInSiteIds());
+            }
             $this->productCollection = $productCollection;
         }
 
@@ -826,9 +833,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $productCollection->getSelect()->limit($count, $offset);
 
-        $productCollection->addMinimalPrice()
-            ->addFinalPrice()
-            ->addTierPriceData();
+        $productCollection->addTierPriceData();
 
         $this->appendReviews();
 
@@ -919,11 +924,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->setInterval(12);
 
         /**
-         * Fetch the orders per product
-         */
-        $orderCount = $this->getOrdersPerProduct();
-
-        /**
          * We need to reset the root attributes on <catalog />
          */
         $this->xmlGenerator->setRootAttributes([
@@ -932,6 +932,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             'fromdatetime'  =>  $from
         ]);
 
+        $updatesBulk = array();
+        $productIds = array();
         foreach ($batchCollection as $batch) {
             $productId = $batch->getProductId();
             $batchStoreId = $batch->getStoreId();
@@ -944,20 +946,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
             if ($batch->getAction() == 'update') {
                 if ($productId) {
-                    $product = $this->loadProductById($productId, $batchStoreId);
-                    if ($product && $product->getId() > 0) {
-                        $this->renderProduct(
-                            $product,
-                            $orderCount,
-                            'update',
-                            $batch->getUpdateDate(),
-                            $batch->getStoreId()
-                        );
-                    } else {
-                        $batch->setAction('remove');
-                        $this->makeRemoveRow($batch);
-                        continue;
-                    }
+                    $updatesBulk[$productId] = $batch;
+                    $productIds[] = $productId;
                 } else {
                     $batch->setAction('remove');
                     $this->makeRemoveRow($batch);
@@ -968,6 +958,44 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->makeRemoveRow($batch);
                 continue;
             }
+        }
+
+        $productCollection = $this->getProductCollection(false);
+
+        if (is_numeric($storeId)) {
+            $productCollection->addStoreFilter($storeId);
+            $productCollection->setStoreId($storeId);
+        }
+
+        $productCollection->addAttributeToFilter('entity_id', ['in' => $productIds]);
+        $productCollection->joinTable('catalog_product_relation', 'child_id=entity_id', [
+            'parent_id' => 'parent_id'
+        ], null, 'left')
+            ->addAttributeToFilter([
+                [
+                    'attribute' => 'parent_id',
+                    'null' => null
+                ]
+            ]);
+
+        $productCollection->addTierPriceData();
+
+        $this->appendReviews();
+
+        /**
+         * Fetch the orders per product
+         */
+        $orderCount = $this->getOrdersPerProduct();
+
+        foreach ($productCollection as $product) {
+            $batch = $updatesBulk[$product->getId()];
+            $this->renderProduct(
+                $product,
+                $orderCount,
+                'update',
+                $batch->getUpdateDate(),
+                $batch->getStoreId()
+            );
         }
 
         return $this->xmlGenerator->generateXml();
@@ -983,34 +1011,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             'magento'   =>  $this->helper->getMagentoVersion()
         ]);
 
-        $productCollection = $this->getProductCollection();
-
-        if (is_numeric($storeId)) {
-            $productCollection->addStoreFilter($storeId);
-            $productCollection->setStoreId($storeId);
-        }
-
-        $productCollection->addAttributeToFilter('entity_id', ['in'  =>  $ids]);
-        $productCollection->joinTable('catalog_product_relation', 'child_id=entity_id', [
-            'parent_id' => 'parent_id'
-        ], null, 'left')
-            ->addAttributeToFilter([
-                [
-                    'attribute' => 'parent_id',
-                    'null' => null
-                ]
-            ]);
-
-        $productCollection->addMinimalPrice()
-            ->addFinalPrice()
-            ->addTierPriceData();
-
-        $this->appendReviews();
-
-        foreach ($productCollection as $product)
-        {
-            $this->renderProduct($product, array(), 'getbyid');
-        }
+        $this->loopOverProductCollectionByIds($ids, $storeId, 'getbyid');
 
         return $this->xmlGenerator->generateXml();
     }
@@ -1378,6 +1379,40 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     $product->getSku()
                 );
             }
+        }
+    }
+
+    /**
+     * @param $ids
+     * @param $storeId
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    private function loopOverProductCollectionByIds($ids, $storeId, $action)
+    {
+        $productCollection = $this->getProductCollection(false);
+
+        if (is_numeric($storeId)) {
+            $productCollection->addStoreFilter($storeId);
+            $productCollection->setStoreId($storeId);
+        }
+
+        $productCollection->addAttributeToFilter('entity_id', ['in' => $ids]);
+        $productCollection->joinTable('catalog_product_relation', 'child_id=entity_id', [
+            'parent_id' => 'parent_id'
+        ], null, 'left')
+            ->addAttributeToFilter([
+                [
+                    'attribute' => 'parent_id',
+                    'null' => null
+                ]
+            ]);
+
+        $productCollection->addTierPriceData();
+
+        $this->appendReviews();
+
+        foreach ($productCollection as $product) {
+            $this->renderProduct($product, array(), $action);
         }
     }
 }
