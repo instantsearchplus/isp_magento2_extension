@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Omit not visible products in full fetch, but not in sending updates
 - Stop using price index in product collections
-- Optimize sending updates by working with products collection
+- Optimize sending updates by working with products collection 
 
 ### Added
 - Import prices from index for monitoring purposes
