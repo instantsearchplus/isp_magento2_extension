@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# [4.5.4] - 2018-06-24 12:58:00
+### Added
+- Compare_at_price for configurable products
+
 ## [4.5.3] - 2018-06-20 14:42:00
 ### Changed
 - Omit not visible products in full fetch, but not in sending updates

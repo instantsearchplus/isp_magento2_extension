@@ -1062,11 +1062,15 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $min_price = 2147483647;
         $max_price = 0;
-
+        $compare_at_price = 0;
         foreach($product->getTypeInstance()->getUsedProducts($product) as $childProduct) {
             $childPrice = $childProduct->getFinalPrice();
 
             if ($childPrice < $min_price) {
+                $reg_price = (float)$childProduct->getPrice();
+                if ($reg_price > (float)$childPrice) {
+                    $compare_at_price = $reg_price;
+                }
                 $min_price = $childPrice;
             }
 
@@ -1079,10 +1083,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $min_price = 0;
         }
 
-        return array(
+        $price_range = array(
             'price_min' => $min_price,
-            'price_max' => $max_price,
+            'price_max' => $max_price
         );
+
+        if ($compare_at_price > 0) {
+            $price_range['compare_at_price'] = $compare_at_price;
+        }
+
+        return $price_range;
     }
 
     protected function _getPurchasePopularity($orderCount, $product)
@@ -1201,6 +1211,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 } else {
                     $xmlAttributes['price_compare_at_price'] = $msrp;
                 }
+            } else if ($product->getTypeId() == Configurable::TYPE_CODE && array_key_exists('compare_at_price', $priceRange)) {
+                $xmlAttributes['price_compare_at_price'] = $priceRange['compare_at_price'];
             }
 
             $productElem = $this->createChild('product', $xmlAttributes, false, $this->xmlGenerator->getSimpleXml());
