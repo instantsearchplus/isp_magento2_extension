@@ -20,9 +20,9 @@ Installation
 Upgrade
 ------------  
 Assuming you have installed our extension through composer, and you would like to upgrade it to version 4.5.5
-1. Run following commands 
-    a. ```composer require instantsearch/instantsearchplus:4.5.5``` 
-    b. ```php bin/magento setup:upgrade```   
+1. Run following commands  
+    a. ```composer require instantsearch/instantsearchplus:4.5.5```  
+    b. ```php bin/magento setup:upgrade```    
     c. ```php bin/magento cache:flush```   
 
 
