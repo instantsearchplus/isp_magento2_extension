@@ -215,7 +215,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                     ->setStoreId($productStore)
                     ->save();
             } else {
-                $batch = $this->batchModel;
+                $batch = $this->objectManager->create('\Autocompleteplus\Autosuggest\Model\Batch');
                 $batch->setUpdateDate($dt)
                     ->setAction('remove')
                     ->setProductId($productId)
