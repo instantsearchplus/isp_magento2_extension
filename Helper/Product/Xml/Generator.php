@@ -833,7 +833,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $productCollection->getSelect()->limit($count, $offset);
 
-        $productCollection->addTierPriceData();
+        $productCollection->addMinimalPrice()
+            ->addFinalPrice()
+            ->addTierPriceData();
+
+        $productCollection->addAttributeToSelect('price');
+
+        $this->changePriceIndexJoinType($productCollection);
 
         $this->appendReviews();
 
@@ -968,17 +974,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $productCollection->addAttributeToFilter('entity_id', ['in' => $productIds]);
-        $productCollection->joinTable('catalog_product_relation', 'child_id=entity_id', [
-            'parent_id' => 'parent_id'
-        ], null, 'left')
-            ->addAttributeToFilter([
-                [
-                    'attribute' => 'parent_id',
-                    'null' => null
-                ]
-            ]);
 
-        $productCollection->addTierPriceData();
+        $productCollection->addMinimalPrice()
+            ->addFinalPrice()
+            ->addTierPriceData();
+
+        $productCollection->addAttributeToSelect('price');
+
+        $this->changePriceIndexJoinType($productCollection);
 
         $this->appendReviews();
 
@@ -1409,22 +1412,39 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $productCollection->addAttributeToFilter('entity_id', ['in' => $ids]);
-        $productCollection->joinTable('catalog_product_relation', 'child_id=entity_id', [
-            'parent_id' => 'parent_id'
-        ], null, 'left')
-            ->addAttributeToFilter([
-                [
-                    'attribute' => 'parent_id',
-                    'null' => null
-                ]
-            ]);
 
-        $productCollection->addTierPriceData();
+        $productCollection->addMinimalPrice()
+            ->addFinalPrice()
+            ->addTierPriceData();
+
+        $productCollection->addAttributeToSelect('price');
+
+        $this->changePriceIndexJoinType($productCollection);
 
         $this->appendReviews();
 
         foreach ($productCollection as $product) {
             $this->renderProduct($product, array(), $action);
         }
+    }
+
+    /**
+     * @param $productCollection
+     */
+    private function changePriceIndexJoinType($productCollection)
+    {
+        $updatedfromAndJoin = array();
+        $fromAndJoin = $productCollection->getSelect()->getPart('FROM');
+        foreach ($fromAndJoin as $key => $index) {
+            if ($key == 'price_index') {
+                $index['joinType'] = 'left join';
+            }
+            $updatedfromAndJoin[$key] = $index;
+        }
+        if (count($updatedfromAndJoin) > 0) {
+            $productCollection->getSelect()->setPart('FROM', $updatedfromAndJoin);
+        }
+
+        $productCollection->clear();
     }
 }

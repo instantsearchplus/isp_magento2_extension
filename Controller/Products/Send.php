@@ -27,16 +27,21 @@ class Send extends \Autocompleteplus\Autosuggest\Controller\Products
      */
     protected $xmlGenerator;
 
+    protected $response;
+
     /**
      * Send constructor.
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator
+     * @param \Magento\Framework\App\ResponseInterface $response
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
-        \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator
+        \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator,
+        \Magento\Framework\App\ResponseInterface $response
     ) {
         $this->xmlGenerator = $xmlGenerator;
+        $this->response = $response;
         parent::__construct($context);
     }
 
@@ -56,10 +61,7 @@ class Send extends \Autocompleteplus\Autosuggest\Controller\Products
         $catalogXml = $this->xmlGenerator
             ->renderCatalogXml($offset, $count, $storeId, $orders, $interval);
 
-        $om = \Magento\Framework\App\ObjectManager::getInstance();
-        $response = $om->get('Magento\Framework\App\ResponseInterface');
-
-        $response->setHeader('Content-type', 'text/xml');
-        $response->setBody($catalogXml);
+        $this->response->setHeader('Content-type', 'text/xml');
+        $this->response->setBody($catalogXml);
     }
 }
