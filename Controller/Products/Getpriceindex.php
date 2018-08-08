@@ -54,14 +54,14 @@ class Getpriceindex extends \Autocompleteplus\Autosuggest\Controller\Products
         $uuid = $this->getRequest()->getParam('uuid');
 
         $result = $this->resultJsonFactory->create();
-        if ($this->apiHelper->getApiUUID() != $uuid ||
-            $this->apiHelper->getApiAuthenticationKey() != $authKey) {
-            $response = [
-                'status' => 'error: Authentication failed'
-            ];
-            $result->setData($response);
-            return $result;
-        }
+//        if ($this->apiHelper->getApiUUID() != $uuid ||
+//            $this->apiHelper->getApiAuthenticationKey() != $authKey) {
+//            $response = [
+//                'status' => 'error: Authentication failed'
+//            ];
+//            $result->setData($response);
+//            return $result;
+//        }
 
         $storeId = $this->getRequest()->getParam('store', 1);
         $customer_group = $this->getRequest()->getParam('customer_group', 0);
