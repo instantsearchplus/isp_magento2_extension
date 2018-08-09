@@ -2,7 +2,7 @@
   "name": "instantsearch/instantsearchplus",
   "description": "Search That Boosts Conversion: Fastest Semantic Search, Search Filters, and Search Autocomplete",
   "type": "magento2-module",
-  "version": "4.5.7",
+  "version": "4.5.8",
   "license": ["OSL-3.0"],
   "require": {
     "php": ">=5.5.0"

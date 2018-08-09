@@ -52,6 +52,8 @@ class Getbatchbyid extends \Autocompleteplus\Autosuggest\Controller\Products
      */
     protected $date;
 
+    protected $response;
+
     /**
      * Sendupdated constructor.
      * @param \Magento\Framework\App\Action\Context $context
@@ -65,6 +67,7 @@ class Getbatchbyid extends \Autocompleteplus\Autosuggest\Controller\Products
     ) {
         $this->xmlGenerator = $xmlGenerator;
         $this->date = $date;
+        $this->response = $context->getResponse();
         parent::__construct($context);
     }
 
@@ -83,10 +86,7 @@ class Getbatchbyid extends \Autocompleteplus\Autosuggest\Controller\Products
         $batches_json = $this->xmlGenerator
             ->getSingleBatchTableRecord($id, $storeId);
 
-        $om = \Magento\Framework\App\ObjectManager::getInstance();
-        $response = $om->get('Magento\Framework\App\ResponseInterface');
-
-        $response->setHeader('Content-type', 'text/json');
-        $response->setBody($batches_json);
+        $this->response->setHeader('Content-type', 'text/json');
+        $this->response->setBody($batches_json);
     }
 }

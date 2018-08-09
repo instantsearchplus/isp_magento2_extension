@@ -32,6 +32,8 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
      */
     protected $date;
 
+    protected $response;
+
     /**
      * Sendupdated constructor.
      * @param \Magento\Framework\App\Action\Context $context
@@ -45,6 +47,7 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
     ) {
         $this->xmlGenerator = $xmlGenerator;
         $this->date = $date;
+        $this->response = $context->getResponse();
         parent::__construct($context);
     }
 
@@ -64,10 +67,7 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
         $catalogXml = $this->xmlGenerator
             ->renderUpdatesCatalogXml($count, $storeId, $from, $to, $page);
 
-        $om = \Magento\Framework\App\ObjectManager::getInstance();
-        $response = $om->get('Magento\Framework\App\ResponseInterface');
-
-        $response->setHeader('Content-type', 'text/xml');
-        $response->setBody($catalogXml);
+        $this->response->setHeader('Content-type', 'text/xml');
+        $this->response->setBody($catalogXml);
     }
 }
