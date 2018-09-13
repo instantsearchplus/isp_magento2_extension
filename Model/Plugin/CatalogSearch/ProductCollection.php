@@ -44,7 +44,7 @@ use Magento\Framework\DB\Select;
  * @license   Open Software License (OSL 3.0)*
  * @link      http://opensource.org/licenses/osl-3.0.php
  */
-class ProductCollection
+class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection
 {
 
     protected $scopeConfig;
@@ -62,6 +62,8 @@ class ProductCollection
     protected $catalogSession;
 
     protected $list_ids = array();
+
+    protected $_totalRecords = null;
 
     /**
      * Store manager
@@ -162,7 +164,7 @@ class ProductCollection
      * server if website has basic subscription. If yes
      * list of ids relevant for query is returned
      *
-     * @param Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection $subject
+     * @param \Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection $subject
      * original class that we override the function from
      * @param Closure $proceed original function
      * @param string $query parameter of the original function
@@ -264,7 +266,7 @@ class ProductCollection
      * overrides order by relevance, because magento has a defult order
      * for relevance which is desc - we change the direction
      *
-     * @param Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection $subject
+     * @param \Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection $subject
      * original class that we override the function from
      * @param Closure $proceed original function
      * @param string $attribute sort attribute name
@@ -280,18 +282,23 @@ class ProductCollection
     ) {
 
         if (!$this->is_layered_enabled) {
-            if ($this->is_fulltext_enabled && $attribute == 'relevance') {
+            if ($this->is_fulltext_enabled) {
+                $this->removeMagentoSearchFilter($subject->getSelect());
+                if ($attribute == 'relevance') {
+                    $dir = strtolower($dir) == strtolower(Select::SQL_ASC) ?
+                        Select::SQL_DESC : Select::SQL_ASC;
 
-                $dir = strtolower($dir) == strtolower(Select::SQL_ASC) ?
-                    Select::SQL_DESC : Select::SQL_ASC;
-
-                $id_str = (count($this->list_ids) > 0) ?
-                    implode(',', $this->list_ids) : '0';
-                if (!empty($id_str)) {
-                    $sort = "FIELD(e.entity_id, {$id_str}) {$dir}";
-                    $subject->getSelect()->order(new \Zend_Db_Expr($sort));
+                    $id_str = (count($this->list_ids) > 0) ?
+                        implode(',', $this->list_ids) : '0';
+                    if (!empty($id_str)) {
+                        $sort = "FIELD(e.entity_id, {$id_str}) {$dir}";
+                        $subject->getSelect()->order(new \Zend_Db_Expr($sort));
+                    }
+                    return $subject;
+                } else {
+                    return $proceed($attribute, $dir);
                 }
-                return $subject;
+
             } else {
                 return $proceed($attribute, $dir);
             }
@@ -299,4 +306,42 @@ class ProductCollection
 
         return $proceed($attribute, $dir);
     }
+
+
+    public function aroundGetSize($subject, \Closure $proceed)
+    {
+        if (!$this->is_layered_enabled && $this->is_fulltext_enabled) {
+            if ($this->_totalRecords === null) {
+                $sql = $subject->getSelectCountSql();
+                $this->removeMagentoSearchFilter($sql);
+                $this->_totalRecords = $subject->getConnection()->fetchOne($sql, array());
+            }
+            return intval($this->_totalRecords);
+        } else {
+            return $proceed();
+        }
+    }
+
+    public function aroundLoad($subject, \Closure $proceed) {
+        if (!$this->is_layered_enabled && $this->is_fulltext_enabled) {
+            if (!$subject->isLoaded()) {
+                $subject->getSize();
+            }
+            $this->removeMagentoSearchFilter($subject->getSelect());
+        }
+        return $proceed();
+    }
+
+    /**
+     * @param $sql
+     */
+    private function removeMagentoSearchFilter($sql)
+    {
+        $joinFroms = $sql->getPart('FROM');
+        if (array_key_exists('search_result', $joinFroms)) {
+            unset($joinFroms['search_result']);
+            $sql->setPart('FROM', $joinFroms);
+        }
+    }
+
 }

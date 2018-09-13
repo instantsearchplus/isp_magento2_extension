@@ -222,6 +222,62 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected $attributesSetsCache;
 
+    protected $productAttributeRepository;
+
+    /**
+     * @return array
+     */
+    public function getAttributesValuesCache()
+    {
+        $attributesValuesCache = $this->cache->load(self::AttributesValuesCache);
+        if (!$attributesValuesCache) {
+            $this->attributesValuesCache = array();
+        } else {
+            $this->attributesValuesCache = unserialize($attributesValuesCache);
+        }
+        return $this->attributesValuesCache;
+    }
+
+    /**
+     * @param array $attributesValuesCache
+     */
+    public function setAttributesValuesCache($attributesValuesCache)
+    {
+        $this->cache->save(
+            serialize($attributesValuesCache),
+            self::AttributesValuesCache,
+            array("autocomplete_cache"),
+            900
+        );
+    }
+
+    /**
+     * @return array
+     */
+    public function getAttributesSetsCache()
+    {
+        $attributesSetsCache = $this->cache->load(self::AttributesSetsCache);
+        if (!$attributesSetsCache) {
+            $this->attributesSetsCache = array();
+        } else {
+            $this->attributesSetsCache = unserialize($attributesSetsCache);
+        }
+        return $this->attributesSetsCache;
+    }
+
+    /**
+     * @param array $attributesSetsCache
+     */
+    public function setAttributesSetsCache($attributesSetsCache)
+    {
+        $this->cache->save(
+            serialize($attributesSetsCache),
+            self::AttributesSetsCache,
+            array("autocomplete_cache"),
+            900
+        );
+    }
+
     /**
      * @var \Magento\Eav\Api\AttributeManagementInterface
      */
@@ -244,7 +300,28 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $productVisibility;
 
+    protected $catalogRuleAffectedProducts;
+
+    protected $catalogFutureRuleAffectedProducts;
+
+    protected $resourceConnection;
+
+    protected $_localeDate;
+
+    protected $productModel;
+
+    protected $ruleCollectionFactory;
+
+    protected $cache;
+
+    protected $rulesCount;
+
     const ISPKEY = 'ISPKEY_';
+
+    const ActiveRulesCount = 'ActiveRulesCount';
+    const AttributesValuesCache = 'AttributesValuesCache';
+    const AttributesSetsCache = 'AttributesSetsCache';
+
 
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
@@ -273,7 +350,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Catalog\Model\Product\AttributeSet\Options $attrSetOPtions,
         \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
         \Magento\Customer\Model\ResourceModel\Group\Collection $customerGroupManager,
-        \Magento\Catalog\Model\Product\Visibility $productVisibility
+        \Magento\Catalog\Model\Product\Visibility $productVisibility,
+        \Magento\Framework\App\ResourceConnection $resourceConnection,
+        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $_localeDate,
+        \Magento\Catalog\Model\Product $productModel,
+        \Magento\CatalogRule\Model\ResourceModel\Rule\CollectionFactory  $ruleCollectionFactory,
+        \Magento\Framework\App\Cache $cache,
+        \Magento\Catalog\Model\Product\Attribute\Repository $productAttributeRepository
     )
     {
         $this->storeManager = $storeManagerInterface;
@@ -301,22 +384,56 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->attrSetOPtions = $attrSetOPtions;
         $this->stockRegistry = $stockRegistry;
         $this->productVisibility = $productVisibility;
-
+        $this->resourceConnection = $resourceConnection;
+        $this->_localeDate = $_localeDate;
         $this->xmlGenerator->setRootElementName('catalog');
         $this->xmlGenerator->setRootAttributes([
             'version'   =>  $this->helper->getVersion(),
             'magento'   =>  $this->helper->getMagentoVersion()
         ]);
-
-        $this->attributesValuesCache = array();
-        $this->attributesSetsCache = array();
         $this->_customersGroups = array();
+        $this->catalogRuleAffectedProducts = array();
+        $this->catalogFutureRuleAffectedProducts = array();
+        $this->resourceConnection = $resourceConnection;
+        $this->productModel = $productModel;
+        $this->ruleCollectionFactory = $ruleCollectionFactory;
+        $this->cache = $cache;
+        $this->productAttributeRepository = $productAttributeRepository;
+
+        $this->attributesValuesCache = $this->getAttributesValuesCache();
+        $this->attributesSetsCache = $this->getAttributesSetsCache();
 
         foreach($customerGroupManager->toOptionArray() as $custGr) {
             $this->_customersGroups[$custGr['value']] = $custGr['label'];
         }
 
         parent::__construct($context);
+    }
+
+    public function __destruct() {
+        $this->setAttributesSetsCache($this->attributesSetsCache);
+        $this->setAttributesValuesCache($this->attributesValuesCache);
+    }
+
+    protected function getActiveRulesCount() {
+        $activeRulesCount = $this->cache->load(self::ActiveRulesCount);
+        if (!$activeRulesCount && $activeRulesCount !== '0') {
+            $locTmstmp = $this->_localeDate->scopeTimeStamp($this->getStoreId());
+            $dateTs = date('Y-m-d', $locTmstmp);
+            $ruleCollection = $this->ruleCollectionFactory->create();
+            $ruleCollection->getSelect()
+                ->where('to_date >= ?', $dateTs)
+                ->orWhere('from_date >= ?', $dateTs)
+                ->where('is_active = ?', true);
+            $activeRulesCount = $ruleCollection->count();
+            $this->cache->save(
+                (string)$activeRulesCount,
+                self::ActiveRulesCount,
+                array("autocomplete_cache"),
+                900
+            );
+        }
+        return (int)$activeRulesCount;
     }
 
     public function getProductCollection($skipNotVisible = true)
@@ -379,6 +496,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $this->categoryCollection;
+    }
+
+    public function getCategoryCollectionRange($categoriesIds)
+    {
+        $categoryCollectionRange = $this->categoryFactory->create()->getCollection();
+        $categoryCollectionRange->setStoreId($this->getStoreId())
+            ->addAttributeToSelect('*')
+            ->addAttributeToFilter('is_active', ['eq' => true])
+            ->addAttributeToFilter('entity_id', ['in' => $categoriesIds]);
+        return $categoryCollectionRange;
     }
 
     public function getBatchCollection()
@@ -607,9 +734,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $rootCategoryId = $this->getRootCategoryId();
         $paths = [];
         $category_names = [];
-        $all_categories = $this->getCategoryMap();
+        $all_categories = $this->getCategoryCollectionRange($productCategories);
         foreach ($all_categories as $category) {
-            if (in_array($category['id'], $productCategories)) {
+            if (in_array($category->getId(), $productCategories)) {
                 $path = explode('/', $category['path']);
                 //we don't want the root category for the entire site
                 array_shift($path);
@@ -653,18 +780,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                          * We generate key for cached attributes array
                          * we make it as string to avoid null to be a key
                          */
-                        $attrValidKey = $attrValue != null ? self::ISPKEY.$attrValue : self::ISPKEY;
-
-                        if (!array_key_exists($attrValidKey, $this->attributesValuesCache[$action])) {
-                            $attrValueText = $product->getAttributeText($action);
-
-                            $this->attributesValuesCache[$action][$attrValidKey] = $attrValueText;
-                            $attrValue = $attrValueText;
-                        } else {
-                            $attrValueText = $this->attributesValuesCache[$action][$attrValidKey];
-
-                            $attrValue = $attrValueText;
-                        }
+                        $attrValue = $this->getAttrValue($product, $attrValue, $action);
                     }
 
                     break;
@@ -726,6 +842,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                          *   //continue;
                          *  }
                          */
+                        if ($this->getRulesCount() > 0) {
+                            if ($child_product->getCatalogRulePrice()) {
+                                $this->catalogRuleAffectedProducts[(int)$child_product->getId()] = $child_product;
+                            } else {
+                                $this->catalogFutureRuleAffectedProducts[] = (int)$child_product->getId();
+                            }
+                        }
+
                         $stockitem = $this->stockRegistry
                             ->getStockItem(
                                 $child_product->getId(),
@@ -758,7 +882,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             'visibility' => $is_variant_visible,
                             'is_in_stock' => $is_variant_in_stock,
                             'is_seallable' => $is_variant_sellable,
-                            'price' => $child_product->getPrice()
+                            'price' => $child_product->getFinalPrice()
                         ];
                         $matches = array();
                         preg_match('/.*\.(jpg|jpeg|png|gif)$/', $_baseImage, $matches);
@@ -776,23 +900,33 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         $this->createChild('name', false,
                             $child_product->getName(), $productVariation);
 
-                        $attributes = $this->getProductAttributes();
-                        foreach ($attributes as $attribute) {
-                            if (
-                                !in_array($attribute['store_label'], $variants)
-                                && !in_array($attribute['frontend_label'], $variants)
-                                && !in_array($attribute['attribute_code'], $variant_codes)
-                            ) {
+                        foreach ($variant_codes as $attribute_code) {
+                            try{
+                                $attribute = $this->productAttributeRepository->get(strtolower($attribute_code));
+                            } catch (\Exception $e) {
                                 continue;
                             }
-                            $variant_name = isset($attribute['store_label'])? $attribute['store_label'] : $attribute['frontend_label'];
+                            $variant_name = !$attribute->getData('store_label')? $attribute->getData('frontend_label') : $attribute->getData('store_label');
+                            $attrValue = '';
+                            try {
+                                $attrValue = $this->getAttrValue(
+                                    $child_product,
+                                    $child_product->getData($attribute->getAttributeCode()),
+                                    $attribute->getAttributeCode()
+                                );
+                            } catch (\Exception $e) {
+                                //echo $e->getMessage();
+                            }
+
                             $this->createChild('variant_attribute', [
-                                'is_configurable' => 1,
-                                'is_filterable' => $attribute->getIsFilterable(),
-                                'name' => $variant_name,
-                                'name_code' => $attribute->getId(),
-                                'value_code' => $child_product->getData($attribute->getAttributeCode())
-                            ], $attribute->getFrontend()->getValue($child_product), $productVariation
+                                    'is_configurable' => 1,
+                                    'is_filterable' => $attribute->getIsFilterable(),
+                                    'name' => $variant_name,
+                                    'name_code' => $attribute->getId(),
+                                    'value_code' => $child_product->getData($attribute->getAttributeCode())
+                                ],
+                                $attrValue,
+                                $productVariation
                             );
                         }
 
@@ -845,12 +979,98 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $orderCount = $this->getOrdersPerProduct();
 
+        $this->setRulesCount($this->getActiveRulesCount());
+
         foreach ($productCollection as $product)
         {
             $this->renderProduct($product, $orderCount, 'insert');
         }
 
+        $dateTs = $this->_localeDate->scopeTimeStamp($storeId);
+        if (count($this->catalogRuleAffectedProducts) > 0) {
+            $resultsToSchedule = $this->getActiveRulesFromProducts(
+                $this->storeManager->getStore()->getWebsiteId(),
+                $this->catalogRuleAffectedProducts,
+                $storeId,
+                $dateTs
+            );
+            foreach ($resultsToSchedule as $res) {
+                $this->scheduleDistantUpdate(null, date('Y-m-d', $res['to_time']), $dateTs, $this->catalogRuleAffectedProducts[$res['product_id']]);
+            }
+        }
+
+        if (count($this->catalogFutureRuleAffectedProducts) > 0) {
+            $resultsToSchedule = $this->getFutureRulesFromProducts(
+                $this->storeManager->getStore()->getWebsiteId(),
+                $this->catalogFutureRuleAffectedProducts,
+                $storeId,
+                $dateTs
+            );
+            foreach ($resultsToSchedule as $res) {
+                $this->scheduleDistantUpdate(date('Y-m-d', $res['from_time']),null, $dateTs, $res['product_id']);
+            }
+        }
         return $this->xmlGenerator->generateXml();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRulesCount()
+    {
+        return $this->rulesCount;
+    }
+
+    /**
+     * @param mixed $rulesCount
+     */
+    public function setRulesCount($rulesCount)
+    {
+        $this->rulesCount = $rulesCount;
+    }
+
+    /**
+     * Get active rule data based on few filters
+     *
+     * @param int|string $date
+     * @param int $websiteId
+     * @param int $customerGroupId
+     * @param int $productId
+     * @return array
+     */
+    public function getActiveRulesFromProducts($websiteId, $products, $dateTs)
+    {
+        $connection = $this->resourceConnection->getConnection();
+        $select = $connection->select()
+            ->from($this->resourceConnection->getTableName('catalogrule_product'), array('to_time', 'product_id'))
+            ->where('website_id = ?', $websiteId)
+            ->where('customer_group_id = ?', 0)
+            ->where('product_id IN (?)', array_keys($products))
+            ->where('to_time > ?', $dateTs);
+
+        return $connection->fetchAll($select);
+    }
+
+    /**
+     * Get active rule data based on few filters
+     *
+     * @param int|string $date
+     * @param int $websiteId
+     * @param int $customerGroupId
+     * @param int $productId
+     * @return array
+     */
+    public function getFutureRulesFromProducts($websiteId, $productsIds, $dateTs)
+    {
+        $connection = $this->resourceConnection->getConnection();
+        $select = $connection->select()
+            ->from($this->resourceConnection->getTableName('catalogrule_product'), array('from_time', 'product_id'))
+            ->where('website_id = ?', $websiteId)
+            ->where('customer_group_id = ?', 0)
+            ->where('product_id IN (?)', $productsIds)
+            ->where('from_time > ?', $dateTs);
+
+        return $connection->fetchAll($select);
     }
 
     public function makeRemoveRow($batch)
@@ -990,6 +1210,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
          */
         $orderCount = $this->getOrdersPerProduct();
 
+        $this->setRulesCount($this->getActiveRulesCount());
+
         foreach ($productCollection as $product) {
             $batch = $updatesBulk[$product->getId()];
             $this->renderProduct(
@@ -999,6 +1221,31 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $batch->getUpdateDate(),
                 $batch->getStoreId()
             );
+        }
+
+        $dateTs = $this->_localeDate->scopeTimeStamp($storeId);
+        if (count($this->catalogRuleAffectedProducts) > 0) {
+            $resultsToSchedule = $this->getActiveRulesFromProducts(
+                $this->storeManager->getStore()->getWebsiteId(),
+                $this->catalogRuleAffectedProducts,
+                $storeId,
+                $dateTs
+            );
+            foreach ($resultsToSchedule as $res) {
+                $this->scheduleDistantUpdate(null, date('Y-m-d', $res['to_time']), $dateTs, $this->catalogRuleAffectedProducts[$res['product_id']]);
+            }
+        }
+
+        if (count($this->catalogFutureRuleAffectedProducts) > 0) {
+            $resultsToSchedule = $this->getFutureRulesFromProducts(
+                $this->storeManager->getStore()->getWebsiteId(),
+                $this->catalogFutureRuleAffectedProducts,
+                $storeId,
+                $dateTs
+            );
+            foreach ($resultsToSchedule as $res) {
+                $this->scheduleDistantUpdate(date('Y-m-d', $res['from_time']),null, $dateTs, $res['product_id']);
+            }
         }
 
         return $this->xmlGenerator->generateXml();
@@ -1118,26 +1365,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected function getProductFinalPrice($product)
     {
-        if ($product->getTypeId() == Grouped::TYPE_CODE) {
-            $products = $this->grouped->getAssociatedProducts($product);
-
-            $finalPrice = 0;
-            foreach ($products as $grProduct) {
-                $qty = intval($grProduct->getQty());
-                if ($qty > 0) {
-                    $prodPrice = floatval($grProduct->getPrice());
-                    if ($prodPrice == 0) {
-                        $prodPrice = $this->getProductFinalPrice($grProduct);
-                    }
-                    $finalPrice += $qty * $prodPrice;
-                }
-            }
-
-        } else {
-            $finalPrice = $product->getPriceInfo()->getPrice('final_price')
-                ->getValue();
-        }
-
+        $finalPrice = $product->getPriceInfo()->getPrice('final_price')
+            ->getValue();
         return $finalPrice;
     }
 
@@ -1183,6 +1412,25 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $finalPrice = $this->getProductFinalPrice($product);
+
+            if ($product->getTypeId() == Grouped::TYPE_CODE) {
+                $priceRange = array(
+                    'price_min' => $product->getMinPrice(),
+                    'price_max' => $product->getMaxPrice()
+                );
+                if ($finalPrice == 0) {
+                    $finalPrice = $priceRange['price_min'];
+                }
+            }
+
+            if ($this->getRulesCount() > 0) {
+                if ($product->getCatalogRulePrice()) {
+                    $this->catalogRuleAffectedProducts[(int)$product->getId()] = $product;
+                } else {
+                    $this->catalogFutureRuleAffectedProducts[] = (int)$product->getId();
+                }
+            }
+
             $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
             $xmlAttributes = [
                 'action' => $action,
@@ -1358,6 +1606,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected function scheduleDistantUpdate($specialFromDate, $specialToDate, $nowDateGmt, $product)
     {
+        if (is_numeric($product)) {
+            $product = $this->productModel->load($product);
+        }
         $specialFromDateGmt = null;
         if ($specialFromDate != null) {
             $localDate = new \DateTime($specialFromDate, new \DateTimeZone(
@@ -1446,5 +1697,30 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $productCollection->clear();
+    }
+
+    /**
+     * @param $product
+     * @param $attrValue
+     * @param $action
+     */
+    private function getAttrValue($product, $attrValue, $action)
+    {
+        $attrValidKey = $attrValue != null ? self::ISPKEY . $attrValue : self::ISPKEY;
+
+        if (!array_key_exists($action, $this->attributesValuesCache)
+            || !array_key_exists($attrValidKey, $this->attributesValuesCache[$action])) {
+            $attrValueText = $product->getAttributeText($action);
+            if (!array_key_exists($action, $this->attributesValuesCache)) {
+                $this->attributesValuesCache[$action] = array();
+            }
+            $this->attributesValuesCache[$action][$attrValidKey] = $attrValueText;
+            $attrValue = $attrValueText;
+        } else {
+            $attrValueText = $this->attributesValuesCache[$action][$attrValidKey];
+
+            $attrValue = $attrValueText;
+        }
+        return $attrValue;
     }
 }

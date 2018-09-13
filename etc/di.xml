@@ -27,4 +27,8 @@
         <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Helper\Plugin\CatalogSearch"
                 sortOrder="1000"/>
     </type>
+    <type name="Magento\CatalogRule\Model\ResourceModel\Rule">
+        <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Helper\Plugin\CatalogRule"
+                sortOrder="1000"/>
+    </type>
 </config>

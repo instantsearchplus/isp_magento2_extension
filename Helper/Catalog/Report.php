@@ -176,7 +176,10 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $resource = $objectManager->get('Magento\Framework\App\ResourceConnection');
+        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
         $connection = $resource->getConnection();
+
+        $vEdition = $productMetadata->getEdition();
 
         $price_index_table_name = $resource->getTableName('catalog_product_index_price');
         $eav_table_name = $resource->getTableName('eav_attribute');
@@ -188,9 +191,15 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
         $store = $this->storeManager->getStore($store);
         $website_id = $store->getWebsiteId();
 
+        $entity_id_col_name = 'entity_id';
+
+        if ($vEdition == 'B2B') {
+            $entity_id_col_name = 'row_id';
+        }
+
         $fields = array(
             sprintf("%s.attribute_id AS attribute_id", $eav_table_name),
-            sprintf("%s.entity_id AS entity_id", $entity_int_table_name),
+            sprintf("%s.%s AS entity_id", $entity_int_table_name, $entity_id_col_name),
             sprintf("%s.value AS value", $entity_int_table_name),
             sprintf("%s.attribute_code AS attribute_code", $eav_table_name),
             sprintf("%s.type_id AS type_id", $product_entity_table_name),
@@ -200,7 +209,7 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
         $sql = $connection->select()
             ->from($eav_table_name, $fields)
             ->join($entity_int_table_name, sprintf("%s.attribute_id = %s.attribute_id", $eav_table_name, $entity_int_table_name))
-            ->join($price_index_table_name, sprintf("%s.entity_id = %s.entity_id", $entity_int_table_name, $price_index_table_name))
+            ->join($price_index_table_name, sprintf("%s.%s = %s.entity_id", $entity_int_table_name, $entity_id_col_name, $price_index_table_name))
             ->join($product_entity_table_name, sprintf("%s.entity_id = %s.entity_id", $product_entity_table_name, $price_index_table_name))
             ->where(sprintf('%s.attribute_code = ?', $eav_table_name), 'visibility')
             ->where(sprintf('%s.value IN (?)', $entity_int_table_name), array(3,4))

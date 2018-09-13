@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.6.0] - 2018-09-13 14:31:00
+### Fixed
+- Basic search magento
+
+### Added
+- Group products pricing range support
+- Catalog price rule support
+- Catalog sync optimization
+- B2B version monitoring support
+
 ## [4.5.8] - 2018-08-09 16:14:00
 ### Fixed
 - Sync optimization
