@@ -904,6 +904,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             try{
                                 $attribute = $this->productAttributeRepository->get(strtolower($attribute_code));
                             } catch (\Exception $e) {
+                                //echo $e->getMessage();
                                 continue;
                             }
                             $variant_name = !$attribute->getData('store_label')? $attribute->getData('frontend_label') : $attribute->getData('store_label');
@@ -1455,7 +1456,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $regularPrice = $product->getPrice();
-            $msrp = round(floatval($product->getMsrp()), 2);
+            $raw_msrp = $product->getMsrp();
+            if (!$raw_msrp) {
+                $raw_msrp = $product->getgcm_msrp();
+            }
+            $msrp = round(floatval($raw_msrp), 2);
             if ($finalPrice < $regularPrice || $msrp > $finalPrice) {
                 if ($msrp < $regularPrice) {
                     $xmlAttributes['price_compare_at_price'] = $regularPrice;
@@ -1564,7 +1569,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->renderGroupedChildrenSkus($product, $productElem);
             }
         } catch (\Exception $e) {
-            //continue
+            //print_r($e->getMessage());
         }
     }
 
