@@ -1076,9 +1076,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function makeRemoveRow($batch)
     {
-        $timeOffset = $this->date->calculateOffset('Asia/Jerusalem');
         $productElement = $this->createChild('product', [
-            'updatedate' =>  ($batch->getUpdateDate() + $timeOffset),
+            'updatedate' =>  ($batch->getUpdateDate()),
             'action'    =>  $batch->getAction(),
             'id'    =>  $batch->getProductId(),
             'storeid'   =>  $batch->getStoreId()
@@ -1276,31 +1275,89 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      * @return void
      */
     protected function renderTieredPrices($product, $productXmlElem) {
-
-        if (is_array($product->getData('tier_price'))
-            && count($product->getData('tier_price')) > 0) {
-            $tieredPricesElem = $this->createChild(
-                'tiered_prices',
-                false,
-                false,
-                $productXmlElem
-            );
-
-            foreach ($product->getData('tier_price') as $trP) {
-                $this->createChild(
-                    'tiered_price',
-                    array(
-                        'cust_group' => array_key_exists($trP['cust_group'], $this->_customersGroups) ?
-                            $this->_customersGroups[$trP['cust_group']] : $trP['cust_group'],
-                        'cust_group_id' => $trP['cust_group'],
-                        'price' => $trP['price'],
-                        'min_qty' => $trP['price_qty']
-                    ),
+        if ($product->getTypeId() != Grouped::TYPE_CODE) {
+            if (is_array($product->getData('tier_price'))
+                && count($product->getData('tier_price')) > 0) {
+                $tieredPricesElem = $this->createChild(
+                    'tiered_prices',
                     false,
-                    $tieredPricesElem
+                    false,
+                    $productXmlElem
                 );
-            }
 
+                foreach ($product->getData('tier_price') as $trP) {
+                    $this->createChild(
+                        'tiered_price',
+                        array(
+                            'cust_group' => array_key_exists($trP['cust_group'], $this->_customersGroups) ?
+                                $this->_customersGroups[$trP['cust_group']] : $trP['cust_group'],
+                            'cust_group_id' => $trP['cust_group'],
+                            'price' => $trP['price'],
+                            'min_qty' => $trP['price_qty']
+                        ),
+                        false,
+                        $tieredPricesElem
+                    );
+                }
+            }
+        } else {
+            $products = $this->grouped->getAssociatedProducts($product);
+            $minPrice = 2147483647;
+            $cheapestProduct = null;
+            foreach ($products as $grProduct) {
+                if ($grProduct->getFinalPrice() < $minPrice) {
+                    $minPrice = $grProduct->getFinalPrice();
+                    $cheapestProduct = $grProduct;
+                }
+            }
+            if ($cheapestProduct != null) {
+                $product->setData('tier_price', $cheapestProduct->getTierPrices());
+                if (is_array($product->getData('tier_price'))
+                    && count($product->getData('tier_price')) > 0) {
+                    $tieredPricesElem = $this->createChild(
+                        'tiered_prices',
+                        false,
+                        false,
+                        $productXmlElem
+                    );
+                    foreach ($product->getData('tier_price') as $trP) {
+                        $max_price = 0;
+                        foreach ($products as $assoc_prod) {
+                            $tiered_prices = $assoc_prod->getTierPrices();
+                            $tiered_price_exists = false;
+                            foreach ($tiered_prices as $assoc_prod_t_pr) {
+                                if ($trP->getCustomerGroupId() == $assoc_prod_t_pr->getCustomerGroupId()) {
+                                    if ($assoc_prod_t_pr->getQty() == 1) {
+                                        if ($max_price < $assoc_prod_t_pr->getValue()) {
+                                            $max_price = $assoc_prod_t_pr->getValue();
+                                        }
+                                        $tiered_price_exists = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!$tiered_price_exists) {
+                                if ($max_price < $assoc_prod->getFinalPrice()) {
+                                    $max_price = $assoc_prod->getFinalPrice();
+                                }
+                            }
+                        }
+                        $this->createChild(
+                            'tiered_price',
+                            array(
+                                'cust_group' => array_key_exists($trP['cust_group'], $this->_customersGroups) ?
+                                    $this->_customersGroups[$trP->getCustomerGroupId()] : $trP->getCustomerGroupId(),
+                                'cust_group_id' => $trP->getCustomerGroupId(),
+                                'price' => $trP->getValue(),
+                                'min_qty' => $trP->getQty(),
+                                'max_price' => $max_price
+                            ),
+                            false,
+                            $tieredPricesElem
+                        );
+                    }
+                }
+            }
         }
     }
 
