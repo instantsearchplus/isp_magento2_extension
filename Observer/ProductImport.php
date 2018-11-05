@@ -85,6 +85,11 @@ class ProductImport implements ObserverInterface
      */
     protected $batchCollection;
 
+    protected $_storeManager;
+
+    protected $_resourceConnection;
+
+    protected $_websites_stores_dict = array();
     /**
      * ProductSave constructor.
      * @param \Autocompleteplus\Autosuggest\Helper\Data $helper
@@ -106,7 +111,9 @@ class ProductImport implements ObserverInterface
         \Autocompleteplus\Autosuggest\Model\Batch $batchModel,
         \Magento\Catalog\Api\ProductRepositoryInterface $productRepositoryInterface,
         \Magento\Framework\Model\Context $context,
-        \Magento\Framework\Registry $registry
+        \Magento\Framework\Registry $registry,
+        \Magento\Store\Model\StoreRepository $storeManager,
+        \Magento\Framework\App\ResourceConnection $resourceConnection
     ) {
         $this->helper = $helper;
         $this->configurable = $configurable;
@@ -118,6 +125,9 @@ class ProductImport implements ObserverInterface
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->context = $context;
         $this->registry = $registry;
+        $this->_storeManager = $storeManager;
+        $this->_resourceConnection = $resourceConnection;
+        $this->getWebsitesStoreDict();
     }
 
     public function getBatchCollection()
@@ -126,6 +136,36 @@ class ProductImport implements ObserverInterface
         $this->batchCollection = $batchCollection;
 
         return $this->batchCollection;
+    }
+
+    protected function getWebsitesStoreDict() {
+        $connection = $this->_resourceConnection->getConnection();
+        $table_name = $this->_resourceConnection->getTableName('store_group');
+        $sql = $connection->select()
+            ->from($table_name, '*')
+            ->where(sprintf('%s.website_id != ?', $table_name), 0);
+        $results = $connection->fetchAll($sql);
+        foreach ($results as $row) {
+            if (!array_key_exists($row['website_id'], $this->_websites_stores_dict)) {
+                $this->_websites_stores_dict[$row['website_id']] = array();
+            }
+            $this->_websites_stores_dict[$row['website_id']][] = $row['group_id'];
+        }
+    }
+
+    protected function getProductWebsites($productId)
+    {
+        $connection = $this->_resourceConnection->getConnection();
+        $table_name = $this->_resourceConnection->getTableName('catalog_product_website');
+        $sql = $connection->select()
+            ->from($table_name, '*')
+            ->where(sprintf('%s.product_id = ?', $table_name), $productId);
+        $results = $connection->fetchAll($sql);
+        $product_websites = array();
+        foreach ($results as $row) {
+            $product_websites[] = $row['website_id'];
+        }
+        return $product_websites;
     }
 
     /**
@@ -145,25 +185,26 @@ class ProductImport implements ObserverInterface
             $dt = $this->date->gmtTimestamp();
             try {
                 try {
-                    $product = $this->productRepositoryInterface->getById($productId);
+                    $pWebsites = $this->getProductWebsites($productId);
+                    $productStores = array();
+                    foreach ($pWebsites as $websiteId) {
+                        if (array_key_exists($websiteId, $this->_websites_stores_dict)) {
+                            $productStores = array_merge($productStores, $this->_websites_stores_dict[$websiteId]);
+                        }
+                    }
                     //recording disabled item as deleted
-                    if ($product->getStatus() == '2') {
-                        $this->helper->writeProductDeletion($sku, $productId, 0, $dt, $product);
+                    if (array_key_exists('status', $itemArray) && $itemArray['status'] == '2') {
+                        $this->helper->writeProductDeletionLight($sku, $productId, 0, $dt, $productStores);
                         continue;
                     }
-                    $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds'))
-                        ? $product->getStoreIds() : [$storeId];
+
                 } catch (\Exception $e) {
 
                     $this->logger->critical($e);
                     $productStores = [$storeId];
                 }
 
-                $simpleProducts = [];
-                if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
-                    $simpleProducts = $this->configurable->getParentIdsByChild($product->getId());
-                }
-
+                $simpleProducts = $this->configurable->getParentIdsByChild($productId);
                 foreach ($productStores as $productStore) {
                     $batches = $this->getBatchCollection()
                         ->addFieldToFilter('product_id', $productId)

@@ -50,19 +50,7 @@ class Getpriceindex extends \Autocompleteplus\Autosuggest\Controller\Products
 
     public function execute()
     {
-        $authKey = $this->getRequest()->getParam('authentication_key');
-        $uuid = $this->getRequest()->getParam('uuid');
-
         $result = $this->resultJsonFactory->create();
-//        if ($this->apiHelper->getApiUUID() != $uuid ||
-//            $this->apiHelper->getApiAuthenticationKey() != $authKey) {
-//            $response = [
-//                'status' => 'error: Authentication failed'
-//            ];
-//            $result->setData($response);
-//            return $result;
-//        }
-
         $storeId = $this->getRequest()->getParam('store', 1);
         $customer_group = $this->getRequest()->getParam('customer_group', 0);
         $count = $this->getRequest()->getParam('count', 1000);

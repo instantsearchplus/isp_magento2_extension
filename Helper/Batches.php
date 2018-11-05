@@ -197,6 +197,32 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
             $productStores = [$storeId];
         }
 
+        $this->removeProductForEachStore($sku, $productId, $dt, $productStores);
+    }
+
+    /**
+     * @param $sku
+     * @param $productId
+     * @param $storeId
+     * @param null $product
+     */
+    public function writeProductDeletionLight($sku, $productId, $storeId, $dt, $productStores=null)
+    {
+        if (!$productStores) {
+            $productStores = [$storeId];
+        }
+
+        $this->removeProductForEachStore($sku, $productId, $dt, $productStores);
+    }
+
+    /**
+     * @param $sku
+     * @param $productId
+     * @param $dt
+     * @param $productStores
+     */
+    protected function removeProductForEachStore($sku, $productId, $dt, $productStores)
+    {
         if ($sku == null) {
             $sku = 'dummy_sku';
         }
