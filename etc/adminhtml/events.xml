@@ -12,7 +12,7 @@
     <event name="catalog_product_delete_before">
         <observer name="batch_delete_observer" instance="Autocompleteplus\Autosuggest\Observer\ProductDelete" />
     </event>
-    <event name="catalog_product_import_bunch_save_after">
+    <event name="catalog_product_import_finish_before">
         <observer name="bunch_observer" instance="Autocompleteplus\Autosuggest\Observer\ProductImport"/>
     </event>
     <event name="catalog_product_attribute_update_before">

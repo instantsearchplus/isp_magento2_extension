@@ -22,6 +22,7 @@
 namespace Autocompleteplus\Autosuggest\Observer;
 
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Setup\Exception;
 
 /**
  * ProductImport
@@ -90,6 +91,19 @@ class ProductImport implements ObserverInterface
     protected $_resourceConnection;
 
     protected $_websites_stores_dict = array();
+
+    protected $_product_batches_by_store = array();
+
+    /**
+     * DB data source model.
+     *
+     * @var \Magento\ImportExport\Model\ResourceModel\Import\Data
+     */
+    protected $_dataSourceModel;
+
+    const MULTIPLE_INSERT_SIZE = 200;
+    const MULTIPLE_UPDATE_SIZE = 150;
+
     /**
      * ProductSave constructor.
      * @param \Autocompleteplus\Autosuggest\Helper\Data $helper
@@ -113,11 +127,17 @@ class ProductImport implements ObserverInterface
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
         \Magento\Store\Model\StoreRepository $storeManager,
-        \Magento\Framework\App\ResourceConnection $resourceConnection
+        \Magento\Framework\App\ResourceConnection $resourceConnection,
+        \Magento\ImportExport\Model\ResourceModel\Import\Data $importData
     ) {
         $this->helper = $helper;
         $this->configurable = $configurable;
-        $this->logger = $context->getLogger();
+
+        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_import_debug.log');
+        //$this->logger = $context->getLogger();
+        $this->logger = new \Zend\Log\Logger();
+        $this->logger->addWriter($writer);
+
         $this->date = $date;
         $this->batchCollectionFactory = $batchCollectionFactory;
         $this->productModel = $productModel;
@@ -127,6 +147,7 @@ class ProductImport implements ObserverInterface
         $this->registry = $registry;
         $this->_storeManager = $storeManager;
         $this->_resourceConnection = $resourceConnection;
+        $this->_dataSourceModel = $importData;
         $this->getWebsitesStoreDict();
     }
 
@@ -168,6 +189,18 @@ class ProductImport implements ObserverInterface
         return $product_websites;
     }
 
+    protected function getAllBatches()
+    {
+        $batchCollection = $this->getBatchCollection();
+        $batchCollection->addFieldToSelect(array('store_id', 'product_id'));
+        foreach ($batchCollection as $batch) {
+            if (!array_key_exists($batch['store_id'], $this->_product_batches_by_store)) {
+                $this->_product_batches_by_store[$batch['store_id']] = array();
+            }
+            $this->_product_batches_by_store[$batch['store_id']][] = $batch['product_id'];
+        }
+    }
+
     /**
      * Update products
      *
@@ -176,14 +209,15 @@ class ProductImport implements ObserverInterface
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $bunch = $observer->getEvent()->getBunch();
         $storeId = 0;
-        foreach ($bunch as $itemArray) {
-            $sku = $itemArray['sku'];
-            $productId = $this->productModel->getIdBySku($sku);
-
-            $dt = $this->date->gmtTimestamp();
-            try {
+        $this->getAllBatches();
+        $to_insert = array();
+        $to_update = array();
+        while ($bunch = $this->_dataSourceModel->getNextBunch()) {
+            $this->logger->info('enter into import observer with ' . count($bunch));
+            foreach ($bunch as $itemArray) {
+                $sku = $itemArray['sku'];
+                $productId = $this->productModel->getIdBySku($sku);
                 try {
                     $pWebsites = $this->getProductWebsites($productId);
                     $productStores = array();
@@ -194,7 +228,7 @@ class ProductImport implements ObserverInterface
                     }
                     //recording disabled item as deleted
                     if (array_key_exists('status', $itemArray) && $itemArray['status'] == '2') {
-                        $this->helper->writeProductDeletionLight($sku, $productId, 0, $dt, $productStores);
+                        $this->helper->writeProductDeletionLight($sku, $productId, 0, $this->date->gmtTimestamp(), $productStores);
                         continue;
                     }
 
@@ -203,68 +237,104 @@ class ProductImport implements ObserverInterface
                     $this->logger->critical($e);
                     $productStores = [$storeId];
                 }
-
-                $simpleProducts = $this->configurable->getParentIdsByChild($productId);
-                foreach ($productStores as $productStore) {
-                    $batches = $this->getBatchCollection()
-                        ->addFieldToFilter('product_id', $productId)
-                        ->addFieldToFilter('store_id', $productStore)
-                        ->setPageSize(1);
-
-                    if ($batches->getSize() > 0) {
-                        $batch = $batches->getFirstItem();
-                        $batch->setUpdateDate($dt)
-                            ->setAction('update')
-                            ->setProductId($productId)
-                            ->setStoreId($productStore)
-                            ->save();
-                    } else {
-                        $batch = new \Autocompleteplus\Autosuggest\Model\Batch($this->context, $this->registry);
-                        $batch->setUpdateDate($dt)
-                            ->setAction('update')
-                            ->setProductId($productId)
-                            ->setStoreId($productStore)
-                            ->setSku($sku)
-                            ->save();
-                    }
-
-                    if (is_array($simpleProducts) && count($simpleProducts) > 0) {
-                        foreach ($simpleProducts as $configurableProduct) {
-                            $batchCollection = $this->getBatchCollection();
-                            $batchCollection->addFieldToFilter(
-                                'product_id',
-                                $configurableProduct
-                            )
-                                ->addFieldToFilter('store_id', $productStore)
-                                ->setPageSize(1);
-
-                            if ($batchCollection->getSize() > 0) {
-                                $batch = $batchCollection->getFirstItem();
-                                if ($batch->getAction() !== 'remove') {
-                                    $batch->setUpdateDate($dt)
-                                        ->setAction('update')
-                                        ->setProductId($configurableProduct)
-                                        ->setStoreId($productStore)
-                                        ->save();
-                                }
-                            } else {
-                                $batch = new \Autocompleteplus\Autosuggest\Model\Batch($this->context, $this->registry);
-
-                                $batch->setUpdateDate($dt)
-                                    ->setProductId($configurableProduct)
-                                    ->setAction('update')
-                                    ->setStoreId($productStore)
-                                    ->setSku('ISP_NO_SKU')
-                                    ->save();
-                            }
-                        }
+                $parentProducts = $this->configurable->getParentIdsByChild($productId);
+                foreach ($productStores as $productStoreId) {
+                    $this->pushIntoUpdateBuffers($productStoreId, $productId, $to_insert, $to_update);
+                    foreach ($parentProducts as $parrent) {
+                        $this->pushIntoUpdateBuffers($productStoreId, $parrent, $to_insert, $to_update);
                     }
                 }
-            } catch (\Exception $e) {
-                $this->logger->critical($e);
             }
+        }
+        $this->logger->info('in import placed updates into buffers');
+        $connection = $this->_resourceConnection->getConnection();
+        $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
+        $counter = 0;
+        $data = array();
+
+        try {
+            foreach ($to_insert as $store=>$productIds) {
+                foreach ($productIds as $p_id) {
+                    $counter++;
+                    $data[] = [
+                        'store_id' => (int)$store,
+                        'product_id' => (int)$p_id,
+                        'update_date' => (int)$this->date->gmtTimestamp() + $counter,
+                        'action' => 'update'
+                    ];
+                    if ($counter == self::MULTIPLE_INSERT_SIZE) {
+                        $connection->insertMultiple($table_name, $data);
+                        $this->logger->info('executed multiple insert of ' . count($data));
+                        $counter = 0;
+                        $data = array();
+                    }
+                }
+
+                if (count($data) > 0) {
+                    $connection->insertMultiple($table_name, $data);
+                    $this->logger->info('executed multiple insert of ' . count($data));
+                    $counter = 0;
+                    $data = array();
+                }
+            }
+
+            foreach ($to_update as $p_id) {
+                $counter++;
+                $data[] = (int)$p_id;
+                if ($counter == self::MULTIPLE_UPDATE_SIZE) {
+                    $bind = ['update_date' => $this->date->gmtTimestamp(), 'action' => 'update'];
+                    $where = [
+                        'product_id IN (?)' => $data,
+                    ];
+                    $connection->update($table_name, $bind, $where);
+                    $this->logger->info('executed multiple insert of ' . count($data));
+                    $counter = 0;
+                    $data = array();
+                }
+            }
+            if (count($data) > 0) {
+                $bind = ['update_date' => $this->date->gmtTimestamp(), 'action' => 'update'];
+                $where = [
+                    'product_id IN (?)' => $data,
+                ];
+                $connection->update($table_name, $bind, $where);
+                $this->logger->info('executed multiple insert of ' . count($data));
+            }
+
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
         }
 
         return $this;
+    }
+
+    /**
+     * @param $productStoreId
+     * @param $productId
+     * @param $to_insert
+     * @param $to_update
+     */
+    protected function pushIntoUpdateBuffers($productStoreId, $productId, &$to_insert, &$to_update)
+    {
+        if (!array_key_exists($productStoreId, $this->_product_batches_by_store)) {
+            if (!array_key_exists($productStoreId, $to_insert)) {
+                $to_insert[$productStoreId] = array();
+            }
+            if (!in_array($productId, $to_insert[$productStoreId])) {
+                $to_insert[$productStoreId][] = $productId;
+            }
+        } elseif (!in_array($productId, $this->_product_batches_by_store[$productStoreId])) {
+            if (!array_key_exists($productStoreId, $to_insert)) {
+                $to_insert[$productStoreId] = array();
+            } elseif (in_array($productId, $to_insert[$productStoreId])) {
+               return;
+            }
+            $to_insert[$productStoreId][] = $productId;
+        } else {
+            if (in_array($productId, $to_update)) {
+                return;
+            }
+            $to_update[] = $productId;
+        }
     }
 }

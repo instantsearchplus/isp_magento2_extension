@@ -1,0 +1,14 @@
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+		<referenceBlock name="catalog.leftnav">
+            <action method="setTemplate" ifconfig="autosuggest/search/smart_navigation">
+                <argument name="template" xsi:type="string">Autocompleteplus_Autosuggest::layer/view.phtml</argument>
+            </action>
+        </referenceBlock>
+        <referenceBlock name="category.products.list">
+            <action method="setTemplate" ifconfig="autosuggest/search/smart_navigation">
+                <argument name="template" xsi:type="string">Autocompleteplus_Autosuggest::catalog/product/category.phtml</argument>
+            </action>
+        </referenceBlock>
+	</body>
+</page>

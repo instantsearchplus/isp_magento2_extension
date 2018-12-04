@@ -97,6 +97,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const PRODUCT_IMAGE_FIELD = 'autosuggest/product/image_field';
     const XML_PATH_SEARCH_LAYERED = 'autosuggest/search/layered';
     const XML_FORM_URL_CONFIG = 'autosuggest/search/miniform_change';
+    const XML_SMART_NAVIGATION_CONFIG = 'autosuggest/search/smart_navigation';
     const MODULE_NAME = 'Autocompleteplus_Autosuggest';
     const XML_PATH_API_ENDPOINT = 'autosuggest/api/endpoint';
     const XML_PATH_DASHBOARD_ENDPOINT = 'autosuggest/dashboard/endpoint';
@@ -217,6 +218,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $this->resourceConfig->saveConfig(
             self::XML_FORM_URL_CONFIG,
+            intval($enabled),
+            $scope,
+            $scopeId
+        );
+        return $this;
+    }
+
+    public function setSmartNavigationNative($enabled, $scope = 'default', $scopeId = 0)
+    {
+        $this->resourceConfig->saveConfig(
+            self::XML_SMART_NAVIGATION_CONFIG,
             intval($enabled),
             $scope,
             $scopeId
