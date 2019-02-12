@@ -1212,6 +1212,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->setRulesCount($this->getActiveRulesCount());
 
+        $visibleProductIds = array();
         foreach ($productCollection as $product) {
             $batch = $updatesBulk[$product->getId()];
             $this->renderProduct(
@@ -1221,6 +1222,23 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $batch->getUpdateDate(),
                 $batch->getStoreId()
             );
+            $visibleProductIds[] = $product->getId();
+        }
+
+        $notVisisbleProducts = array_diff($productIds, $visibleProductIds);
+
+        foreach ($notVisisbleProducts as $productId) {
+            $batch = $updatesBulk[$productId];
+            $product = $this->productModel->load($productId);
+            if ($product) {
+                $this->renderProduct(
+                    $product,
+                    $orderCount,
+                    'update',
+                    $batch->getUpdateDate(),
+                    $batch->getStoreId()
+                );
+            }
         }
 
         $dateTs = $this->_localeDate->scopeTimeStamp($storeId);
