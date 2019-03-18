@@ -229,7 +229,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getAttributesValuesCache()
     {
-        $attributesValuesCache = $this->cache->load(self::AttributesValuesCache);
+        $storeId = $this->storeManager->getStore()->getId();
+        $attributesValuesCache = $this->cache->load(self::AttributesValuesCache . '_' . $storeId);
         if (!$attributesValuesCache) {
             $this->attributesValuesCache = array();
         } else {
@@ -243,9 +244,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function setAttributesValuesCache($attributesValuesCache)
     {
+        $storeId = $this->storeManager->getStore()->getId();
         $this->cache->save(
             serialize($attributesValuesCache),
-            self::AttributesValuesCache,
+            self::AttributesValuesCache . '_' . $storeId,
             array("autocomplete_cache"),
             900
         );
@@ -265,17 +267,33 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->attributesSetsCache;
     }
 
+    public function getAttributesSetCachedById($attrSetId)
+    {
+        $storeId = $this->storeManager->getStore()->getId();
+        $attributesSetCached = $this->cache->load(self::AttributesSetsCache . '_' . $attrSetId . '_' . $storeId);
+        if (!$attributesSetCached) {
+            $attributesSetCached = array();
+        } else {
+            $attributesSetCached = unserialize($attributesSetCached);
+            $this->attributesSetsCache[$attrSetId] = $attributesSetCached;
+        }
+        return $attributesSetCached;
+    }
+
     /**
      * @param array $attributesSetsCache
      */
     public function setAttributesSetsCache($attributesSetsCache)
     {
-        $this->cache->save(
-            serialize($attributesSetsCache),
-            self::AttributesSetsCache,
-            array("autocomplete_cache"),
-            900
-        );
+        $storeId = $this->storeManager->getStore()->getId();
+        foreach ($attributesSetsCache as $attrSetId => $setData) {
+            $this->cache->save(
+                serialize($setData),
+                self::AttributesSetsCache . '_' . $attrSetId . '_' . $storeId,
+                array("autocomplete_cache"),
+                900
+            );
+        }
     }
 
     /**
@@ -315,6 +333,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     protected $cache;
 
     protected $rulesCount;
+
+    protected $priceCurrencyInterface;
+
+    protected $stockFactory;
 
     const ISPKEY = 'ISPKEY_';
 
@@ -356,7 +378,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Catalog\Model\Product $productModel,
         \Magento\CatalogRule\Model\ResourceModel\Rule\CollectionFactory  $ruleCollectionFactory,
         \Magento\Framework\App\Cache $cache,
-        \Magento\Catalog\Model\Product\Attribute\Repository $productAttributeRepository
+        \Magento\Catalog\Model\Product\Attribute\Repository $productAttributeRepository,
+        \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrencyInterface,
+        \Magento\CatalogInventory\Model\Stock\Item $stockFactory
     )
     {
         $this->storeManager = $storeManagerInterface;
@@ -402,10 +426,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->attributesValuesCache = $this->getAttributesValuesCache();
         $this->attributesSetsCache = $this->getAttributesSetsCache();
+        $this->priceCurrencyInterface = $priceCurrencyInterface;
 
         foreach($customerGroupManager->toOptionArray() as $custGr) {
             $this->_customersGroups[$custGr['value']] = $custGr['label'];
         }
+
+        $this->stockFactory = $stockFactory;
 
         parent::__construct($context);
     }
@@ -876,13 +903,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             $is_variant_visible = '';
                         }
 
+                        $child_product->setData('catalog_rule_price', null);
+                        $child_product->setData('special_price', null);
+
                         $variant_node_attributes = [
                             'id' => $child_product->getId(),
                             'type' => $child_product->getTypeId(),
                             'visibility' => $is_variant_visible,
                             'is_in_stock' => $is_variant_in_stock,
                             'is_seallable' => $is_variant_sellable,
-                            'price' => $child_product->getFinalPrice()
+                            'price' => (float)$child_product->getPriceInfo()->getPrice('final_price')->getValue()
                         ];
                         $matches = array();
                         preg_match('/.*\.(jpg|jpeg|png|gif)$/', $_baseImage, $matches);
@@ -1126,7 +1156,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $storeId,
         $from,
         $to,
-        $page
+        $page,
+        $send_oos
     ) {
         /**
          * Load and filter the batches
@@ -1229,16 +1260,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         foreach ($notVisisbleProducts as $productId) {
             $batch = $updatesBulk[$productId];
-            $product = $this->productModel->load($productId);
-            if ($product) {
-                $this->renderProduct(
-                    $product,
-                    $orderCount,
-                    'update',
-                    $batch->getUpdateDate(),
-                    $batch->getStoreId()
-                );
+            $stockItem = $this->stockFactory->load($productId, 'product_id');
+            if ($send_oos && (!$stockItem || !$stockItem->getIsInStock())) {
+                $batch->setAction('remove');
+            } else {
+                $batch->setAction('ignore');
             }
+            $this->makeRemoveRow($batch);
         }
 
         $dateTs = $this->_localeDate->scopeTimeStamp($storeId);
@@ -1384,20 +1412,23 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return array
      */
-    public function getPriceRange($product)
+    public function getPriceRange($product, $finalPrice)
     {
-        $min_price = 2147483647;
+        $min_price = (float)$finalPrice;
         $max_price = 0;
         $compare_at_price = 0;
         foreach($product->getTypeInstance()->getUsedProducts($product) as $childProduct) {
-            $childPrice = $childProduct->getFinalPrice();
+            $childProduct->setData('catalog_rule_price', null);
+            $childProduct->setData('special_price', null);
+            $childPrice = (float)$childProduct->getPriceInfo()->getPrice('final_price')->getValue();
 
             if ($childPrice < $min_price) {
-                $reg_price = (float)$childProduct->getPrice();
-                if ($reg_price > (float)$childPrice) {
-                    $compare_at_price = $reg_price;
-                }
                 $min_price = $childPrice;
+            }
+
+            $reg_price = (float)$childProduct->getPriceInfo()->getPrice('regular_price')->getValue();
+            if ($reg_price > (float)$min_price && $reg_price > $compare_at_price) {
+                $compare_at_price = $reg_price;
             }
 
             if ($childPrice > $max_price) {
@@ -1465,10 +1496,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
                 . 'catalog/product' . $imagePath;
 
+            $finalPrice = $this->getProductFinalPrice($product);
             $priceRange = array('price_min' => 0, 'price_max' => 0);
 
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
-                $priceRange = $this->getPriceRange($product);
+                $priceRange = $this->getPriceRange($product, $finalPrice);
             }
 
             $specialFromDate = $product->getSpecialFromDate();
@@ -1486,8 +1518,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             } else {
                 $lastModifiedDate = $updatedate;
             }
-
-            $finalPrice = $this->getProductFinalPrice($product);
 
             if ($product->getTypeId() == Grouped::TYPE_CODE) {
                 $priceRange = array(
@@ -1508,6 +1538,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $purchasePopularity = $this->_getPurchasePopularity($orderCount, $product);
+            $currency = $this->getCurrencyCode();
             $xmlAttributes = [
                 'action' => $action,
                 'id' => $product->getId(),
@@ -1518,7 +1549,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'price_min' => ($priceRange['price_min']),
                 'price_max' => ($priceRange['price_max']),
                 'type' => $product->getTypeId(),
-                'currency' => $this->getCurrencyCode(),
+                'currency' => $currency,
                 'visibility' => $product->getVisibility(),
                 'selleable' => $product->isSalable()
             ];
@@ -1530,7 +1561,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $xmlAttributes['storeid'] = $storeId;
             }
 
-            $regularPrice = $product->getPrice();
+            $regularPrice = (float)$product->getPriceInfo()->getPrice('regular_price')->getValue();
+
+            if ($product->getTypeId() == Configurable::TYPE_CODE) {
+                $regularPrice = $this->priceCurrencyInterface->convert($regularPrice, $storeId, $currency);
+                $regularPrice = round(floatval($regularPrice), 2);
+            }
+
             $raw_msrp = $product->getMsrp();
             if (!$raw_msrp) {
                 $raw_msrp = $product->getgcm_msrp();
@@ -1585,7 +1622,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
             if ($this->helper->canUseProductAttributes()) {
                 $attributeSetId = $product->getAttributeSetId();
-
+                $this->getAttributesSetCachedById($attributeSetId);
                 if (!array_key_exists($attributeSetId, $this->attributesSetsCache)) {
                     $this->attributesSetsCache[$attributeSetId] = array();
                     $setAttributes = $this->productAttributeManagementInterface->getAttributes(
@@ -1599,9 +1636,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 }
 
                 foreach ($this->getProductAttributes() as $attr) {
-                    if (in_array($attr->getAttributeCode(), $this->attributesSetsCache[$attributeSetId])) {
-                        $this->renderAttributeXml($attr, $product, $productElem);
-                    }
+                    $this->renderAttributeXml($attr, $product, $productElem);
                 }
             }
 
