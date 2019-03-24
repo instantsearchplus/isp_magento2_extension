@@ -65,9 +65,7 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
         $page = $this->getRequest()->getParam('page', 1);
         $send_oos = $this->getRequest()->getParam('send_oos', false);
 
-        if (intval($send_oos) == 1) {
-            $send_oos = true;
-        }
+        $send_oos = boolval($send_oos);
         $catalogXml = $this->xmlGenerator
             ->renderUpdatesCatalogXml($count, $storeId, $from, $to, $page, $send_oos);
 
