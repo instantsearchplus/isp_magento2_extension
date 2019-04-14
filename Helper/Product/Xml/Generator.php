@@ -1261,11 +1261,22 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         foreach ($notVisisbleProducts as $productId) {
             $batch = $updatesBulk[$productId];
             $stockItem = $this->stockFactory->load($productId, 'product_id');
-            if (!$send_oos && (!$stockItem || !boolval($stockItem->getIsInStock()))) {
-                $batch->setAction('remove');
+
+            if ($stockItem->getTypeId() == 'configurable') {
+                $product = $this->productModel->load($productId);
+                if (!$send_oos && $product->hasData('is_salable') && !boolval($product->getData('is_salable'))) {
+                    $batch->setAction('remove');
+                } else {
+                    $batch->setAction('ignore');
+                }
             } else {
-                $batch->setAction('ignore');
+                if (!$send_oos && (!$stockItem || !boolval($stockItem->getIsInStock()))) {
+                    $batch->setAction('remove');
+                } else {
+                    $batch->setAction('ignore');
+                }
             }
+
             $this->makeRemoveRow($batch);
         }
 
