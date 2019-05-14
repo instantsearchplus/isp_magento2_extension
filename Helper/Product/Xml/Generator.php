@@ -1800,9 +1800,50 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->appendReviews();
 
+        $visibleProductIds = array();
         foreach ($productCollection as $product) {
             $this->renderProduct($product, array(), $action);
+            $visibleProductIds[] = $product->getId();
         }
+
+        $notVisisbleProducts = array_diff($ids, $visibleProductIds);
+
+        if (count($notVisisbleProducts) > 0) {
+            foreach ($notVisisbleProducts as $productId) {
+
+                $stockItem = $this->stockFactory->load($productId, 'product_id');
+                $itemType = $stockItem->getTypeId();
+                $action = '';
+                $sku = '';
+                if ($itemType == 'configurable') {
+                    $product = $this->productModel->load($productId);
+                    $sku = $product->getSku();
+                    if ($product->hasData('is_salable') && !boolval($product->getData('is_salable'))) {
+                        $action = 'remove';
+                    } else {
+                        $action = 'ignore';
+                    }
+                } else {
+                    if ((!$stockItem || !boolval($stockItem->getIsInStock()))) {
+                        $action = 'remove';
+                    } else {
+                        $action = 'ignore';
+                    }
+                }
+
+                $productElement = $this->createChild('product', [
+                    'action'    =>  $action,
+                    'id'    =>  $productId,
+                    'type' => $itemType,
+                    'storeid'   =>  $storeId
+                ], false, $this->xmlGenerator->getSimpleXml());
+
+                $this->createChild('sku', false, $sku, $productElement);
+                $this->createChild('id', false, $productId, $productElement);
+            }
+        }
+
+
     }
 
     /**

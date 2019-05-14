@@ -43,5 +43,3 @@ class CsrfValidatorSkip
         $proceed($request, $action); // Proceed Magento 2 core functionalities
     }
 }
-
-?>

@@ -60,13 +60,27 @@ class Webhook implements ObserverInterface
 
     protected $orderCollectionFactory;
 
+    protected $cartProduct;
+
+    /**
+     * @var \Autocompleteplus\Autosuggest\Helper\Batches
+     */
+    protected $batchesHelper;
+
+    /**
+     * @var \Magento\Framework\Stdlib\DateTime\DateTime
+     */
+    protected $date;
+
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Api $api,
         \Autocompleteplus\Autosuggest\Helper\Html\Injector $injector_helper,
         \Magento\Checkout\Model\Session $session,
         \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
-        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
+        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
+        \Autocompleteplus\Autosuggest\Helper\Batches $batchesHelper,
+        \Magento\Framework\Stdlib\DateTime\DateTime $date
     ) {
         $this->injector_helper = $injector_helper;
         $this->apiHelper = $api;
@@ -75,6 +89,8 @@ class Webhook implements ObserverInterface
         $this->_session = $session;
         $this->orderRepository = $orderRepository;
         $this->orderCollectionFactory = $orderCollectionFactory;
+        $this->batchesHelper = $batchesHelper;
+        $this->date = $date;
     }
 
     /**
@@ -110,6 +126,7 @@ class Webhook implements ObserverInterface
                 $quantity = $item->getqty_ordered();
             }
             if (is_object($item->getProduct())) {
+                $this->cartProduct = $item->getProduct();
                 $items[] = array(
                     'product_id' => $item->getProduct()->getId(),
                     'price' => $item->getProduct()->getFinalPrice(),
@@ -216,6 +233,7 @@ class Webhook implements ObserverInterface
      */
     protected function _getWebhookObjectUri($event_name, $observer)
     {
+        $store_id = $this->_storeManager->getStore()->getId();
         if ($event_name == 'checkout_cart_add_product_complete') {
             $cart_items = $this->_getVisibleItems();
             $cart_token = $this->_session->getQuote()->getID();
@@ -227,10 +245,23 @@ class Webhook implements ObserverInterface
             $order = $this->getOrder($order_ids[0]);
             $cart_items = $this->_getVisibleItemsFromOrder($order);
             $cart_token = $order->getQuoteID();
+
+            if ($this->cartProduct) {
+                $dt = $this->date->gmtTimestamp();
+                if (($this->cartProduct->getTypeId() == 'simple' && !$this->cartProduct->isSalable())
+                    || $this->cartProduct->getTypeId() == 'configurable') {
+                    $this->batchesHelper->writeProductUpdate(
+                        $this->cartProduct,
+                        $this->cartProduct->getId(),
+                        $store_id,
+                        $dt,
+                        $this->cartProduct->getSku()
+                    );
+                }
+            }
             //TODO: implement product removal when qty = 0 and show_out_of_stock_items = false
         }
         $cart_products_json = json_encode($cart_items);
-        $store_id = $this->_storeManager->getStore()->getId();
         $parameters = array(
             'event' => $this->getWebhookEventLabel($event_name),
             'UUID' => $this->apiHelper->getApiUUID(),
