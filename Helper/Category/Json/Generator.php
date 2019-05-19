@@ -83,10 +83,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $thumbnail = '';
 
         $category = $this->categoryRepository->get($node->getId(), $store);
-
+        $image = '';
+        if ($node->getImage()) {
+          $image = sprintf('%scatalog/category/%s', $mediaUrl, $node->getImage());
+        }
         $result = [
             'category_id' => $node->getId(),
-            'image' => sprintf('%scatalog/category/%s', $mediaUrl, $node->getImage()),
+            'image' => $image,
             'thumbnail' => $thumbnail,
             'description' => strip_tags($node->getDescription()),
             'parent_id'   => $node->getParentId(),
