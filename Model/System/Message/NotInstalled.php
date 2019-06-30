@@ -61,6 +61,8 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
 
     protected $helper;
 
+    protected $request;
+
     /**
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\UrlInterface $urlBuilder
@@ -70,12 +72,14 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
         \Magento\Framework\AuthorizationInterface $authorization,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\UrlInterface $urlBuilder,
-        \Autocompleteplus\Autosuggest\Helper\Api $helper
+        \Autocompleteplus\Autosuggest\Helper\Api $helper,
+        \Magento\Framework\App\RequestInterface $request
     ) {
         $this->_authorization = $authorization;
         $this->storeManager = $storeManager;
         $this->urlBuilder = $urlBuilder;
         $this->helper = $helper;
+        $this->request = $request;
     }
 
     /**
@@ -132,11 +136,16 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
      */
     public function isDisplayed()
     {
+        if ($this->request->getParam('isAjax') === 'true') {
         return ($this->_authorization->isAllowed(
             'Autocompleteplus_Autosuggest::autosuggest'
         ) && ($this->checkAuthenticationKey() ||
             $this->checkEndpoint() ||
             $this->checkUUID()));
+        } else {
+            return true;
+        }
+
     }
 
     /**

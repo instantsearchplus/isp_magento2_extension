@@ -34,4 +34,8 @@
     <type name="Magento\Framework\App\Request\CsrfValidator">
         <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Helper\Plugin\CsrfValidatorSkip" />
     </type>
+    <type name="Magento\Customer\Model\Checkout\ConfigProvider">
+        <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Model\Plugin\Html\ConfigProvider"
+                sortOrder="1000"/>
+    </type>
 </config>

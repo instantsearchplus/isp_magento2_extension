@@ -862,7 +862,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 if (count($variants) > 0) {
                     $simpleSkusArr = array();
                     $variantElem = $this->createChild('variants', false, false, $productElem);
-                    foreach ($this->getConfigurableChildren($product) as $child_product) {
+                    $configChildren = $this->getConfigurableChildren($product);
+                    foreach ($configChildren as $child_product) {
 
                         /**
                          *  if (!in_array($product->getStoreId(), $child_product->getStoreIds())) {
@@ -902,9 +903,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         } else {
                             $is_variant_visible = '';
                         }
-
-                        $child_product->setData('catalog_rule_price', null);
-                        $child_product->setData('special_price', null);
 
                         $variant_node_attributes = [
                             'id' => $child_product->getId(),
@@ -1419,18 +1417,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * GetPriceRange
+     * GeneratePriceRange
      *
      * @return array
      */
-    public function getPriceRange($product, $finalPrice)
+    public function generatePriceRange($product, $finalPrice)
     {
         $min_price = (float)$finalPrice;
         $max_price = 0;
         $compare_at_price = 0;
         foreach($product->getTypeInstance()->getUsedProducts($product) as $childProduct) {
-            $childProduct->setData('catalog_rule_price', null);
-            $childProduct->setData('special_price', null);
             $childPrice = (float)$childProduct->getPriceInfo()->getPrice('final_price')->getValue();
 
             if ($childPrice < $min_price) {
@@ -1500,8 +1496,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $storeId=null
     ) {
         try {
+            $product->getTypeInstance()->setStoreFilter($this->storeManager->getStore(), $product);
+
             $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
-            $imagePath = $product->getImage() ? $product->getImage() : $product->getSmallImage();
+            $imagePath = $product->getSmallImage() ? $product->getSmallImage() : $product->getImage();
             $_baseImage = $this->storeManager
                     ->getStore()
                     ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
@@ -1511,7 +1509,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $priceRange = array('price_min' => 0, 'price_max' => 0);
 
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
-                $priceRange = $this->getPriceRange($product, $finalPrice);
+                $priceRange = $this->generatePriceRange($product, $finalPrice);
             }
 
             $specialFromDate = $product->getSpecialFromDate();
@@ -1782,7 +1780,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     private function loopOverProductCollectionByIds($ids, $storeId, $action)
     {
         $productCollection = $this->getProductCollection(false);
-
+        $this->setStoreId($storeId);
         if (is_numeric($storeId)) {
             $productCollection->addStoreFilter($storeId);
             $productCollection->setStoreId($storeId);
