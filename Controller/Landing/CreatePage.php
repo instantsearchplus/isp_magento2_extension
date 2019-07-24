@@ -65,7 +65,7 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
         $slug = $request->getParam('slug');
         $is_serp = $request->getParam('is_serp', '0');
 
-		if (!$slug) {
+        if (!$slug) {
             $response = [
                 'success' => false,
                 'error' => 'no slug found'
@@ -73,18 +73,18 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
             $result->setData($response);
             return $result;
         }
-		
-		if (strlen($slug) > 50) {
-			$response = [
+        
+        if (strlen($slug) > 50) {
+            $response = [
                 'success' => false,
                 'error' => 'slug is not valid'
             ];
             $result->setData($response);
             return $result;
-		}
-		$title = ucfirst($request->getParam('slug', $slug));
+        }
+        $title = ucfirst($request->getParam('slug', $slug));
 
-		try {
+        try {
             $page = $this->pageFactory->create();
             if ($page->checkIdentifier($slug, $storeId)) {
                 $response = [
@@ -92,23 +92,27 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
                     'error' => 'The page with this identifier(slug) already exists'
                 ];
             } else {
-                $page_content = sprintf('{{widget type="Autocompleteplus\Autosuggest\Block\Widget\LandingPage" is_serp="%s" slug="%s"}}', $slug, $is_serp);
+                $page_content = sprintf(
+                    '{{widget type="Autocompleteplus\Autosuggest\Block\Widget\LandingPage" is_serp="%s" slug="%s"}}',
+                    $slug,
+                    $is_serp
+                );
                 $page->setTitle($title)
-                    ->setIdentifier($slug)
-                    ->setIsActive(true)
-                    ->setPageLayout('1column')
-                    ->setStores(array($storeId))
-                    ->setContent($page_content)
-                    ->save();
+                ->setIdentifier($slug)
+                ->setIsActive(true)
+                ->setPageLayout('1column')
+                ->setStores([$storeId])
+                ->setContent($page_content)
+                ->save();
                 $this->clearCache();
                 $response = [
-                    'success' => true
+                'success' => true
                 ];
             }
         } catch (\Exception $e) {
             $response = [
-                'success' => false,
-                'error' => $e->getMessage()
+            'success' => false,
+            'error' => $e->getMessage()
             ];
         }
 

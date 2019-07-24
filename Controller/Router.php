@@ -88,7 +88,7 @@ class Router implements \Magento\Framework\App\RouterInterface
          */
         if (strpos($identifier, 'instantsearchplus/result') !== false) {
         
-            $matches = array();
+            $matches = [];
 
             if (preg_match(
                 '/^(?:[^\/]+)\/(?:[^\/]+)\/?([^\/]+)?$/',

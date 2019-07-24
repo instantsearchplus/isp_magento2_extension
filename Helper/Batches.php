@@ -61,25 +61,38 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $batchModel;
 
+    protected $_resourceConnection;
+
     /**
      * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
      */
     protected $batchCollection;
 
+    /**
+     * @var \Magento\Framework\Stdlib\DateTime\DateTime
+     */
+    protected $date;
+
     protected $objectManager;
+
+    const MULTIPLE_INSERT_SIZE = 200;
 
     public function __construct(
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
         \Psr\Log\LoggerInterface $logger,
         \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
         \Magento\Catalog\Model\Product $productModel,
+        \Magento\Framework\App\ResourceConnection $resourceConnection,
+        \Magento\Framework\Stdlib\DateTime\DateTime $date,
         \Autocompleteplus\Autosuggest\Model\Batch $batchModel
     ) {
+        $this->date = $date;
         $this->configurable = $configurable;
         $this->logger = $logger;
         $this->batchCollectionFactory = $batchCollectionFactory;
         $this->productModel = $productModel;
         $this->batchModel = $batchModel;
+        $this->_resourceConnection = $resourceConnection;
         $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
     }
 
@@ -206,7 +219,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $storeId
      * @param null $product
      */
-    public function writeProductDeletionLight($sku, $productId, $storeId, $dt, $productStores=null)
+    public function writeProductDeletionLight($sku, $productId, $storeId, $dt, $productStores = null)
     {
         if (!$productStores) {
             $productStores = [$storeId];
@@ -249,6 +262,44 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                     ->setSku($sku)
                     ->save();
             }
+        }
+    }
+
+    /**
+     * @param $product_ids
+     * @param $rows
+     */
+    public function writeMassProductsUpdate($products_ids, $store_id) {
+        $connection = $this->_resourceConnection->getConnection();
+        $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
+        $counter = 0;
+        $where = [
+            'product_id IN (?)' => $products_ids,
+            'store_id = ?' => $store_id
+        ];
+
+        $connection->delete($table_name, $where);
+
+        $data = [];
+        foreach ($products_ids as $p_id) {
+            $counter++;
+            $data[] = [
+                'store_id' => (int)$store_id,
+                'product_id' => (int)$p_id,
+                'update_date' => (int)$this->date->gmtTimestamp() + $counter,
+                'action' => 'update'
+            ];
+            if ($counter == self::MULTIPLE_INSERT_SIZE) {
+                $connection->insertMultiple($table_name, $data);
+                $this->logger->info('executed multiple insert of ' . count($data));
+                $counter = 0;
+                $data = [];
+            }
+        }
+
+        if (count($data) > 0) {
+            $connection->insertMultiple($table_name, $data);
+            $this->logger->info('executed multiple insert of ' . count($data));
         }
     }
 }

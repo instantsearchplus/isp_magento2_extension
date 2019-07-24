@@ -61,7 +61,7 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
 
     protected $catalogSession;
 
-    protected $list_ids = array();
+    protected $list_ids = [];
 
     protected $_totalRecords = null;
 
@@ -106,8 +106,6 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
         if (isset($laeyeredTmp) && $laeyeredTmp == '1') {
             $this->is_layered_enabled = true;
         }
-
-
     }
 
     /**
@@ -229,7 +227,7 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
 
                 if ($responseData->total_results) {
                     $id_list = $responseData->id_list;
-                    $product_ids = array();
+                    $product_ids = [];
                     /**
                      * Validate received ids
                      */
@@ -307,22 +305,22 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
         return $proceed($attribute, $dir);
     }
 
-
     public function aroundGetSize($subject, \Closure $proceed)
     {
         if (!$this->is_layered_enabled && $this->is_fulltext_enabled) {
             if ($this->_totalRecords === null) {
                 $sql = $subject->getSelectCountSql();
                 $this->removeMagentoSearchFilter($sql);
-                $this->_totalRecords = $subject->getConnection()->fetchOne($sql, array());
+                $this->_totalRecords = $subject->getConnection()->fetchOne($sql, []);
             }
-            return intval($this->_totalRecords);
+            return (int)$this->_totalRecords;
         } else {
             return $proceed();
         }
     }
 
-    public function aroundLoad($subject, \Closure $proceed) {
+    public function aroundLoad($subject, \Closure $proceed)
+    {
         if (!$this->is_layered_enabled && $this->is_fulltext_enabled) {
             if (!$subject->isLoaded()) {
                 $subject->getSize();
@@ -343,5 +341,4 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
             $sql->setPart('FROM', $joinFroms);
         }
     }
-
 }

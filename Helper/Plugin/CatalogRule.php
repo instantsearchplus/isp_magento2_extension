@@ -24,7 +24,6 @@ namespace Autocompleteplus\Autosuggest\Helper\Plugin;
 use Magento\Framework\App\Helper;
 use Magento\CatalogRule\Api\Data;
 
-
 class CatalogRule
 {
     /**
@@ -89,17 +88,15 @@ class CatalogRule
 
         if ($rule->getFromDate()) {
             $localFromDate = new \DateTime($rule->getFromDate(), new \DateTimeZone(
-                    $this->dataHelper->getTimezone($this->storeManager->getStore()->getId())
-                )
-            );
+                $this->dataHelper->getTimezone($this->storeManager->getStore()->getId())
+            ));
             $dtFrom = $localFromDate->getTimestamp();
         }
 
         if (!$dt && $rule->getToDate()) {
             $localToDate = new \DateTime($rule->getToDate(), new \DateTimeZone(
-                    $this->dataHelper->getTimezone($this->storeManager->getStore()->getId())
-                )
-            );
+                $this->dataHelper->getTimezone($this->storeManager->getStore()->getId())
+            ));
             $dtTo = $localToDate->getTimestamp();
             $dtTo = strtotime("tomorrow", $dtTo);
         }

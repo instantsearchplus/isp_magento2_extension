@@ -90,9 +90,9 @@ class ProductImport implements ObserverInterface
 
     protected $_resourceConnection;
 
-    protected $_websites_stores_dict = array();
+    protected $_websites_stores_dict = [];
 
-    protected $_product_batches_by_store = array();
+    protected $_product_batches_by_store = [];
 
     /**
      * DB data source model.
@@ -159,7 +159,8 @@ class ProductImport implements ObserverInterface
         return $this->batchCollection;
     }
 
-    protected function getWebsitesStoreDict() {
+    protected function getWebsitesStoreDict()
+    {
         $connection = $this->_resourceConnection->getConnection();
         $table_name = $this->_resourceConnection->getTableName('store_group');
         $sql = $connection->select()
@@ -168,7 +169,7 @@ class ProductImport implements ObserverInterface
         $results = $connection->fetchAll($sql);
         foreach ($results as $row) {
             if (!array_key_exists($row['website_id'], $this->_websites_stores_dict)) {
-                $this->_websites_stores_dict[$row['website_id']] = array();
+                $this->_websites_stores_dict[$row['website_id']] = [];
             }
             $this->_websites_stores_dict[$row['website_id']][] = $row['group_id'];
         }
@@ -182,7 +183,7 @@ class ProductImport implements ObserverInterface
             ->from($table_name, '*')
             ->where(sprintf('%s.product_id = ?', $table_name), $productId);
         $results = $connection->fetchAll($sql);
-        $product_websites = array();
+        $product_websites = [];
         foreach ($results as $row) {
             $product_websites[] = $row['website_id'];
         }
@@ -192,10 +193,10 @@ class ProductImport implements ObserverInterface
     protected function getAllBatches()
     {
         $batchCollection = $this->getBatchCollection();
-        $batchCollection->addFieldToSelect(array('store_id', 'product_id'));
+        $batchCollection->addFieldToSelect(['store_id', 'product_id']);
         foreach ($batchCollection as $batch) {
             if (!array_key_exists($batch['store_id'], $this->_product_batches_by_store)) {
-                $this->_product_batches_by_store[$batch['store_id']] = array();
+                $this->_product_batches_by_store[$batch['store_id']] = [];
             }
             $this->_product_batches_by_store[$batch['store_id']][] = $batch['product_id'];
         }
@@ -211,8 +212,8 @@ class ProductImport implements ObserverInterface
     {
         $storeId = 0;
         $this->getAllBatches();
-        $to_insert = array();
-        $to_update = array();
+        $to_insert = [];
+        $to_update = [];
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
             $this->logger->info('enter into import observer with ' . count($bunch));
             foreach ($bunch as $itemArray) {
@@ -220,7 +221,7 @@ class ProductImport implements ObserverInterface
                 $productId = $this->productModel->getIdBySku($sku);
                 try {
                     $pWebsites = $this->getProductWebsites($productId);
-                    $productStores = array();
+                    $productStores = [];
                     foreach ($pWebsites as $websiteId) {
                         if (array_key_exists($websiteId, $this->_websites_stores_dict)) {
                             $productStores = array_merge($productStores, $this->_websites_stores_dict[$websiteId]);
@@ -228,7 +229,13 @@ class ProductImport implements ObserverInterface
                     }
                     //recording disabled item as deleted
                     if (array_key_exists('status', $itemArray) && $itemArray['status'] == '2') {
-                        $this->helper->writeProductDeletionLight($sku, $productId, 0, $this->date->gmtTimestamp(), $productStores);
+                        $this->helper->writeProductDeletionLight(
+                            $sku,
+                            $productId,
+                            0,
+                            $this->date->gmtTimestamp(),
+                            $productStores
+                        );
                         continue;
                     }
 
@@ -250,10 +257,10 @@ class ProductImport implements ObserverInterface
         $connection = $this->_resourceConnection->getConnection();
         $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
         $counter = 0;
-        $data = array();
+        $data = [];
 
         try {
-            foreach ($to_insert as $store=>$productIds) {
+            foreach ($to_insert as $store => $productIds) {
                 foreach ($productIds as $p_id) {
                     $counter++;
                     $data[] = [
@@ -266,7 +273,7 @@ class ProductImport implements ObserverInterface
                         $connection->insertMultiple($table_name, $data);
                         $this->logger->info('executed multiple insert of ' . count($data));
                         $counter = 0;
-                        $data = array();
+                        $data = [];
                     }
                 }
 
@@ -274,7 +281,7 @@ class ProductImport implements ObserverInterface
                     $connection->insertMultiple($table_name, $data);
                     $this->logger->info('executed multiple insert of ' . count($data));
                     $counter = 0;
-                    $data = array();
+                    $data = [];
                 }
             }
 
@@ -289,7 +296,7 @@ class ProductImport implements ObserverInterface
                     $connection->update($table_name, $bind, $where);
                     $this->logger->info('executed multiple insert of ' . count($data));
                     $counter = 0;
-                    $data = array();
+                    $data = [];
                 }
             }
             if (count($data) > 0) {
@@ -318,16 +325,16 @@ class ProductImport implements ObserverInterface
     {
         if (!array_key_exists($productStoreId, $this->_product_batches_by_store)) {
             if (!array_key_exists($productStoreId, $to_insert)) {
-                $to_insert[$productStoreId] = array();
+                $to_insert[$productStoreId] = [];
             }
             if (!in_array($productId, $to_insert[$productStoreId])) {
                 $to_insert[$productStoreId][] = $productId;
             }
         } elseif (!in_array($productId, $this->_product_batches_by_store[$productStoreId])) {
             if (!array_key_exists($productStoreId, $to_insert)) {
-                $to_insert[$productStoreId] = array();
+                $to_insert[$productStoreId] = [];
             } elseif (in_array($productId, $to_insert[$productStoreId])) {
-               return;
+                return;
             }
             $to_insert[$productStoreId][] = $productId;
         } else {

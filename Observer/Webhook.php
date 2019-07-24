@@ -119,7 +119,7 @@ class Webhook implements ObserverInterface
      */
     protected function _buildCartArray($cartItems)
     {
-        $items = array();
+        $items = [];
         foreach ($cartItems as $item) {
             $quantity = $item->getQty();
             if ($quantity == null) {
@@ -127,14 +127,14 @@ class Webhook implements ObserverInterface
             }
             if (is_object($item->getProduct())) {
                 $this->cartProduct = $item->getProduct();
-                $items[] = array(
+                $items[] = [
                     'product_id' => $item->getProduct()->getId(),
                     'price' => $item->getProduct()->getFinalPrice(),
                     'quantity' => $quantity,
                     'currency' => ($item->getQuote() == null)?
                         $item->getOrder()->getorder_currency_code() :
                         $item->getQuote()->getGlobalCurrencyCode()
-                );
+                ];
             }
         }
 
@@ -144,7 +144,7 @@ class Webhook implements ObserverInterface
     public function getOrder($id)
     {
         $tempOrdCollection = $this->orderCollectionFactory->create();
-        $tempOrdCollection->addAttributeToFilter('entity_id', ['in'  =>  array($id)]);
+        $tempOrdCollection->addAttributeToFilter('entity_id', ['in'  =>  [$id]]);
         $order = $tempOrdCollection->getFirstItem();
         return $order;
     }
@@ -160,7 +160,7 @@ class Webhook implements ObserverInterface
                 return;
             }
             
-            if(function_exists('fsockopen')) {
+            if (function_exists('fsockopen')) {
                 $this->post_without_wait(
                     $web_hook_url,
                     $params,
@@ -186,10 +186,12 @@ class Webhook implements ObserverInterface
      *
      * @return void
      */
-    private function post_without_wait($url, $params=array(), $type='POST', $post_params=array())
+    private function post_without_wait($url, $params = [], $type = 'POST', $post_params = [])
     {
         foreach ($params as $key => &$val) {
-            if (is_array($val)) $val = implode(',', $val);
+            if (is_array($val)) {
+                $val = implode(',', $val);
+            }
             $post_params[] = $key.'='.urlencode($val);
         }
 
@@ -204,7 +206,7 @@ class Webhook implements ObserverInterface
         );
 
         // Data goes in the path for a GET request
-        if('GET' == $type) {
+        if ('GET' == $type) {
             $parts['path'] .= '?'.$post_string;
         }
 
@@ -238,7 +240,7 @@ class Webhook implements ObserverInterface
             $cart_items = $this->_getVisibleItems();
             $cart_token = $this->_session->getQuote()->getID();
         } elseif ($event_name == 'checkout_onepage_controller_success_action') {
-            $order_ids = $observer->getOrderIds();  
+            $order_ids = $observer->getOrderIds();
             if ($order_ids == null || count($order_ids) == 0) {
                 return null;
             }
@@ -262,7 +264,7 @@ class Webhook implements ObserverInterface
             //TODO: implement product removal when qty = 0 and show_out_of_stock_items = false
         }
         $cart_products_json = json_encode($cart_items);
-        $parameters = array(
+        $parameters = [
             'event' => $this->getWebhookEventLabel($event_name),
             'UUID' => $this->apiHelper->getApiUUID(),
             'key' => $this->apiHelper->getApiAuthenticationKey(),
@@ -271,7 +273,7 @@ class Webhook implements ObserverInterface
             'cart_token' => $cart_token,
             'serp' => '',
             'cart_product' => $cart_products_json,
-        );
+        ];
 
         return $parameters;
     }

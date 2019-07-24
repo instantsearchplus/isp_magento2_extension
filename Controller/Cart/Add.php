@@ -23,6 +23,7 @@ namespace Autocompleteplus\Autosuggest\Controller\Cart;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Checkout\Model\Cart as CustomerCart;
 use Magento\Framework\Exception\NoSuchEntityException;
+
 /**
  * Add
  *

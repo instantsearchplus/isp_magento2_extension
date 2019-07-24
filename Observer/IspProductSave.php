@@ -86,7 +86,6 @@ class IspProductSave implements ObserverInterface
         $this->date = $date;
     }
 
-
     /**
      * Update products
      *
@@ -119,5 +118,4 @@ class IspProductSave implements ObserverInterface
 
         return $this;
     }
-
 }

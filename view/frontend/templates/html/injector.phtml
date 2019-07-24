@@ -1,4 +1,3 @@
-<?php if ($block->isEnabled()): ?>
-    <script data-cfasync="false" async type="text/javascript" src="<?php /* @noEscape */ echo $block->getUrl('autocompleteplus/html/getispjsvars')?>"></script>
-    <script data-cfasync="false" async type="text/javascript" src="<?php /* @noEscape */ echo $block->getSrc()?>"></script>
+<?php if ($block->isEnabled()) : ?>
+    <script data-cfasync="false" async type="text/javascript" src="<?= /* @noEscape */ $block->getSrc() ?>"></script>
 <?php endif; ?>

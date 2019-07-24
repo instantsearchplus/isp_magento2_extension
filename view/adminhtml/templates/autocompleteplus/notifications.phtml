@@ -1,14 +1,14 @@
 <?php
-$shouldSync=$this->localhostSynced();
+$shouldSync = $this->localhostSynced();
 
-if($shouldSync){
+if ($shouldSync) {
     ?>
     <div id="autosuggest-notification" class="notification-global">
-        <a target="_blank" href="<?php echo $block->getUrl('adminhtml/autocompleteplus_push/startpush');?>">
-            <b><?php echo  __('Sync now'); ?></b>
+        <a target="_blank" href="<?= /* @noEscape */ $block->getUrl('adminhtml/autocompleteplus_push/startpush');?>">
+            <b><?= /* @noEscape */ __('Sync now'); ?></b>
         </a>
-        <?php echo __(' to complete the initial <strong>InstantSearch+</strong> product synchronization with our cloud service') ?>.
+        <?= /* @noEscape */ __(' to complete the initial <strong>InstantSearch+</strong> product synchronization with our cloud service') ?>.
     </div>
-<?php
+    <?php
 }
 ?>

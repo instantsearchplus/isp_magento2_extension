@@ -1,8 +1,8 @@
 <script>
     var __isp_fulltext_search_obj = {
-        uuid: "<?php /* @noEscape */ echo $block->getApiUUID(); ?>",
-        store_id: <?php /* @noEscape */ echo $block->getStoreId(); ?>
+        uuid: "<?= /* @noEscape */ $block->getApiUUID();?>",
+        store_id: <?= /* @noEscape */ $block->getStoreId();?>
     };
 </script>
 <?php $results = $block->getSearchResults(); ?>
-<?php echo $results; ?>
+<?= /* @noEscape */ $results; ?>

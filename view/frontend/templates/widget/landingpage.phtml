@@ -1,11 +1,11 @@
 <script>
-    <?php if ($block->getis_serp() == '0'): ?>
-        var lp_slug = "<?php if($block->getData('slug')) { echo $block->getData('slug'); } ?>";
+    <?php if ($block->getis_serp() == '0') : ?>
+        var lp_slug = "<?php if ($block->getData('slug')) { /* @noEscape */echo $block->getData('slug'); } ?>";
     <?php endif; ?>
     var __isp_fulltext_search_obj = {
-        uuid: "<?php /* @noEscape */ echo $block->getApiUUID(); ?>",
-        store_id: <?php /* @noEscape */ echo $block->getStoreId(); ?> 
+        uuid: "<?= /* @noEscape */ $block->getApiUUID();?>",
+        store_id: <?= /* @noEscape */ $block->getStoreId();?>
     };
 </script>
 <?php $results = $block->getSearchResults(); ?>
-<?php echo $results; ?>
+<?= /* @noEscape */ $results; ?>

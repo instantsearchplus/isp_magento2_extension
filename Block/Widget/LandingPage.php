@@ -24,7 +24,7 @@ namespace Autocompleteplus\Autosuggest\Block\Widget;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Widget\Block\BlockInterface;
-use Autocompleteplus\Autosuggest\Block\SearchResult; 
+use Autocompleteplus\Autosuggest\Block\SearchResult;
 
 class LandingPage extends \Autocompleteplus\Autosuggest\Block\SearchResult\ListProduct implements BlockInterface
 {

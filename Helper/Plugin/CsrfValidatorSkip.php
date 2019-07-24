@@ -25,7 +25,7 @@ use Magento\Framework\App\Helper;
 
 class CsrfValidatorSkip
 {
-	/**
+    /**
      * @param \Magento\Framework\App\Request\CsrfValidator $subject
      * @param \Closure $proceed
      * @param \Magento\Framework\App\RequestInterface $request

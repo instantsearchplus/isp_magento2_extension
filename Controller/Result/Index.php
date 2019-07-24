@@ -10,7 +10,6 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Search\Model\QueryFactory;
 use Magento\Store\Model\ScopeInterface;
 
-
 class Index extends \Magento\CatalogSearch\Controller\Result\Index
 {
     /**

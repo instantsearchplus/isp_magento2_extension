@@ -140,7 +140,7 @@ class ProductUpdate implements ObserverInterface
         $attributes_data = $observer->getEvent()->getAttributesData();
         $storeId = 0;
         foreach ($bunch as $productIdStr) {
-            $productId = intval($productIdStr);
+            $productId = (int)$productIdStr;
             $dt = $this->date->gmtTimestamp();
             try {
                 try {

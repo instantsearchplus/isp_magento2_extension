@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.10] - 2019-07-24 17:33:00
+### Added
+- Optimized Mass Import method for third party extensions 
+### Fixed
+- Code styling according to Magento 2 standards
+- Use js window.checkout to store usefull information
+
 ## [4.7.8] - 2019-07-09 11:33:00
 ### Added
 - Credentials section in Magento Configuration page

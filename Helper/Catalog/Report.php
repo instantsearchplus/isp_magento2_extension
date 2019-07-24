@@ -101,14 +101,18 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getEnabledProducts()
     {
-        return $this->getProductCollection()->addAttributeToFilter('status',
-            ['eq'  =>  \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED]);
+        return $this->getProductCollection()->addAttributeToFilter(
+            'status',
+            ['eq'  =>  \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED]
+        );
     }
 
     public function getDisabledProducts()
     {
-        return $this->getProductCollection()->addAttributeToFilter('status',
-            ['eq'  =>  \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_DISABLED]);
+        return $this->getProductCollection()->addAttributeToFilter(
+            'status',
+            ['eq'  =>  \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_DISABLED]
+        );
     }
 
     public function getVisibleInCatalogProducts()
@@ -144,12 +148,12 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
     public function getSearchableProductsIds()
     {
         $collection = $this->getVisibleInSearchProducts();
-        $ids = array();
-        foreach($collection as $product) {
-            $ids[] = array(
+        $ids = [];
+        foreach ($collection as $product) {
+            $ids[] = [
                 'id' => $product->getID(),
                 'sku' => $product->getSku()
-            );
+            ];
         }
         return $ids;
     }
@@ -186,7 +190,7 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
         $entity_int_table_name = $resource->getTableName('catalog_product_entity_int');
         $product_entity_table_name = $resource->getTableName('catalog_product_entity');
 
-        $params = array();
+        $params = [];
         $page = (int)ceil((float)$startInd/$count) ;
         $store = $this->storeManager->getStore($store);
         $website_id = $store->getWebsiteId();
@@ -197,22 +201,40 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
             $entity_id_col_name = 'row_id';
         }
 
-        $fields = array(
+        $fields = [
             sprintf("%s.attribute_id AS attribute_id", $eav_table_name),
             sprintf("%s.%s AS entity_id", $entity_int_table_name, $entity_id_col_name),
             sprintf("%s.value AS value", $entity_int_table_name),
             sprintf("%s.attribute_code AS attribute_code", $eav_table_name),
             sprintf("%s.type_id AS type_id", $product_entity_table_name),
             sprintf("%s.*", $price_index_table_name)
-        );
+        ];
 
         $sql = $connection->select()
             ->from($eav_table_name, $fields)
-            ->join($entity_int_table_name, sprintf("%s.attribute_id = %s.attribute_id", $eav_table_name, $entity_int_table_name))
-            ->join($price_index_table_name, sprintf("%s.%s = %s.entity_id", $entity_int_table_name, $entity_id_col_name, $price_index_table_name))
-            ->join($product_entity_table_name, sprintf("%s.entity_id = %s.entity_id", $product_entity_table_name, $price_index_table_name))
+            ->join(
+                $entity_int_table_name,
+                sprintf("%s.attribute_id = %s.attribute_id", $eav_table_name, $entity_int_table_name)
+            )
+            ->join(
+                $price_index_table_name,
+                sprintf(
+                    "%s.%s = %s.entity_id",
+                    $entity_int_table_name,
+                    $entity_id_col_name,
+                    $price_index_table_name
+                )
+            )
+            ->join(
+                $product_entity_table_name,
+                sprintf(
+                    "%s.entity_id = %s.entity_id",
+                    $product_entity_table_name,
+                    $price_index_table_name
+                )
+            )
             ->where(sprintf('%s.attribute_code = ?', $eav_table_name), 'visibility')
-            ->where(sprintf('%s.value IN (?)', $entity_int_table_name), array(3,4))
+            ->where(sprintf('%s.value IN (?)', $entity_int_table_name), [3,4])
             ->where(sprintf('%s.customer_group_id = ?', $price_index_table_name), $customer_group)
             ->where(sprintf('%s.website_id = ?', $price_index_table_name), $website_id)
             ->limitPage($page, $count);
@@ -222,9 +244,9 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $results = $connection->fetchAll($sql);
-        $result = array();
+        $result = [];
         foreach ($results as $res) {
-            $result[$res['entity_id']] = array(
+            $result[$res['entity_id']] = [
                 'id' => $res['entity_id'],
                 'final_price' => $res['final_price'],
                 'min_price' => $res['min_price'],
@@ -232,7 +254,7 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
                 'website_id' => $res['website_id'],
                 'customer_group_id' => $res['customer_group_id'],
                 'type_id' => $res['type_id']
-            );
+            ];
         }
         return $result;
     }

@@ -21,7 +21,6 @@
 
 namespace Autocompleteplus\Autosuggest\Controller\Layered;
 
-
 class SwitchSmartNavigationNative extends \Autocompleteplus\Autosuggest\Controller\Layered
 {
     public function execute()
@@ -50,8 +49,8 @@ class SwitchSmartNavigationNative extends \Autocompleteplus\Autosuggest\Controll
             return $result;
         }
 
-        if (!in_array($state, array('on', 'off'))) {
-            $response = array('status' => 'error: '.'Wrong state');
+        if (!in_array($state, ['on', 'off'])) {
+            $response = ['status' => 'error: '.'Wrong state'];
             $result->setData($response);
             return $result;
         }

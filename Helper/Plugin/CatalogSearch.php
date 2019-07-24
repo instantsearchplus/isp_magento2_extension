@@ -22,6 +22,7 @@
 namespace Autocompleteplus\Autosuggest\Helper\Plugin;
 
 use Magento\Framework\App\Helper;
+
 /**
  * CatalogSearch
  *
@@ -72,8 +73,6 @@ class CatalogSearch extends \Magento\Search\Helper\Data
         if (isset($is_mini_form_rewrite_enabledTmp) && $is_mini_form_rewrite_enabledTmp == '1') {
             $this->is_mini_form_rewrite_enabled = true;
         }
-
-
     }
 
     /**

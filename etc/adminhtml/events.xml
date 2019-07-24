@@ -21,4 +21,7 @@
     <event name="isp_catalog_product_save_after">
         <observer name="batch_observer" instance="Autocompleteplus\Autosuggest\Observer\IspProductSave" />
     </event>
+	<event name="urapidflow_product_import_after_rtidx">
+		<observer name="batch_observer" instance="Autocompleteplus\Autosuggest\Observer\UrapidAfterProductSave" />
+	</event>
 </config>

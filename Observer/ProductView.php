@@ -72,6 +72,7 @@ class ProductView implements ObserverInterface
     {
         $product = $observer->getEvent()->getProduct();
         $this->catalogSession->setIspProductSku($product->getSku());
+        $this->catalogSession->setIspProductId($product->getId());
         return $this;
     }
 }

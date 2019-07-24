@@ -59,17 +59,18 @@ class InstallSchema implements InstallSchemaInterface
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Autocompleteplus\Autosuggest\Helper\Api $api,
         \Psr\Log\LoggerInterface $logger,
-        \Autocompleteplus\Autosuggest\Helper\Data $helper)
-    {
+        \Autocompleteplus\Autosuggest\Helper\Data $helper
+    ) {
         $this->scopeConfig = $scopeConfig;
         $this->helper = $helper;
         $this->api = $api;
         $this->logger = $logger;
     }
 
-    public function install(SchemaSetupInterface $setup,
-                            ModuleContextInterface $context)
-    {
+    public function install(
+        SchemaSetupInterface $setup,
+        ModuleContextInterface $context
+    ) {
         $installer = $setup;
 
         $installer->startSetup();
@@ -247,18 +248,18 @@ class InstallSchema implements InstallSchemaInterface
 
         $params = [
             'site'       => $this->scopeConfig->getValue(
-                                'web/unsecure/base_url',
-                                ScopeInterface::SCOPE_STORE
-                                ),
+                'web/unsecure/base_url',
+                ScopeInterface::SCOPE_STORE
+            ),
             'email'      => $this->scopeConfig->getValue(
-                                'trans_email/ident_support/email',
-                                ScopeInterface::SCOPE_STORE
-                                ),
+                'trans_email/ident_support/email',
+                ScopeInterface::SCOPE_STORE
+            ),
             'f'          => $this->helper->getVersion(),
             'multistore' => json_encode($this->helper->getMultiStoreData())
         ];
 
-        $uuid = $this->scopeConfig->getValue('autosuggest/api/uuid',ScopeInterface::SCOPE_STORE);
+        $uuid = $this->scopeConfig->getValue('autosuggest/api/uuid', ScopeInterface::SCOPE_STORE);
 
         if ($uuid != null) {
             $params['uuid'] = $uuid;
@@ -279,6 +280,5 @@ class InstallSchema implements InstallSchemaInterface
         } catch (\Exception $e) {
             $this->logger->critical($e);
         }
-
     }
 }

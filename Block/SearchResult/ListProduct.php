@@ -115,7 +115,7 @@ class ListProduct extends Template
      *
      * @return bool
      */
-    public function getSearchResults($trials=1)
+    public function getSearchResults($trials = 1)
     {
         $template = $this->cacheManager->load('autocomplete_template_serp');
 
@@ -132,13 +132,13 @@ class ListProduct extends Template
                 $this->cacheManager->save(
                     $template,
                     'autocomplete_template_serp',
-                    array("autocomplete_cache")
+                    ["autocomplete_cache"]
                 );
 
                 $this->cacheManager->save(
                     (string)$now,
                     'autocomplete_template_serp_age',
-                    array("autocomplete_cache")
+                    ["autocomplete_cache"]
                 );
                 /**
                  * Successefully brought template from acp.magento
@@ -170,6 +170,5 @@ class ListProduct extends Template
              */
             return $template;
         }
-
     }
 }

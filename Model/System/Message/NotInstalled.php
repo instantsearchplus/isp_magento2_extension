@@ -94,19 +94,19 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
 
     public function checkEndpoint()
     {
-        return is_null($this->helper->getApiEndpoint()) ||
+        return $this->helper->getApiEndpoint() === null ||
             (strlen($this->helper->getApiEndpoint()) < 30);
     }
 
     public function checkUUID()
     {
-        return is_null($this->helper->getApiUUID()) ||
+        return $this->helper->getApiUUID() === null ||
         (strlen($this->helper->getApiUUID()) < 30);
     }
 
     public function checkAuthenticationKey()
     {
-        return is_null($this->helper->getApiAuthenticationKey()) ||
+        return $this->helper->getApiAuthenticationKey() === null ||
         (strlen($this->helper->getApiAuthenticationKey()) < 30);
     }
 
@@ -137,15 +137,14 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
     public function isDisplayed()
     {
         if ($this->request->getParam('isAjax') === 'true') {
-        return ($this->_authorization->isAllowed(
-            'Autocompleteplus_Autosuggest::autosuggest'
-        ) && ($this->checkAuthenticationKey() ||
+            return ($this->_authorization->isAllowed(
+                'Autocompleteplus_Autosuggest::autosuggest'
+            ) && ($this->checkAuthenticationKey() ||
             $this->checkEndpoint() ||
             $this->checkUUID()));
         } else {
             return true;
         }
-
     }
 
     /**
@@ -160,11 +159,15 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
         $messageDetails .= '<strong>';
         $messageDetails .= __('There appears to be an issue with your InstantSearch+ configuration! ');
         $messageDetails .= '</strong><p>';
-        $messageDetails .= __('Please make sure your settings are correct <a href="%1">here</a>',
-            $this->getLink());
+        $messageDetails .= __(
+            'Please make sure your settings are correct <a href="%1">here</a>',
+            $this->getLink()
+        );
         $messageDetails .= '</p><p>';
-        $messageDetails .= __('You could also try installing it <a href="%1">here</a>',
-            $this->getInstallUrl());
+        $messageDetails .= __(
+            'You could also try installing it <a href="%1">here</a>',
+            $this->getInstallUrl()
+        );
         $messageDetails .= '</p>';
 
         return $messageDetails;

@@ -20,8 +20,8 @@
  */
 
 namespace Autocompleteplus\Autosuggest\Model\System\Message;
-use \Magento\Store\Model\ScopeInterface;
 
+use \Magento\Store\Model\ScopeInterface;
 
 class ServerMigrationCheck implements \Magento\Framework\Notification\MessageInterface
 {
@@ -86,7 +86,8 @@ class ServerMigrationCheck implements \Magento\Framework\Notification\MessageInt
         return md5('AUTOSUGGEST_SERVER_MIGRATION_NOTIFICATION');
     }
 
-    protected function _checkSiteUrl() {
+    protected function _checkSiteUrl()
+    {
         $params =
             [
                 'site'       => $this->scopeConfig->getValue(
@@ -126,12 +127,11 @@ class ServerMigrationCheck implements \Magento\Framework\Notification\MessageInt
     {
         if ($this->request->getParam('isAjax') === 'true') {
             return ($this->_authorization->isAllowed(
-                    'Autocompleteplus_Autosuggest::autosuggest'
-                ) && ($this->checkSiteUrl()));
+                'Autocompleteplus_Autosuggest::autosuggest'
+            ) && ($this->checkSiteUrl()));
         } else {
             return true;
         }
-
     }
 
     /**
@@ -147,21 +147,29 @@ class ServerMigrationCheck implements \Magento\Framework\Notification\MessageInt
             $messageDetails .= '<strong>';
             $messageDetails .= __('There appears to be an issue with your InstantSearch+ configuration! ');
             $messageDetails .= '</strong><p>';
-            $messageDetails .= __('Please make sure your settings are correct <a href="%1">here</a>',
-                $this->getLink());
+            $messageDetails .= __(
+                'Please make sure your settings are correct <a href="%1">here</a>',
+                $this->getLink()
+            );
             $messageDetails .= '</p><p>';
-            $messageDetails .= __('You could also try installing it <a href="%1">here</a>',
-                $this->getInstallUrl());
+            $messageDetails .= __(
+                'You could also try installing it <a href="%1">here</a>',
+                $this->getInstallUrl()
+            );
             $messageDetails .= '</p>';
         } else {
             $messageDetails .= '<strong>';
             $messageDetails .= __('There appears to be an issue with your InstantSearch+ configuration! ');
             $messageDetails .= '</strong><p>';
-            $messageDetails .= __('Please make sure your settings are correct <a href="%1">here</a>',
-                $this->getLink());
+            $messageDetails .= __(
+                'Please make sure your settings are correct <a href="%1">here</a>',
+                $this->getLink()
+            );
             $messageDetails .= '</p><p>';
-            $messageDetails .= __('You could also try installing it <a href="%1">here</a>',
-                $this->getInstallUrl());
+            $messageDetails .= __(
+                'You could also try installing it <a href="%1">here</a>',
+                $this->getInstallUrl()
+            );
             $messageDetails .= '</p>';
         }
         return $messageDetails;
@@ -176,5 +184,4 @@ class ServerMigrationCheck implements \Magento\Framework\Notification\MessageInt
     {
         return \Magento\Framework\Notification\MessageInterface::SEVERITY_CRITICAL;
     }
-
 }

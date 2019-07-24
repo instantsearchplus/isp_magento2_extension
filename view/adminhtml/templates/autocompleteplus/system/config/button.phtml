@@ -1,9 +1,9 @@
 <script type="text/javascript">
     //<![CDATA[
     function updateautocomplete() {
-        var email = $('autocompleteplus_config_store_email').value || ='no@email.com';
+        var email = $('autocompleteplus_config_store_email').value || 'no@email.com';
 
-        new Ajax.Request('<?php echo $block->getAjaxCheckUrl() ?>', {
+        new Ajax.Request('<?= /* @noEscape */ $block->getAjaxCheckUrl(); ?>', {
             method:     'post',
             parameters: { email: email },
             onSuccess: function( transport ) {
@@ -17,4 +17,4 @@
     //]]>
 </script>
 
-<?php echo $block->getButtonHtml() ?>
+<?= /* @noEscape */ $block->getButtonHtml(); ?>

@@ -1,6 +1,7 @@
 <?php
 
 namespace Autocompleteplus\Autosuggest\Controller\Products;
+
 /**
  * Send
  *

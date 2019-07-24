@@ -53,7 +53,7 @@ class Collection extends AbstractCollection
     protected function _construct()
     {
         $this->_init(
-            'Autocompleteplus\Autosuggest\Model\Pusher', 
+            'Autocompleteplus\Autosuggest\Model\Pusher',
             'Autocompleteplus\Autosuggest\Model\ResourceModel\Pusher'
         );
     }

@@ -147,8 +147,8 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->requestType = $type;
     }
     
-    public function buildRequest($requestData = [] , $timeout=2)
-    {                    
+    public function buildRequest($requestData = [], $timeout = 2)
+    {
         /** @var \Magento\Framework\HTTP\ZendClient $client */
         $client = $this->httpClientFactory->create();
         $responseBody = [];
@@ -199,7 +199,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     public function fetchProductListingData()
-    {           
+    {
         $this->setUrl($this->getApiEndpoint() . '/ma_load_search_page');
         $params = [
             'isp_platform' => 'magento',

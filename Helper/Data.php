@@ -210,7 +210,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->scopeConfig->getValue(
             self::XML_PATH_SEARCH_LAYERED,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $scopeId
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $scopeId
         );
     }
 

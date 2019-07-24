@@ -232,7 +232,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $storeId = $this->storeManager->getStore()->getId();
         $attributesValuesCache = $this->cache->load(self::AttributesValuesCache . '_' . $storeId);
         if (!$attributesValuesCache) {
-            $this->attributesValuesCache = array();
+            $this->attributesValuesCache = [];
         } else {
             $this->attributesValuesCache = unserialize($attributesValuesCache);
         }
@@ -248,7 +248,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->cache->save(
             serialize($attributesValuesCache),
             self::AttributesValuesCache . '_' . $storeId,
-            array("autocomplete_cache"),
+            ["autocomplete_cache"],
             900
         );
     }
@@ -260,7 +260,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $attributesSetsCache = $this->cache->load(self::AttributesSetsCache);
         if (!$attributesSetsCache) {
-            $this->attributesSetsCache = array();
+            $this->attributesSetsCache = [];
         } else {
             $this->attributesSetsCache = unserialize($attributesSetsCache);
         }
@@ -272,7 +272,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $storeId = $this->storeManager->getStore()->getId();
         $attributesSetCached = $this->cache->load(self::AttributesSetsCache . '_' . $attrSetId . '_' . $storeId);
         if (!$attributesSetCached) {
-            $attributesSetCached = array();
+            $attributesSetCached = [];
         } else {
             $attributesSetCached = unserialize($attributesSetCached);
             $this->attributesSetsCache[$attrSetId] = $attributesSetCached;
@@ -290,7 +290,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $this->cache->save(
                 serialize($setData),
                 self::AttributesSetsCache . '_' . $attrSetId . '_' . $storeId,
-                array("autocomplete_cache"),
+                ["autocomplete_cache"],
                 900
             );
         }
@@ -381,8 +381,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Catalog\Model\Product\Attribute\Repository $productAttributeRepository,
         \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrencyInterface,
         \Magento\CatalogInventory\Model\Stock\Item $stockFactory
-    )
-    {
+    ) {
         $this->storeManager = $storeManagerInterface;
         $this->helper = $helper;
         $this->batchesHelper = $batchesHelper;
@@ -415,9 +414,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             'version'   =>  $this->helper->getVersion(),
             'magento'   =>  $this->helper->getMagentoVersion()
         ]);
-        $this->_customersGroups = array();
-        $this->catalogRuleAffectedProducts = array();
-        $this->catalogFutureRuleAffectedProducts = array();
+        $this->_customersGroups = [];
+        $this->catalogRuleAffectedProducts = [];
+        $this->catalogFutureRuleAffectedProducts = [];
         $this->resourceConnection = $resourceConnection;
         $this->productModel = $productModel;
         $this->ruleCollectionFactory = $ruleCollectionFactory;
@@ -428,7 +427,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->attributesSetsCache = $this->getAttributesSetsCache();
         $this->priceCurrencyInterface = $priceCurrencyInterface;
 
-        foreach($customerGroupManager->toOptionArray() as $custGr) {
+        foreach ($customerGroupManager->toOptionArray() as $custGr) {
             $this->_customersGroups[$custGr['value']] = $custGr['label'];
         }
 
@@ -437,12 +436,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         parent::__construct($context);
     }
 
-    public function __destruct() {
+    public function __destruct()
+    {
         $this->setAttributesSetsCache($this->attributesSetsCache);
         $this->setAttributesValuesCache($this->attributesValuesCache);
     }
 
-    protected function getActiveRulesCount() {
+    protected function getActiveRulesCount()
+    {
         $activeRulesCount = $this->cache->load(self::ActiveRulesCount);
         if (!$activeRulesCount && $activeRulesCount !== '0') {
             $locTmstmp = $this->_localeDate->scopeTimeStamp($this->getStoreId());
@@ -456,7 +457,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $this->cache->save(
                 (string)$activeRulesCount,
                 self::ActiveRulesCount,
-                array("autocomplete_cache"),
+                ["autocomplete_cache"],
                 900
             );
         }
@@ -468,7 +469,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         if (!$this->productCollection) {
             $productCollection = $this->productCollectionFactory->create();
 
-            $attributesToSelect = array(
+            $attributesToSelect = [
                 'store_id',
                 'name',
                 'description',
@@ -489,7 +490,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'sku',
                 'tier_price',
                 'msrp'
-            );
+            ];
 
             if ($this->helper->canUseProductAttributes()) {
                 $customAttributes = $this->getProductAttributes();
@@ -697,7 +698,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $configurableAttributes = [];
 
         foreach ($productAttributeOptions as $productAttribute) {
-            $attributeFull = $this->catalogConfig->getAttribute(\Magento\Catalog\Model\Product::ENTITY, $productAttribute['attribute_code']);
+            $attributeFull = $this->catalogConfig
+                ->getAttribute(
+                    \Magento\Catalog\Model\Product::ENTITY,
+                    $productAttribute['attribute_code']
+                );
             foreach ($productAttribute['values'] as $attribute) {
                 $configurableAttributes[$productAttribute['store_label']]['values'][] = $attribute['store_label'];
             }
@@ -779,13 +784,17 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $category_names[] = $category['name'];
             }
         }
-        return array(array_filter($paths), $category_names);
+        return [array_filter($paths), $category_names];
     }
 
     public function createChild($childName, $childAttributes, $childValue, $childParent)
     {
-        return $this->xmlGenerator->createChild($childName, $childAttributes,
-            $childValue, $childParent);
+        return $this->xmlGenerator->createChild(
+            $childName,
+            $childAttributes,
+            $childValue,
+            $childParent
+        );
     }
 
     public function renderAttributeXml($attr, $product, $productElem)
@@ -796,7 +805,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $attrValue = $product->getData($action);
 
         if (!array_key_exists($action, $this->attributesValuesCache)) {
-            $this->attributesValuesCache[$action] = array();
+            $this->attributesValuesCache[$action] = [];
         }
 
         if (!is_array($attrValue)) {
@@ -831,11 +840,18 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'name' => $attr->getAttributeCode()
             ], false, $productElem);
 
-            $this->createChild('attribute_values', false,
+            $this->createChild(
+                'attribute_values',
+                false,
                 $attrValue,
-                $attributeElem);
-            $this->createChild('attribute_label', false,
-                $attribute_label, $attributeElem);
+                $attributeElem
+            );
+            $this->createChild(
+                'attribute_label',
+                false,
+                $attribute_label,
+                $attributeElem
+            );
         }
     }
 
@@ -860,7 +876,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 }
 
                 if (count($variants) > 0) {
-                    $simpleSkusArr = array();
+                    $simpleSkusArr = [];
                     $variantElem = $this->createChild('variants', false, false, $productElem);
                     $configChildren = $this->getConfigurableChildren($product);
                     foreach ($configChildren as $child_product) {
@@ -912,7 +928,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             'is_seallable' => $is_variant_sellable,
                             'price' => (float)$child_product->getPriceInfo()->getPrice('final_price')->getValue()
                         ];
-                        $matches = array();
+                        $matches = [];
                         preg_match('/.*\.(jpg|jpeg|png|gif)$/', $_baseImage, $matches);
                         if (count($matches) > 0) {
                             $variant_node_attributes['variantimage'] = $_baseImage;
@@ -925,11 +941,15 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             $variantElem
                         );
 
-                        $this->createChild('name', false,
-                            $child_product->getName(), $productVariation);
+                        $this->createChild(
+                            'name',
+                            false,
+                            $child_product->getName(),
+                            $productVariation
+                        );
 
                         foreach ($variant_codes as $attribute_code) {
-                            try{
+                            try {
                                 $attribute = $this->productAttributeRepository->get(strtolower($attribute_code));
                             } catch (\Exception $e) {
                                 //echo $e->getMessage();
@@ -947,7 +967,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                                 //echo $e->getMessage();
                             }
 
-                            $this->createChild('variant_attribute', [
+                            $this->createChild(
+                                'variant_attribute',
+                                [
                                     'is_configurable' => 1,
                                     'is_filterable' => $attribute->getIsFilterable(),
                                     'name' => $variant_name,
@@ -968,11 +990,18 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         'is_filterable' => 0,
                         'name' => 'configurable_simple_skus'
                     ], false, $productElem);
-                    $this->createChild('attribute_values', false,
+                    $this->createChild(
+                        'attribute_values',
+                        false,
                         implode(',', $simpleSkusArr),
-                        $attributeElem);
-                    $this->createChild('attribute_label', false,
-                        'configurable_simple_skus', $attributeElem);
+                        $attributeElem
+                    );
+                    $this->createChild(
+                        'attribute_label',
+                        false,
+                        'configurable_simple_skus',
+                        $attributeElem
+                    );
                 }
             }
         }
@@ -984,8 +1013,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $storeId,
         $orders,
         $interval
-    )
-    {
+    ) {
         $this->setOffset($offset);
         $this->setCount($count);
         $this->setStoreId($storeId);
@@ -1010,8 +1038,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->setRulesCount($this->getActiveRulesCount());
 
-        foreach ($productCollection as $product)
-        {
+        foreach ($productCollection as $product) {
             $this->renderProduct($product, $orderCount, 'insert');
         }
 
@@ -1024,7 +1051,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $dateTs
             );
             foreach ($resultsToSchedule as $res) {
-                $this->scheduleDistantUpdate(null, date('Y-m-d', $res['to_time']), $dateTs, $this->catalogRuleAffectedProducts[$res['product_id']]);
+                $this->scheduleDistantUpdate(
+                    null,
+                    date('Y-m-d', $res['to_time']),
+                    $dateTs,
+                    $this->catalogRuleAffectedProducts[$res['product_id']]
+                );
             }
         }
 
@@ -1036,7 +1068,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $dateTs
             );
             foreach ($resultsToSchedule as $res) {
-                $this->scheduleDistantUpdate(date('Y-m-d', $res['from_time']),null, $dateTs, $res['product_id']);
+                $this->scheduleDistantUpdate(
+                    date('Y-m-d', $res['from_time']),
+                    null,
+                    $dateTs,
+                    $res['product_id']
+                );
             }
         }
         return $this->xmlGenerator->generateXml();
@@ -1071,7 +1108,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $connection = $this->resourceConnection->getConnection();
         $select = $connection->select()
-            ->from($this->resourceConnection->getTableName('catalogrule_product'), array('to_time', 'product_id'))
+            ->from($this->resourceConnection->getTableName('catalogrule_product'), ['to_time', 'product_id'])
             ->where('website_id = ?', $websiteId)
             ->where('customer_group_id = ?', 0)
             ->where('product_id IN (?)', array_keys($products))
@@ -1093,7 +1130,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $connection = $this->resourceConnection->getConnection();
         $select = $connection->select()
-            ->from($this->resourceConnection->getTableName('catalogrule_product'), array('from_time', 'product_id'))
+            ->from($this->resourceConnection->getTableName('catalogrule_product'), ['from_time', 'product_id'])
             ->where('website_id = ?', $websiteId)
             ->where('customer_group_id = ?', 0)
             ->where('product_id IN (?)', $productsIds)
@@ -1115,7 +1152,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->createChild('id', false, $batch->getProductId(), $productElement);
     }
 
-    public function getSingleBatchTableRecord($id, $store_id) {
+    public function getSingleBatchTableRecord($id, $store_id)
+    {
         /**
          * Load and filter the batches
          */
@@ -1126,27 +1164,26 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $batchCollection->setOrder('update_date');
 
         $max_update_date = 0;
-        $batches = array();
+        $batches = [];
 
         foreach ($batchCollection as $batch) {
             if (intval($batch['update_date']) > $max_update_date) {
                 $max_update_date = $batch['update_date'];
             }
-            $batches[] = array(
+            $batches[] = [
                 'product_id' => $batch['product_id'],
                 'action' => $batch['action'],
                 'update_date' => $batch['update_date'],
                 'store_id' => $batch['store_id']
-            );
+            ];
         }
 
         return json_encode(
-            array(
+            [
                 'max_update_date' => $max_update_date,
                 'batches' => $batches
-            )
+            ]
         );
-
     }
 
     public function renderUpdatesCatalogXml(
@@ -1161,7 +1198,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
          * Load and filter the batches
          */
         $batchCollection = $this->getBatchCollection();
-        $filter = array('from' => $from);
+        $filter = ['from' => $from];
         if ($to > 0) {
             $filter['to'] = $to;
         }
@@ -1187,8 +1224,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             'fromdatetime'  =>  $from
         ]);
 
-        $updatesBulk = array();
-        $productIds = array();
+        $updatesBulk = [];
+        $productIds = [];
         foreach ($batchCollection as $batch) {
             $productId = $batch->getProductId();
             $batchStoreId = $batch->getStoreId();
@@ -1241,7 +1278,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->setRulesCount($this->getActiveRulesCount());
 
-        $visibleProductIds = array();
+        $visibleProductIds = [];
         foreach ($productCollection as $product) {
             $batch = $updatesBulk[$product->getId()];
             $this->renderProduct(
@@ -1299,7 +1336,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $dateTs
             );
             foreach ($resultsToSchedule as $res) {
-                $this->scheduleDistantUpdate(date('Y-m-d', $res['from_time']),null, $dateTs, $res['product_id']);
+                $this->scheduleDistantUpdate(date('Y-m-d', $res['from_time']), null, $dateTs, $res['product_id']);
             }
         }
 
@@ -1329,7 +1366,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @return void
      */
-    protected function renderTieredPrices($product, $productXmlElem) {
+    protected function renderTieredPrices($product, $productXmlElem)
+    {
         if ($product->getTypeId() != Grouped::TYPE_CODE) {
             if (is_array($product->getData('tier_price'))
                 && count($product->getData('tier_price')) > 0) {
@@ -1343,13 +1381,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 foreach ($product->getData('tier_price') as $trP) {
                     $this->createChild(
                         'tiered_price',
-                        array(
+                        [
                             'cust_group' => array_key_exists($trP['cust_group'], $this->_customersGroups) ?
                                 $this->_customersGroups[$trP['cust_group']] : $trP['cust_group'],
                             'cust_group_id' => $trP['cust_group'],
                             'price' => $trP['price'],
                             'min_qty' => $trP['price_qty']
-                        ),
+                        ],
                         false,
                         $tieredPricesElem
                     );
@@ -1399,14 +1437,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         }
                         $this->createChild(
                             'tiered_price',
-                            array(
+                            [
                                 'cust_group' => array_key_exists($trP['cust_group'], $this->_customersGroups) ?
                                     $this->_customersGroups[$trP->getCustomerGroupId()] : $trP->getCustomerGroupId(),
                                 'cust_group_id' => $trP->getCustomerGroupId(),
                                 'price' => $trP->getValue(),
                                 'min_qty' => $trP->getQty(),
                                 'max_price' => $max_price
-                            ),
+                            ],
                             false,
                             $tieredPricesElem
                         );
@@ -1426,7 +1464,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $min_price = (float)$finalPrice;
         $max_price = 0;
         $compare_at_price = 0;
-        foreach($product->getTypeInstance()->getUsedProducts($product) as $childProduct) {
+        foreach ($product->getTypeInstance()->getUsedProducts($product) as $childProduct) {
             $childPrice = (float)$childProduct->getPriceInfo()->getPrice('final_price')->getValue();
 
             if ($childPrice < $min_price) {
@@ -1447,10 +1485,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $min_price = 0;
         }
 
-        $price_range = array(
+        $price_range = [
             'price_min' => $min_price,
             'price_max' => $max_price
-        );
+        ];
 
         if ($compare_at_price > 0) {
             $price_range['compare_at_price'] = $compare_at_price;
@@ -1490,10 +1528,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected function renderProduct(
         $product,
-        $orderCount=array(),
-        $action='update',
-        $updatedate=0,
-        $storeId=null
+        $orderCount = [],
+        $action = 'update',
+        $updatedate = 0,
+        $storeId = null
     ) {
         try {
             $product->getTypeInstance()->setStoreFilter($this->storeManager->getStore(), $product);
@@ -1506,7 +1544,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 . 'catalog/product' . $imagePath;
 
             $finalPrice = $this->getProductFinalPrice($product);
-            $priceRange = array('price_min' => 0, 'price_max' => 0);
+            $priceRange = ['price_min' => 0, 'price_max' => 0];
 
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
                 $priceRange = $this->generatePriceRange($product, $finalPrice);
@@ -1516,7 +1554,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $specialToDate = $product->getSpecialToDate();
             $specialPrice = $product->getSpecialPrice();
             $nowDateGmt = strtotime('now');
-            if (!is_null($specialPrice) && $specialPrice != false) {
+            if (!is_null($specialPrice) && $specialPrice != false && $action != 'getbyid') {
                 $this->scheduleDistantUpdate($specialFromDate, $specialToDate, $nowDateGmt, $product);
             }
 
@@ -1529,10 +1567,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             if ($product->getTypeId() == Grouped::TYPE_CODE) {
-                $priceRange = array(
+                $priceRange = [
                     'price_min' => $product->getMinPrice(),
                     'price_max' => $product->getMaxPrice()
-                );
+                ];
                 if ($finalPrice == 0) {
                     $finalPrice = $priceRange['price_min'];
                 }
@@ -1588,32 +1626,56 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 } else {
                     $xmlAttributes['price_compare_at_price'] = $msrp;
                 }
-            } else if ($product->getTypeId() == Configurable::TYPE_CODE && array_key_exists('compare_at_price', $priceRange)) {
+            } elseif ($product->getTypeId() == Configurable::TYPE_CODE && array_key_exists('compare_at_price', $priceRange)) {
                 $xmlAttributes['price_compare_at_price'] = $priceRange['compare_at_price'];
             }
 
             $productElem = $this->createChild('product', $xmlAttributes, false, $this->xmlGenerator->getSimpleXml());
 
-            $this->createChild('description', false,
-                strval($product->getDescription()), $productElem);
+            $this->createChild(
+                'description',
+                false,
+                strval($product->getDescription()),
+                $productElem
+            );
 
-            $this->createChild('short', false,
-                strval($product->getShortDescription()), $productElem);
+            $this->createChild(
+                'short',
+                false,
+                strval($product->getShortDescription()),
+                $productElem
+            );
 
-            $this->createChild('name', false,
-                strval($product->getName()), $productElem);
+            $this->createChild(
+                'name',
+                false,
+                strval($product->getName()),
+                $productElem
+            );
 
-            $this->createChild('sku', false,
-                strval($product->getSku()), $productElem);
+            $this->createChild(
+                'sku',
+                false,
+                strval($product->getSku()),
+                $productElem
+            );
 
             $ratingSummary = $product->getRatingSummary();
 
             if ($ratingSummary) {
-                $this->createChild('review', false,
-                    intval($ratingSummary->getRatingSummary()), $productElem);
+                $this->createChild(
+                    'review',
+                    false,
+                    intval($ratingSummary->getRatingSummary()),
+                    $productElem
+                );
 
-                $this->createChild('review_count', false,
-                    intval($ratingSummary->getReviewsCount()), $productElem);
+                $this->createChild(
+                    'review_count',
+                    false,
+                    intval($ratingSummary->getReviewsCount()),
+                    $productElem
+                );
             }
 
             $this->createChild('purchase_popularity', false, intval($purchasePopularity), $productElem);
@@ -1621,19 +1683,30 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $_isEnabled = $this->_getProductEnabledString($product);
             $this->createChild('product_status', false, $_isEnabled, $productElem);
 
-            $this->createChild('newfrom', false,
-                $this->dateTime->timestamp($product->getNewsFromDate()), $productElem
+            $this->createChild(
+                'newfrom',
+                false,
+                $this->dateTime->timestamp($product->getNewsFromDate()),
+                $productElem
             );
-            $this->createChild('creation_date', false,
-                $this->dateTime->timestamp($product->getCreatedAt()), $productElem);
-            $this->createChild('updated_date', false,
-                $this->dateTime->timestamp($product->getUpdatedAt()), $productElem);
+            $this->createChild(
+                'creation_date',
+                false,
+                $this->dateTime->timestamp($product->getCreatedAt()),
+                $productElem
+            );
+            $this->createChild(
+                'updated_date',
+                false,
+                $this->dateTime->timestamp($product->getUpdatedAt()),
+                $productElem
+            );
 
             if ($this->helper->canUseProductAttributes()) {
                 $attributeSetId = $product->getAttributeSetId();
                 $this->getAttributesSetCachedById($attributeSetId);
                 if (!array_key_exists($attributeSetId, $this->attributesSetsCache)) {
-                    $this->attributesSetsCache[$attributeSetId] = array();
+                    $this->attributesSetsCache[$attributeSetId] = [];
                     $setAttributes = $this->productAttributeManagementInterface->getAttributes(
                         \Magento\Catalog\Api\Data\ProductAttributeInterface::ENTITY_TYPE_CODE,
                         $attributeSetId
@@ -1650,37 +1723,68 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
-                $this->createChild('product_parents', false,
-                    implode(',', $this->getProductParentIds($product)), $productElem);
+                $this->createChild(
+                    'product_parents',
+                    false,
+                    implode(',', $this->getProductParentIds($product)),
+                    $productElem
+                );
             }
 
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
-                $this->createChild('simpleproducts', false,
-                    implode(',', $this->getConfigurableChildrenIds($product)), $productElem);
+                $this->createChild(
+                    'simpleproducts',
+                    false,
+                    implode(',', $this->getConfigurableChildrenIds($product)),
+                    $productElem
+                );
 
                 $this->renderProductVariantXml($product, $productElem);
             }
 
             $cats_data = $this->getCategoryPathsByProduct($product);
-            $this->createChild('categories', false,
-                implode(';', $cats_data[0]), $productElem);
+            $this->createChild(
+                'categories',
+                false,
+                implode(';', $cats_data[0]),
+                $productElem
+            );
 
             $attributeElem = $this->createChild('attribute', [
                 'is_filterable' => 0,
                 'name' => 'category_names'
             ], false, $productElem);
-            $this->createChild('attribute_values', false,
+            $this->createChild(
+                'attribute_values',
+                false,
                 implode(',', $cats_data[1]),
-                $attributeElem);
-            $this->createChild('attribute_label', false,
-                'category_names', $attributeElem);
+                $attributeElem
+            );
+            $this->createChild(
+                'attribute_label',
+                false,
+                'category_names',
+                $attributeElem
+            );
 
-            $this->createChild('meta_title', false,
-                strval($product->getMetaTitle()), $productElem);
-            $this->createChild('meta_description', false,
-                strval($product->getMetaDescription()), $productElem);
-            $this->createChild('meta_keywords', false,
-                strval($product->getMetaKeyword()), $productElem);
+            $this->createChild(
+                'meta_title',
+                false,
+                strval($product->getMetaTitle()),
+                $productElem
+            );
+            $this->createChild(
+                'meta_description',
+                false,
+                strval($product->getMetaDescription()),
+                $productElem
+            );
+            $this->createChild(
+                'meta_keywords',
+                false,
+                strval($product->getMetaKeyword()),
+                $productElem
+            );
 
             $this->renderTieredPrices($product, $productElem);
 
@@ -1700,7 +1804,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $childProductCollection = $product->getTypeInstance()
             ->getAssociatedProducts($product);
-        $childSkus = array();
+        $childSkus = [];
         foreach ($childProductCollection as $childProduct) {
             if ($childProduct->getTypeId() == Configurable::TYPE_CODE) {
                 $configChildren = $this->getConfigurableChildren($childProduct);
@@ -1716,11 +1820,18 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'is_filterable' => 0,
                 'name' => 'configurable_simple_skus'
             ], false, $productElem);
-            $this->createChild('attribute_values', false,
+            $this->createChild(
+                'attribute_values',
+                false,
                 implode(',', $childSkus),
-                $attributeElem);
-            $this->createChild('attribute_label', false,
-                'configurable_simple_skus', $attributeElem);
+                $attributeElem
+            );
+            $this->createChild(
+                'attribute_label',
+                false,
+                'configurable_simple_skus',
+                $attributeElem
+            );
         }
     }
 
@@ -1736,9 +1847,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $specialFromDateGmt = null;
         if ($specialFromDate != null) {
             $localDate = new \DateTime($specialFromDate, new \DateTimeZone(
-                    $this->helper->getTimezone($this->getStoreId())
-                )
-            );
+                $this->helper->getTimezone($this->getStoreId())
+            ));
             $specialFromDateGmt = $localDate->getTimestamp();
         }
         if ($specialFromDateGmt && $specialFromDateGmt > $nowDateGmt) {
@@ -1749,11 +1859,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $specialFromDateGmt,
                 $product->getSku()
             );
-        } else if ($specialToDate != null) {
+        } elseif ($specialToDate != null) {
             $localDate = new \DateTime($specialToDate, new \DateTimeZone(
-                    $this->helper->getTimezone($this->getStoreId())
-                )
-            );
+                $this->helper->getTimezone($this->getStoreId())
+            ));
             $hour = $localDate->format('H');
             $mins = $localDate->format('i');
             if ($hour == '00' && $mins == '00') {
@@ -1798,9 +1907,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->appendReviews();
 
-        $visibleProductIds = array();
+        $visibleProductIds = [];
         foreach ($productCollection as $product) {
-            $this->renderProduct($product, array(), $action);
+            $this->renderProduct($product, [], $action);
             $visibleProductIds[] = $product->getId();
         }
 
@@ -1840,8 +1949,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->createChild('id', false, $productId, $productElement);
             }
         }
-
-
     }
 
     /**
@@ -1849,7 +1956,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     private function changePriceIndexJoinType($productCollection)
     {
-        $updatedfromAndJoin = array();
+        $updatedfromAndJoin = [];
         $fromAndJoin = $productCollection->getSelect()->getPart('FROM');
         foreach ($fromAndJoin as $key => $index) {
             if ($key == 'price_index') {
@@ -1877,7 +1984,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             || !array_key_exists($attrValidKey, $this->attributesValuesCache[$action])) {
             $attrValueText = $product->getAttributeText($action);
             if (!array_key_exists($action, $this->attributesValuesCache)) {
-                $this->attributesValuesCache[$action] = array();
+                $this->attributesValuesCache[$action] = [];
             }
             $this->attributesValuesCache[$action][$attrValidKey] = $attrValueText;
             $attrValue = $attrValueText;

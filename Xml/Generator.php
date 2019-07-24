@@ -39,7 +39,7 @@ namespace Autocompleteplus\Autosuggest\Xml;
  * @license   Open Software License (OSL 3.0)*
  * @link      http://opensource.org/licenses/osl-3.0.php
  */
-class Generator  implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
+class Generator implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
 {
     protected $_xml;
 
@@ -47,11 +47,13 @@ class Generator  implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
 
     protected $_rootAttributes;
 
-    public function getRootElementName() {
+    public function getRootElementName()
+    {
         return $this->_rootElementName;
     }
 
-    public function setRootElementName($name) {
+    public function setRootElementName($name)
+    {
         $this->_rootElementName = $name;
         return $this;
     }
@@ -84,7 +86,8 @@ class Generator  implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
         return $this->_xml;
     }
 
-    public function generateXml() {
+    public function generateXml()
+    {
         $domDocument = new \DOMDocument('1.0');
         $domDocument->formatOutput = true;
         $simpleXmlToDom = dom_import_simplexml($this->getSimpleXml());
@@ -97,7 +100,8 @@ class Generator  implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
         return $output;
     }
 
-    public function createChild($childName, $childAttributes, $childValue = false, $parent = false) {
+    public function createChild($childName, $childAttributes, $childValue = false, $parent = false)
+    {
         $xml = $this->getSimpleXml();
 
         if ($parent !== false) {
@@ -106,7 +110,7 @@ class Generator  implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
 
         if ($childValue !== false) {
             $child = $xml->addChild($childName);
-            if ($child !== NULL) {
+            if ($child !== null) {
                 $node = dom_import_simplexml($child);
                 $doc = $node->ownerDocument;
                 $node->appendChild($doc->createCDATASection($childValue));

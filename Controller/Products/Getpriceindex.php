@@ -58,7 +58,13 @@ class Getpriceindex extends \Autocompleteplus\Autosuggest\Controller\Products
         $product_id = $this->getRequest()->getParam('id', 0);
 
 
-        $responseArr = $this->catalogReport->getPricesFromIndex($storeId, $customer_group, $count, $offset, $product_id);
+        $responseArr = $this->catalogReport->getPricesFromIndex(
+            $storeId,
+            $customer_group,
+            $count,
+            $offset,
+            $product_id
+        );
         return $result->setData($responseArr);
     }
 }

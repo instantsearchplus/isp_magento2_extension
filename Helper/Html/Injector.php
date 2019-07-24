@@ -23,6 +23,7 @@ namespace Autocompleteplus\Autosuggest\Helper\Html;
 use Magento\Framework\App;
 use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\Stdlib\CookieManagerInterface;
+
 /**
  * Injector
  *
@@ -176,7 +177,8 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
 
         if ($this->getCurrentProduct()) {
             $parameters = array_merge(
-                $parameters, [
+                $parameters,
+                [
                     'product_url' => $this->getCurrentProduct()->getProductUrl(),
                     'product_sku' => $this->getCurrentProduct()->getSku(),
                     'product_id' => $this->getCurrentProduct()->getId(),

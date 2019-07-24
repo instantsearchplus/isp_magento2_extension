@@ -21,7 +21,6 @@
 
 namespace Autocompleteplus\Autosuggest\Model;
 
-
 class Rule extends \Magento\CatalogRule\Model\Rule
 {
     /**
@@ -47,7 +46,7 @@ class Rule extends \Magento\CatalogRule\Model\Rule
             }
         }
         if ($results != null) {
-            $this->_productIds[$product->getId()] = array($results);
+            $this->_productIds[$product->getId()] = [$results];
         }
     }
 }

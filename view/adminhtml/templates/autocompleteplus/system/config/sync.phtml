@@ -1,14 +1,14 @@
 <script>
     function syncautocomplete() {
 
-        var url='<?php echo $block->escapeUrl($block->getSyncUrl()); ?>';
+        var url='<?=/* @noEscape */$block->escapeUrl($block->getSyncUrl());?>';
 
         window.open(url);
     }
 </script>
 <?php
 
-if($block->getIsReachable()==0){
+if ($block->getIsReachable()==0) {
     /* @noEscape */
     echo $block->getButtonHtml();
 } else {

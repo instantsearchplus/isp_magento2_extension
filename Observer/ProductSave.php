@@ -82,7 +82,6 @@ class ProductSave implements ObserverInterface
         $this->date = $date;
     }
 
-
     /**
      * Update products
      *
@@ -115,5 +114,4 @@ class ProductSave implements ObserverInterface
 
         return $this;
     }
-
 }

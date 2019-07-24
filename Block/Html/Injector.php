@@ -65,7 +65,7 @@ class Injector extends \Magento\Framework\View\Element\Template
      * @return string
      */
     public function getSrc()
-    {       
+    {
         return $this->injectorHelper->getSrc();
     }
 
