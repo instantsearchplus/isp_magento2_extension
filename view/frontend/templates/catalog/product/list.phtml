@@ -1,7 +1,11 @@
+<?php
+$uuid = $block->getApiUUID();
+$store_id = $block->getStoreId() ? $block->getStoreId() : 1;
+?>
 <script>
     var __isp_fulltext_search_obj = {
-        uuid: "<?= /* @noEscape */ $block->getApiUUID();?>",
-        store_id: <?= /* @noEscape */ $block->getStoreId();?>
+        uuid: "<?= /* @noEscape */ $uuid;?>",
+        store_id: <?= /* @noEscape */ $store_id;?>
     };
 </script>
 <?php $results = $block->getSearchResults(); ?>

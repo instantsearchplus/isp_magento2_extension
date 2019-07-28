@@ -65,6 +65,15 @@ class Checkslug extends \Autocompleteplus\Autosuggest\Controller\Landing
         $slug = $request->getParam('slug');
 
         try {
+            if ($this->helper->getSerpSlug($storeId)) {
+                $response = [
+                    'success' => false,
+                    'error' => 'The page with this identifier(slug) was already created'
+                ];
+                $result->setData($response);
+                return $result;
+            }
+
             $page = $this->pageFactory->create();
 
             if ($page->checkIdentifier($slug, $storeId)) {

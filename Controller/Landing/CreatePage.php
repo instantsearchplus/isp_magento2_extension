@@ -94,8 +94,8 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
             } else {
                 $page_content = sprintf(
                     '{{widget type="Autocompleteplus\Autosuggest\Block\Widget\LandingPage" is_serp="%s" slug="%s"}}',
-                    $slug,
-                    $is_serp
+                    $is_serp,
+                    $slug
                 );
                 $page->setTitle($title)
                 ->setIdentifier($slug)
@@ -108,6 +108,8 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
                 $response = [
                 'success' => true
                 ];
+                if ((int)$is_serp == 1)
+                    $this->helper->setSerpSlug($slug, 'stores', $storeId);
             }
         } catch (\Exception $e) {
             $response = [

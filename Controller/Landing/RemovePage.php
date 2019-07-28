@@ -97,6 +97,8 @@ class RemovePage extends \Autocompleteplus\Autosuggest\Controller\Landing
                 $response = [
                     'success' => true
                 ];
+
+                $this->helper->unsetSerpSlug('stores', $storeId);
             } else {
                 $response = [
                     'success' => false,

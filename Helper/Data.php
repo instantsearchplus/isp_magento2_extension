@@ -96,6 +96,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const PRODUCT_ATTRIBUTES = 'autosuggest/product/attributes';
     const PRODUCT_IMAGE_FIELD = 'autosuggest/product/image_field';
     const XML_PATH_SEARCH_LAYERED = 'autosuggest/search/layered';
+    const XML_PATH_SERP_SLUG = 'autosuggest/search/slug';
     const XML_FORM_URL_CONFIG = 'autosuggest/search/miniform_change';
     const XML_SMART_NAVIGATION_CONFIG = 'autosuggest/search/smart_navigation';
     const MODULE_NAME = 'Autocompleteplus_Autosuggest';
@@ -215,6 +216,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
+    public function getSerpSlug($scopeId = 0)
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_SERP_SLUG,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $scopeId
+        );
+    }
+
     public function setMiniFormRewrite($enabled, $scope = 'default', $scopeId = 0)
     {
         $this->resourceConfig->saveConfig(
@@ -242,6 +252,28 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->resourceConfig->saveConfig(
             self::XML_PATH_SEARCH_LAYERED,
             intval($enabled),
+            $scope,
+            $scopeId
+        );
+        return $this;
+    }
+
+
+    public function setSerpSlug($slug, $scope = 'default', $scopeId = 0)
+    {
+        $this->resourceConfig->saveConfig(
+            self::XML_PATH_SERP_SLUG,
+            $slug,
+            $scope,
+            $scopeId
+        );
+        return $this;
+    }
+
+    public function unsetSerpSlug($scope = 'default', $scopeId = 0)
+    {
+        $this->resourceConfig->deleteConfig(
+            self::XML_PATH_SERP_SLUG,
             $scope,
             $scopeId
         );

@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.11] - 2019-07-28 17:33:00
+### Added
+- Keep custom serp slug in config table 
+### Fixed
+- Frontend store id missing error
+- Custom css in smart navigation
+
 ## [4.7.10] - 2019-07-24 17:33:00
 ### Added
 - Optimized Mass Import method for third party extensions 
