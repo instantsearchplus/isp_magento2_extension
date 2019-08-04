@@ -261,7 +261,6 @@ class Webhook implements ObserverInterface
                     );
                 }
             }
-            //TODO: implement product removal when qty = 0 and show_out_of_stock_items = false
         }
         $cart_products_json = json_encode($cart_items);
         $parameters = [

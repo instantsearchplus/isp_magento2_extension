@@ -95,6 +95,10 @@ class ConfigProvider
             $this->catalogSession->unsIspProductId();
         }
 
+        if ($this->helper->getSerpSlug($storeId)) {
+            $result['isp_serp_slug'] = $this->helper->getSerpSlug($storeId);
+        }
+
         $result['sessionID'] = $this->getSessionId();
         $result['is_user_logged_in'] = ($this->isLoggedInUser() ? '1' : '0');
         $result['QuoteID'] = $this->cart->getQuote()->getId();

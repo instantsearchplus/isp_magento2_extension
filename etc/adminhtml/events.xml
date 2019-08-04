@@ -24,4 +24,7 @@
 	<event name="urapidflow_product_import_after_rtidx">
 		<observer name="batch_observer" instance="Autocompleteplus\Autosuggest\Observer\UrapidAfterProductSave" />
 	</event>
+    <event name="sales_order_place_after">
+        <observer name="new_ordercomment_observer_ordernew" instance="Autocompleteplus\Autosuggest\Observer\OrderCreate" />
+    </event>
 </config>

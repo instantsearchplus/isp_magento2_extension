@@ -92,10 +92,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $_storeTime;
 
+    protected $regionsCollection;
+
     const ENABLED = 'autosuggest/general/enabled';
     const PRODUCT_ATTRIBUTES = 'autosuggest/product/attributes';
     const PRODUCT_IMAGE_FIELD = 'autosuggest/product/image_field';
     const XML_PATH_SEARCH_LAYERED = 'autosuggest/search/layered';
+    const XML_PATH_COUNTRY_CODE = 'general/store_information/country_id';
+    const XML_PATH_REGION_CODE = 'general/store_information/region_id';
     const XML_PATH_SERP_SLUG = 'autosuggest/search/slug';
     const XML_FORM_URL_CONFIG = 'autosuggest/search/miniform_change';
     const XML_SMART_NAVIGATION_CONFIG = 'autosuggest/search/smart_navigation';
@@ -116,7 +120,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Autocompleteplus\Autosuggest\Model\Batch $batchModel,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
         \Magento\Framework\App\ProductMetadataInterface $productMetaData,
-        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezone
+        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezone,
+        \Magento\Directory\Model\Region $regionsCollection
     ) {
         $this->moduleList = $moduleList;
         $this->storeManager = $storeManager;
@@ -127,6 +132,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->batchModel = $batchModel;
         $this->date = $date;
         $this->productMetaData = $productMetaData;
+        $this->regionsCollection = $regionsCollection;
         $this->_storeTime = $timezone;
         parent::__construct($context);
     }
@@ -214,6 +220,27 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $scopeId
         );
+    }
+
+    public function getCountryCode($store_id = 0)
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_COUNTRY_CODE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $store_id
+        );
+    }
+
+    public function getRegionCodeById($store_id)
+    {
+        $region_id = $this->scopeConfig->getValue(
+            self::XML_PATH_REGION_CODE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $store_id
+        );
+        $regionData = $this->regionsCollection
+            ->load($region_id);
+        return $regionData->getName();
     }
 
     public function getSerpSlug($scopeId = 0)
@@ -318,8 +345,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
         if (count($storesArr) == 1) {
             try {
+                $store_data = array_pop($storesArr);
+//                $country_code = $this->getCountryCode($store_data['store_id']);
+//                if ($country_code) {
+//                    $store_data['country_code'] = $country_code;
+//                    $store_data['region_code'] = $this->getRegionCodeById($store_data['store_id']);
+//                }
+
                 $dataArr = [
-                    'stores' => array_pop($storesArr),
+                    'stores' => $store_data,
                     'version' => $version,
                 ];
             } catch (\Exception $e) {
@@ -341,6 +375,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 }
 
                 $storeComplete = $value;
+//                $country_code = $this->getCountryCode($storeComplete['store_id']);
+//                if ($country_code) {
+//                    $storeComplete['country_code'] = $country_code;
+//                    $storeComplete['region_code'] = $this->getRegionCodeById($storeComplete['store_id']);
+//                }
+
                 if (array_key_exists($key, $locales)) {
                     $storeComplete['lang'] = $locales[$key];
                 } else {
@@ -356,7 +396,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 if ($useStoreCode) {
                     $storeComplete['url'] = $storeUrls[0].$value['code'];
                 }
-
+                
                 $storeData[] = $storeComplete;
             }
             $dataArr = [
