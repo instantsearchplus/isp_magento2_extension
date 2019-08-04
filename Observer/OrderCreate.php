@@ -64,18 +64,21 @@ class OrderCreate implements ObserverInterface
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $order = $observer->getEvent()->getOrder();
-        $order_ids = $observer->getOrderIds();
-        $orderItems = $order->getItems();
-        $store_id = $this->_storeManager->getStore()->getId();
         $product_ids = [];
-        foreach ($orderItems as $orderItem) {
-            $productId = $orderItem->getProductId();
-            $product_ids[] = $productId;
-        }
-        if (count($product_ids) > 0) {
-            $this->batchesHelper->writeMassProductsUpdate($product_ids, $store_id);
-        }
+        try {
+                $order = $observer->getEvent()->getOrder();
+                $orderItems = $order->getItems();
+                $store_id = $this->_storeManager->getStore()->getId();
+                foreach ($orderItems as $orderItem) {
+                    $productId = $orderItem->getProductId();
+                    $product_ids[] = $productId;
+                }
+                if (count($product_ids) > 0) {
+                    $this->batchesHelper->writeMassProductsUpdate($product_ids, $store_id);
+                }
+            } catch (\Exception $e) {
+                $product_ids = [];
+            }
         return $this;
     }
 }
