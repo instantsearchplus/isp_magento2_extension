@@ -908,6 +908,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                                 ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
                             . 'catalog/product' . $imagePath;
 
+                        if (strpos($_baseImage, 'no_selection')) {
+                            $_baseImage = $this->image->init($child_product, 'product_thumbnail_image')->getUrl();
+                        }
+
                         if (method_exists($child_product, 'isSaleable')) {
                             $is_variant_sellable = ($child_product->isSaleable()) ? 1 : 0;
                         } else {

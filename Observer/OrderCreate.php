@@ -49,36 +49,39 @@ class OrderCreate implements ObserverInterface
     protected $dateTime;
     protected $batchesHelper;
     protected $_storeManager;
+    protected $logger;
 
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Batches $batchesHelper,
         \Magento\Framework\Stdlib\DateTime\DateTime $dateTime,
-        \Magento\CatalogInventory\Model\Stock\Item $stockFactory
+        \Magento\CatalogInventory\Model\Stock\Item $stockFactory,
+        \Psr\Log\LoggerInterface $logger
     ) {
         $this->batchesHelper = $batchesHelper;
         $this->dateTime = $dateTime;
         $this->stockFactory = $stockFactory;
         $this->_storeManager = $context->getStoreManager();
+        $this->logger = $logger;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $product_ids = [];
         try {
-                $order = $observer->getEvent()->getOrder();
-                $orderItems = $order->getItems();
-                $store_id = $this->_storeManager->getStore()->getId();
-                foreach ($orderItems as $orderItem) {
-                    $productId = $orderItem->getProductId();
-                    $product_ids[] = $productId;
-                }
-                if (count($product_ids) > 0) {
-                    $this->batchesHelper->writeMassProductsUpdate($product_ids, $store_id);
-                }
-            } catch (\Exception $e) {
-                $product_ids = [];
+            $order = $observer->getEvent()->getOrder();
+            $orderItems = $order->getItems();
+            $store_id = $this->_storeManager->getStore()->getId();
+            foreach ($orderItems as $orderItem) {
+                $productId = $orderItem->getProductId();
+                $product_ids[] = $productId;
             }
+            if (count($product_ids) > 0) {
+                $this->batchesHelper->writeMassProductsUpdate($product_ids, $store_id);
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning($e->getMessage());
+        }
         return $this;
     }
 }

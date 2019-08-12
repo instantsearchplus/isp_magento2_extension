@@ -58,7 +58,7 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
     protected $catalogSession;
     protected $product;
     protected $productModel;
-    
+
     /**
      * Store manager
      *
@@ -162,8 +162,9 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getAdditionalParameters()
     {
+        $storeId = $this->_storeManager->getStore()->getId();
         $parameters = [
-            'store' => $this->_storeManager->getStore()->getId(),
+            'store' => $storeId,
             'is_admin_user' =>  0,
             'sessionID' =>  $this->getSessionId(),
             'is_user_logged_in'=> ($this->isLoggedInUser() ? '1' : '0'),
@@ -198,11 +199,13 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getParameters()
     {
+        $storeId = $this->_storeManager->getStore()->getId();
         $parameters = [
             'mage_v' => $this->helper->getMagentoVersion(),
             'ext_v' => $this->helper->getVersion(),
-            'store' => $this->_storeManager->getStore()->getId(),
+            'store' => $storeId,
             'UUID' => $this->apiHelper->getApiUUID(),
+            'serp_slug' => $this->helper->getSerpSlug($storeId),
             'm2' => true
         ];
 
