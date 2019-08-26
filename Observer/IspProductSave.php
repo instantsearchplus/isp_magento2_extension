@@ -68,13 +68,14 @@ class IspProductSave implements ObserverInterface
 
     /**
      * ProductSave constructor.
-     * @param \Autocompleteplus\Autosuggest\Helper\Data $helper
-     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable
-     * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
+     *
+     * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
+     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable              $configurable
+     * @param \Psr\Log\LoggerInterface                                                  $logger
+     * @param \Magento\Framework\Stdlib\DateTime\DateTime                               $date
      * @param \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory
-     * @param \Magento\Catalog\Model\Product $productModel
-     * @param \Autocompleteplus\Autosuggest\Model\Batch $batchModel
+     * @param \Magento\Catalog\Model\Product                                            $productModel
+     * @param \Autocompleteplus\Autosuggest\Model\Batch                                 $batchModel
      */
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
@@ -89,7 +90,7 @@ class IspProductSave implements ObserverInterface
     /**
      * Update products
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param  \Magento\Framework\Event\Observer $observer
      * @return $this
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
@@ -100,8 +101,9 @@ class IspProductSave implements ObserverInterface
         $productId = $product->getId();
         $sku = $product->getSku();
         $dt = $this->date->gmtTimestamp();
-        if (is_array($origData) &&
-            array_key_exists('sku', $origData)) {
+        if (is_array($origData) 
+            && array_key_exists('sku', $origData)
+        ) {
             $oldSku = $origData['sku'];
             if ($sku != $oldSku) {
                 $this->helper->writeProductDeletion($oldSku, $productId, 0, $dt, $product);

@@ -56,14 +56,14 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
     /**
      * Add constructor.
      *
-     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-     * @param \Magento\Framework\App\Action\Context $context
+     * @param \Magento\Framework\Controller\Result\JsonFactory   $resultJsonFactory
+     * @param \Magento\Framework\App\Action\Context              $context
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Framework\Data\Form\FormKey\Validator $formKeyValidator
-     * @param CustomerCart $cart
-     * @param ProductRepositoryInterface $productRepository
+     * @param \Magento\Checkout\Model\Session                    $checkoutSession
+     * @param \Magento\Store\Model\StoreManagerInterface         $storeManager
+     * @param \Magento\Framework\Data\Form\FormKey\Validator     $formKeyValidator
+     * @param CustomerCart                                       $cart
+     * @param ProductRepositoryInterface                         $productRepository
      */
     public function __construct(
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
@@ -90,7 +90,7 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
     /**
      * Add product to shopping cart action
      *
-     * @return \Magento\Framework\Controller\Result\Redirect
+     * @return                                       \Magento\Framework\Controller\Result\Redirect
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function execute()

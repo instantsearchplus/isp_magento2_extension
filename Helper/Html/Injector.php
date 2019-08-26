@@ -68,16 +68,17 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Injector constructor.
+     *
      * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \Autocompleteplus\Autosuggest\Helper\Data $helper
-     * @param \Autocompleteplus\Autosuggest\Helper\Api $apiHelper
-     * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Checkout\Model\Cart $cart
-     * @param CookieManagerInterface $cookieManager
-     * @param DeploymentConfig $deploymentConfig
-     * @param \Magento\Customer\Model\Session $session
-     * @param \Magento\Catalog\Model\Session $catalogSession
-     * @param \Magento\Catalog\Model\Product $productModel
+     * @param \Autocompleteplus\Autosuggest\Helper\Data        $helper
+     * @param \Autocompleteplus\Autosuggest\Helper\Api         $apiHelper
+     * @param \Magento\Framework\Registry                      $registry
+     * @param \Magento\Checkout\Model\Cart                     $cart
+     * @param CookieManagerInterface                           $cookieManager
+     * @param DeploymentConfig                                 $deploymentConfig
+     * @param \Magento\Customer\Model\Session                  $session
+     * @param \Magento\Catalog\Model\Session                   $catalogSession
+     * @param \Magento\Catalog\Model\Product                   $productModel
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
@@ -124,7 +125,8 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getSessionId()
     {
-        return md5(
+        return hash(
+            'sha256',
             $this->cookieManager->getCookie(
                 self::SESSION_COOKIE_NAME
             ).$this->deploymentConfig->get(

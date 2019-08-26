@@ -222,6 +222,23 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
+    public function getStoreInformation($store_id)
+    {
+        $country_code = $this->getCountryCode($store_id);
+        $address = $this->getRegionCodeById($store_id);
+        $store_info = array();
+
+        if ($country_code) {
+            $store_info['country_code'] = $country_code;
+        }
+
+        if ($address) {
+            $store_info['address'] = rawurlencode($address);
+        }
+
+        return $store_info;
+    }
+
     public function getCountryCode($store_id = 0)
     {
         return $this->scopeConfig->getValue(
@@ -346,12 +363,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         if (count($storesArr) == 1) {
             try {
                 $store_data = array_pop($storesArr);
-//                $country_code = $this->getCountryCode($store_data['store_id']);
-//                if ($country_code) {
-//                    $store_data['country_code'] = $country_code;
-//                    $store_data['region_code'] = $this->getRegionCodeById($store_data['store_id']);
-//                }
-
                 $dataArr = [
                     'stores' => $store_data,
                     'version' => $version,
@@ -375,12 +386,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 }
 
                 $storeComplete = $value;
-//                $country_code = $this->getCountryCode($storeComplete['store_id']);
-//                if ($country_code) {
-//                    $storeComplete['country_code'] = $country_code;
-//                    $storeComplete['region_code'] = $this->getRegionCodeById($storeComplete['store_id']);
-//                }
-
                 if (array_key_exists($key, $locales)) {
                     $storeComplete['lang'] = $locales[$key];
                 } else {

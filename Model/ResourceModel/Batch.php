@@ -46,7 +46,7 @@ class Batch extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
      * Construct
      *
      * @param \Magento\Framework\Model\ResourceModel\Db\Context $context
-     * @param string $connectionName
+     * @param string                                            $connectionName
      */
     public function __construct(
         \Magento\Framework\Model\ResourceModel\Db\Context $context,
@@ -69,9 +69,9 @@ class Batch extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     /**
      * Load an object using 'identifier' field if there's no field specified and value is not numeric
      *
-     * @param \Magento\Framework\Model\AbstractModel $object
-     * @param mixed $value
-     * @param string $field
+     * @param  \Magento\Framework\Model\AbstractModel $object
+     * @param  mixed                                  $value
+     * @param  string                                 $field
      * @return $this
      */
     public function load(\Magento\Framework\Model\AbstractModel $object, $value, $field = null)

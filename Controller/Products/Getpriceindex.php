@@ -28,11 +28,12 @@ class Getpriceindex extends \Autocompleteplus\Autosuggest\Controller\Products
 
     /**
      * Getnumofproducts constructor.
-     * @param \Magento\Framework\App\Action\Context $context
+     *
+     * @param \Magento\Framework\App\Action\Context               $context
      * @param \Autocompleteplus\Autosuggest\Helper\Catalog\Report $catalogReport
-     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-     * @param \Autocompleteplus\Autosuggest\Helper\Api $apiHelper
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Magento\Framework\Controller\Result\JsonFactory    $resultJsonFactory
+     * @param \Autocompleteplus\Autosuggest\Helper\Api            $apiHelper
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface  $scopeConfig
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,

@@ -114,7 +114,8 @@ class ConfigProvider
 
     public function getSessionId()
     {
-        return md5(
+        return hash(
+            'sha256',
             $this->cookieManager->getCookie(
                 self::SESSION_COOKIE_NAME
             ).$this->deploymentConfig->get(

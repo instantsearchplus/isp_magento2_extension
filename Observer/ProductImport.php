@@ -106,15 +106,16 @@ class ProductImport implements ObserverInterface
 
     /**
      * ProductSave constructor.
-     * @param \Autocompleteplus\Autosuggest\Helper\Data $helper
-     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable
-     * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
+     *
+     * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
+     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable              $configurable
+     * @param \Magento\Framework\Stdlib\DateTime\DateTime                               $date
      * @param \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory
-     * @param \Magento\Catalog\Model\Product $productModel
-     * @param \Autocompleteplus\Autosuggest\Model\Batch $batchModel
-     * @param \Magento\Catalog\Api\ProductRepositoryInterface $productRepositoryInterface
-     * @param \Magento\Framework\Model\Context $context
-     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Catalog\Model\Product                                            $productModel
+     * @param \Autocompleteplus\Autosuggest\Model\Batch                                 $batchModel
+     * @param \Magento\Catalog\Api\ProductRepositoryInterface                           $productRepositoryInterface
+     * @param \Magento\Framework\Model\Context                                          $context
+     * @param \Magento\Framework\Registry                                               $registry
      */
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
@@ -134,7 +135,6 @@ class ProductImport implements ObserverInterface
         $this->configurable = $configurable;
 
         $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_import_debug.log');
-        //$this->logger = $context->getLogger();
         $this->logger = new \Zend\Log\Logger();
         $this->logger->addWriter($writer);
 
@@ -205,7 +205,7 @@ class ProductImport implements ObserverInterface
     /**
      * Update products
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param  \Magento\Framework\Event\Observer $observer
      * @return $this
      */
     public function execute(\Magento\Framework\Event\Observer $observer)

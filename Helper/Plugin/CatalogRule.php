@@ -49,10 +49,11 @@ class CatalogRule
 
     /**
      * CatalogRule constructor.
+     *
      * @param \Autocompleteplus\Autosuggest\Helper\Batches $helper
-     * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
-     * @param \Autocompleteplus\Autosuggest\Helper\Data $dataHelper
+     * @param \Psr\Log\LoggerInterface                     $logger
+     * @param \Magento\Framework\Stdlib\DateTime\DateTime  $date
+     * @param \Autocompleteplus\Autosuggest\Helper\Data    $dataHelper
      */
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
@@ -69,7 +70,7 @@ class CatalogRule
     }
 
     /**
-     * @param $rule
+     * @param  $rule
      * @return mixed
      */
     public function aroundSave($subject, $proceed, $rule)
@@ -87,16 +88,20 @@ class CatalogRule
         $dt = null;
 
         if ($rule->getFromDate()) {
-            $localFromDate = new \DateTime($rule->getFromDate(), new \DateTimeZone(
-                $this->dataHelper->getTimezone($this->storeManager->getStore()->getId())
-            ));
+            $localFromDate = new \DateTime(
+                $rule->getFromDate(), new \DateTimeZone(
+                    $this->dataHelper->getTimezone($this->storeManager->getStore()->getId())
+                )
+            );
             $dtFrom = $localFromDate->getTimestamp();
         }
 
         if (!$dt && $rule->getToDate()) {
-            $localToDate = new \DateTime($rule->getToDate(), new \DateTimeZone(
-                $this->dataHelper->getTimezone($this->storeManager->getStore()->getId())
-            ));
+            $localToDate = new \DateTime(
+                $rule->getToDate(), new \DateTimeZone(
+                    $this->dataHelper->getTimezone($this->storeManager->getStore()->getId())
+                )
+            );
             $dtTo = $localToDate->getTimestamp();
             $dtTo = strtotime("tomorrow", $dtTo);
         }

@@ -49,7 +49,7 @@ class Checkslug extends \Autocompleteplus\Autosuggest\Controller\Landing
         $uuid = $request->getParam('uuid');
         $storeId = $request->getParam('store_id');
         $result = $this->resultJsonFactory->create();
-
+        $is_serp = $request->getParam('is_serp', '0');
         if (!$this->isValid($uuid, $authKey)) {
             $response = [
                 'success' => false,
@@ -65,7 +65,7 @@ class Checkslug extends \Autocompleteplus\Autosuggest\Controller\Landing
         $slug = $request->getParam('slug');
 
         try {
-            if ($this->helper->getSerpSlug($storeId)) {
+            if ($is_serp && $this->helper->getSerpSlug($storeId)) {
                 $response = [
                     'success' => false,
                     'error' => 'The page with this identifier(slug) was already created'

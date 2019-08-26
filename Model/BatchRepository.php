@@ -95,14 +95,14 @@ class BatchRepository implements BatchRepositoryInterface
     protected $storeManager;
 
     /**
-     * @param ResourcePage $resource
-     * @param BatchFactory $batchFactory
-     * @param Data\BatchInterfaceFactory $dataBatchFactory
-     * @param BatchCollectionFactory $batchCollectionFactory
+     * @param ResourcePage                            $resource
+     * @param BatchFactory                            $batchFactory
+     * @param Data\BatchInterfaceFactory              $dataBatchFactory
+     * @param BatchCollectionFactory                  $batchCollectionFactory
      * @param Data\BatchSearchResultsInterfaceFactory $searchResultsFactory
-     * @param DataObjectHelper $dataObjectHelper
-     * @param DataObjectProcessor $dataObjectProcessor
-     * @param StoreManagerInterface $storeManager
+     * @param DataObjectHelper                        $dataObjectHelper
+     * @param DataObjectProcessor                     $dataObjectProcessor
+     * @param StoreManagerInterface                   $storeManager
      */
     public function __construct(
         ResourcePage $resource,
@@ -127,7 +127,7 @@ class BatchRepository implements BatchRepositoryInterface
     /**
      * Save Batch data
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\BatchInterface $batch
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\BatchInterface $batch
      * @return Page
      * @throws CouldNotSaveException
      */
@@ -146,7 +146,7 @@ class BatchRepository implements BatchRepositoryInterface
     /**
      * Load Batch data by given Batch Identity
      *
-     * @param string $pageId
+     * @param  string $pageId
      * @return Batch
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
@@ -165,8 +165,8 @@ class BatchRepository implements BatchRepositoryInterface
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @param \Magento\Framework\Api\SearchCriteriaInterface $criteria
-     * @return \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
+     * @param                                        \Magento\Framework\Api\SearchCriteriaInterface $criteria
+     * @return                                       \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
      */
     public function getList(\Magento\Framework\Api\SearchCriteriaInterface $criteria)
     {
@@ -187,7 +187,9 @@ class BatchRepository implements BatchRepositoryInterface
         $searchResults->setTotalCount($collection->getSize());
         $sortOrders = $criteria->getSortOrders();
         if ($sortOrders) {
-            /** @var SortOrder $sortOrder */
+            /**
+ * @var SortOrder $sortOrder 
+*/
             foreach ($sortOrders as $sortOrder) {
                 $collection->addOrder(
                     $sortOrder->getField(),
@@ -198,7 +200,9 @@ class BatchRepository implements BatchRepositoryInterface
         $collection->setCurPage($criteria->getCurrentPage());
         $collection->setPageSize($criteria->getPageSize());
         $pages = [];
-        /** @var Batch $batchModel */
+        /**
+ * @var Batch $batchModel 
+*/
         foreach ($collection as $batchModel) {
             $pageData = $this->dataPageFactory->create();
             $this->dataObjectHelper->populateWithArray(
@@ -218,7 +222,7 @@ class BatchRepository implements BatchRepositoryInterface
     /**
      * Delete Batch
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\BatchInterface $batch
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\BatchInterface $batch
      * @return bool
      * @throws CouldNotDeleteException
      */
@@ -235,7 +239,7 @@ class BatchRepository implements BatchRepositoryInterface
     /**
      * Delete Batch by given Batch Identity
      *
-     * @param string $batchId
+     * @param  string $batchId
      * @return bool
      * @throws CouldNotDeleteException
      * @throws NoSuchEntityException

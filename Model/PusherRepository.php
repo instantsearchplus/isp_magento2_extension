@@ -95,14 +95,14 @@ class PusherRepository implements PusherRepositoryInterface
     protected $storeManager;
 
     /**
-     * @param ResourcePage $resource
-     * @param PusherFactory $pusherFactory
-     * @param Data\PusherInterfaceFactory $dataPusherFactory
-     * @param PusherCollectionFactory $pusherCollectionFactory
+     * @param ResourcePage                             $resource
+     * @param PusherFactory                            $pusherFactory
+     * @param Data\PusherInterfaceFactory              $dataPusherFactory
+     * @param PusherCollectionFactory                  $pusherCollectionFactory
      * @param Data\PusherSearchResultsInterfaceFactory $searchResultsFactory
-     * @param DataObjectHelper $dataObjectHelper
-     * @param DataObjectProcessor $dataObjectProcessor
-     * @param StoreManagerInterface $storeManager
+     * @param DataObjectHelper                         $dataObjectHelper
+     * @param DataObjectProcessor                      $dataObjectProcessor
+     * @param StoreManagerInterface                    $storeManager
      */
     public function __construct(
         ResourcePage $resource,
@@ -127,7 +127,7 @@ class PusherRepository implements PusherRepositoryInterface
     /**
      * Save Pusher data
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\PusherInterface $pusher
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\PusherInterface $pusher
      * @return Page
      * @throws CouldNotSaveException
      */
@@ -146,7 +146,7 @@ class PusherRepository implements PusherRepositoryInterface
     /**
      * Load Pusher data by given Pusher Identity
      *
-     * @param string $pageId
+     * @param  string $pageId
      * @return Pusher
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
@@ -165,8 +165,8 @@ class PusherRepository implements PusherRepositoryInterface
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @param \Magento\Framework\Api\SearchCriteriaInterface $criteria
-     * @return \Autocompleteplus\Autosuggest\Model\ResourceModel\Pusher\Collection
+     * @param                                        \Magento\Framework\Api\SearchCriteriaInterface $criteria
+     * @return                                       \Autocompleteplus\Autosuggest\Model\ResourceModel\Pusher\Collection
      */
     public function getList(\Magento\Framework\Api\SearchCriteriaInterface $criteria)
     {
@@ -187,7 +187,9 @@ class PusherRepository implements PusherRepositoryInterface
         $searchResults->setTotalCount($collection->getSize());
         $sortOrders = $criteria->getSortOrders();
         if ($sortOrders) {
-            /** @var SortOrder $sortOrder */
+            /**
+ * @var SortOrder $sortOrder 
+*/
             foreach ($sortOrders as $sortOrder) {
                 $collection->addOrder(
                     $sortOrder->getField(),
@@ -198,7 +200,9 @@ class PusherRepository implements PusherRepositoryInterface
         $collection->setCurPage($criteria->getCurrentPage());
         $collection->setPageSize($criteria->getPageSize());
         $pages = [];
-        /** @var Pusher $pusherModel */
+        /**
+ * @var Pusher $pusherModel 
+*/
         foreach ($collection as $pusherModel) {
             $pageData = $this->dataPageFactory->create();
             $this->dataObjectHelper->populateWithArray(
@@ -218,7 +222,7 @@ class PusherRepository implements PusherRepositoryInterface
     /**
      * Delete Pusher
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\PusherInterface $pusher
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\PusherInterface $pusher
      * @return bool
      * @throws CouldNotDeleteException
      */
@@ -235,7 +239,7 @@ class PusherRepository implements PusherRepositoryInterface
     /**
      * Delete Pusher by given Pusher Identity
      *
-     * @param string $pusherId
+     * @param  string $pusherId
      * @return bool
      * @throws CouldNotDeleteException
      * @throws NoSuchEntityException

@@ -84,7 +84,11 @@ class Webhook implements ObserverInterface
     ) {
         $this->injector_helper = $injector_helper;
         $this->apiHelper = $api;
-        $this->logger = $context->getLogger();
+
+        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_orders_debug.log');
+        $this->logger = new \Zend\Log\Logger();
+        $this->logger->addWriter($writer);
+
         $this->_storeManager = $context->getStoreManager();
         $this->_session = $session;
         $this->orderRepository = $orderRepository;
@@ -181,7 +185,7 @@ class Webhook implements ObserverInterface
      * post_without_wait send http call and close the connection without waiting for response
      *
      * @param $url
-     * @param array $params
+     * @param array  $params
      * @param string $type
      *
      * @return void
@@ -231,7 +235,7 @@ class Webhook implements ObserverInterface
     /**
      * Create the webhook URI.
      *
-     * @return string
+     * @return array
      */
     protected function _getWebhookObjectUri($event_name, $observer)
     {
@@ -251,7 +255,8 @@ class Webhook implements ObserverInterface
             if ($this->cartProduct) {
                 $dt = $this->date->gmtTimestamp();
                 if (($this->cartProduct->getTypeId() == 'simple' && !$this->cartProduct->isSalable())
-                    || $this->cartProduct->getTypeId() == 'configurable') {
+                    || $this->cartProduct->getTypeId() == 'configurable'
+                ) {
                     $this->batchesHelper->writeProductUpdate(
                         $this->cartProduct,
                         $this->cartProduct->getId(),
@@ -288,14 +293,14 @@ class Webhook implements ObserverInterface
     public function getWebhookEventLabel($event_name)
     {
         switch ($event_name) {
-            case 'checkout_cart_add_product_complete':
-                return 'cart';
-            case 'controller_action_postdispatch_checkout_onepage_index':
-                return 'checkout';
-            case 'checkout_onepage_controller_success_action':
-                return 'success';
-            default:
-                return null;
+        case 'checkout_cart_add_product_complete':
+            return 'cart';
+        case 'controller_action_postdispatch_checkout_onepage_index':
+            return 'checkout';
+        case 'checkout_onepage_controller_success_action':
+            return 'success';
+        default:
+            return null;
         }
     }
 }

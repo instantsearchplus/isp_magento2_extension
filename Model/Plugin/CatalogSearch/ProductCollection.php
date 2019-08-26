@@ -74,16 +74,19 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
 
     /**
      * ProductCollection constructor.
+     *
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * retrieves config values
-     * @param \Autocompleteplus\Autosuggest\Helper\Data $helper
+     * @param \Autocompleteplus\Autosuggest\Helper\Data          $helper
      * retrieves ext version
-     * @param \Autocompleteplus\Autosuggest\Helper\Api $api
+     * @param \Autocompleteplus\Autosuggest\Helper\Api           $api
      * performs isp server calls
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager retrieves
-     * store info
-     * @param \Psr\Log\LoggerInterface $logger logs errors
-     * @param \Magento\Catalog\Model\Session $catalogSession session manager
+     * @param \Magento\Store\Model\StoreManagerInterface         $storeManager   retrieves
+     *                                                                           store
+     *                                                                           info
+
+     * @param \Psr\Log\LoggerInterface                           $logger         logs errors
+     * @param \Magento\Catalog\Model\Session                     $catalogSession session manager
      */
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -127,7 +130,7 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
      * SetSessionData set relevant sessions vars
      *
      * @param Object $responseData json decoded returned from isp
-     * @param string $query query
+     * @param string $query        query
      *
      * @return void
      */
@@ -164,8 +167,8 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
      *
      * @param \Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection $subject
      * original class that we override the function from
-     * @param Closure $proceed original function
-     * @param string $query parameter of the original function
+     * @param Closure                                                        $proceed original function
+     * @param string                                                         $query   parameter of the original function
      *
      * @return mixed
      */
@@ -266,9 +269,9 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
      *
      * @param \Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection $subject
      * original class that we override the function from
-     * @param Closure $proceed original function
-     * @param string $attribute sort attribute name
-     * @param string $dir order direction
+     * @param Closure                                                        $proceed   original function
+     * @param string                                                         $attribute sort attribute name
+     * @param string                                                         $dir       order direction
      *
      * @return mixed
      */

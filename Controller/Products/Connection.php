@@ -12,6 +12,7 @@ class Connection extends \Autocompleteplus\Autosuggest\Controller\Products
 
     /**
      * Eventually want this to be JSON
+     *
      * @return int|void
      */
     public function execute()

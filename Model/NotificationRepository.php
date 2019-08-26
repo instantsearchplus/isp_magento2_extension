@@ -95,14 +95,14 @@ class NotificationRepository implements NotificationRepositoryInterface
     protected $storeManager;
 
     /**
-     * @param ResourcePage $resource
-     * @param NotificationFactory $notificationFactory
-     * @param Data\NotificationInterfaceFactory $dataNotificationFactory
-     * @param NotificationCollectionFactory $notificationCollectionFactory
+     * @param ResourcePage                                   $resource
+     * @param NotificationFactory                            $notificationFactory
+     * @param Data\NotificationInterfaceFactory              $dataNotificationFactory
+     * @param NotificationCollectionFactory                  $notificationCollectionFactory
      * @param Data\NotificationSearchResultsInterfaceFactory $searchResultsFactory
-     * @param DataObjectHelper $dataObjectHelper
-     * @param DataObjectProcessor $dataObjectProcessor
-     * @param StoreManagerInterface $storeManager
+     * @param DataObjectHelper                               $dataObjectHelper
+     * @param DataObjectProcessor                            $dataObjectProcessor
+     * @param StoreManagerInterface                          $storeManager
      */
     public function __construct(
         ResourcePage $resource,
@@ -127,7 +127,7 @@ class NotificationRepository implements NotificationRepositoryInterface
     /**
      * Save Notification data
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface $notification
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface $notification
      * @return Page
      * @throws CouldNotSaveException
      */
@@ -146,7 +146,7 @@ class NotificationRepository implements NotificationRepositoryInterface
     /**
      * Load Notification data by given Notification Identity
      *
-     * @param string $pageId
+     * @param  string $pageId
      * @return Notification
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
@@ -165,8 +165,8 @@ class NotificationRepository implements NotificationRepositoryInterface
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @param \Magento\Framework\Api\SearchCriteriaInterface $criteria
-     * @return \Autocompleteplus\Autosuggest\Model\ResourceModel\Notification\Collection
+     * @param                                        \Magento\Framework\Api\SearchCriteriaInterface $criteria
+     * @return                                       \Autocompleteplus\Autosuggest\Model\ResourceModel\Notification\Collection
      */
     public function getList(\Magento\Framework\Api\SearchCriteriaInterface $criteria)
     {
@@ -187,7 +187,9 @@ class NotificationRepository implements NotificationRepositoryInterface
         $searchResults->setTotalCount($collection->getSize());
         $sortOrders = $criteria->getSortOrders();
         if ($sortOrders) {
-            /** @var SortOrder $sortOrder */
+            /**
+ * @var SortOrder $sortOrder 
+*/
             foreach ($sortOrders as $sortOrder) {
                 $collection->addOrder(
                     $sortOrder->getField(),
@@ -198,7 +200,9 @@ class NotificationRepository implements NotificationRepositoryInterface
         $collection->setCurPage($criteria->getCurrentPage());
         $collection->setPageSize($criteria->getPageSize());
         $pages = [];
-        /** @var Notification $notificationModel */
+        /**
+ * @var Notification $notificationModel 
+*/
         foreach ($collection as $notificationModel) {
             $pageData = $this->dataPageFactory->create();
             $this->dataObjectHelper->populateWithArray(
@@ -218,7 +222,7 @@ class NotificationRepository implements NotificationRepositoryInterface
     /**
      * Delete Notification
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface $notification
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface $notification
      * @return bool
      * @throws CouldNotDeleteException
      */
@@ -235,7 +239,7 @@ class NotificationRepository implements NotificationRepositoryInterface
     /**
      * Delete Notification by given Notification Identity
      *
-     * @param string $notificationId
+     * @param  string $notificationId
      * @return bool
      * @throws CouldNotDeleteException
      * @throws NoSuchEntityException

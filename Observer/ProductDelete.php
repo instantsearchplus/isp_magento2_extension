@@ -73,9 +73,9 @@ class ProductDelete implements ObserverInterface
     protected $date;
 
     /**
-     * @param \Autocompleteplus\Autosuggest\Helper\Data $helper
+     * @param \Autocompleteplus\Autosuggest\Helper\Data                    $helper
      * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable
-     * @param \Psr\Logger\LoggerInterface $logger
+     * @param \Psr\Logger\LoggerInterface                                  $logger
      */
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
@@ -92,7 +92,7 @@ class ProductDelete implements ObserverInterface
     /**
      * Mark product for deletion
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param  \Magento\Framework\Event\Observer $observer
      * @return $this
      */
     public function execute(\Magento\Framework\Event\Observer $observer)

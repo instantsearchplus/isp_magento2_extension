@@ -5,6 +5,7 @@ use Magento\Framework\Api\SearchResultsInterface;
 
 /**
  * Interface for Autosuggest Batch search results.
+ *
  * @api
  */
 interface NotificationSearchResultsInterface extends SearchResultsInterface
@@ -19,7 +20,7 @@ interface NotificationSearchResultsInterface extends SearchResultsInterface
     /**
      * Set notifications list.
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface[] $items
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface[] $items
      * @return $this
      */
     public function setItems(array $items);

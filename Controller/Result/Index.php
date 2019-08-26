@@ -30,11 +30,11 @@ class Index extends \Magento\CatalogSearch\Controller\Result\Index
     protected $helper;
     
     /**
-     * @param Context $context
-     * @param Session $catalogSession
+     * @param Context               $context
+     * @param Session               $catalogSession
      * @param StoreManagerInterface $storeManager
-     * @param QueryFactory $queryFactory
-     * @param Resolver $layerResolver
+     * @param QueryFactory          $queryFactory
+     * @param Resolver              $layerResolver
      */
     public function __construct(
         Context $context,

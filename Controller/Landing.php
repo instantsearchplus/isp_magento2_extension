@@ -67,8 +67,9 @@ abstract class Landing extends \Magento\Framework\App\Action\Action
 
     public function isValid($uuid, $authKey)
     {
-        if ($this->apiHelper->getApiUUID() == $uuid &&
-            $this->apiHelper->getApiAuthenticationKey() == $authKey) {
+        if ($this->apiHelper->getApiUUID() == $uuid 
+            && $this->apiHelper->getApiAuthenticationKey() == $authKey
+        ) {
             return true;
         }
 

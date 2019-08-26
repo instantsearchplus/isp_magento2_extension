@@ -5,6 +5,7 @@ use Magento\Framework\Api\SearchResultsInterface;
 
 /**
  * Interface for Autosuggest Pusher search results.
+ *
  * @api
  */
 interface PusherSearchResultsInterface extends SearchResultsInterface
@@ -19,7 +20,7 @@ interface PusherSearchResultsInterface extends SearchResultsInterface
     /**
      * Set pusher list.
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\PusherInterface[] $items
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\PusherInterface[] $items
      * @return $this
      */
     public function setItems(array $items);

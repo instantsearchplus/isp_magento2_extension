@@ -22,11 +22,15 @@ class Checkinstall extends \Autocompleteplus\Autosuggest\Controller\Products
      */
     public function execute()
     {
-        /** @var \Magento\Framework\Controller\Result\Json $result */
+        /**
+ * @var \Magento\Framework\Controller\Result\Json $result 
+*/
         $result = $this->resultJsonFactory->create();
-        $result->setData([
+        $result->setData(
+            [
             'isInstalled'   =>  $this->helper->isInstalled()
-        ]);
+            ]
+        );
         return $result;
     }
 }

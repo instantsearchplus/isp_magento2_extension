@@ -98,18 +98,19 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
                     $slug
                 );
                 $page->setTitle($title)
-                ->setIdentifier($slug)
-                ->setIsActive(true)
-                ->setPageLayout('1column')
-                ->setStores([$storeId])
-                ->setContent($page_content)
-                ->save();
+                    ->setIdentifier($slug)
+                    ->setIsActive(true)
+                    ->setPageLayout('1column')
+                    ->setStores([$storeId])
+                    ->setContent($page_content)
+                    ->save();
                 $this->clearCache();
                 $response = [
                 'success' => true
                 ];
-                if ((int)$is_serp == 1)
+                if ((int)$is_serp == 1) {
                     $this->helper->setSerpSlug($slug, 'stores', $storeId);
+                }
             }
         } catch (\Exception $e) {
             $response = [

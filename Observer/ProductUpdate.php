@@ -87,15 +87,16 @@ class ProductUpdate implements ObserverInterface
 
     /**
      * ProductSave constructor.
-     * @param \Autocompleteplus\Autosuggest\Helper\Data $helper
-     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable
-     * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
+     *
+     * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
+     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable              $configurable
+     * @param \Magento\Framework\Stdlib\DateTime\DateTime                               $date
      * @param \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory
-     * @param \Magento\Catalog\Model\Product $productModel
-     * @param \Autocompleteplus\Autosuggest\Model\Batch $batchModel
-     * @param \Magento\Catalog\Api\ProductRepositoryInterface $productRepositoryInterface
-     * @param \Magento\Framework\Model\Context $context
-     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Catalog\Model\Product                                            $productModel
+     * @param \Autocompleteplus\Autosuggest\Model\Batch                                 $batchModel
+     * @param \Magento\Catalog\Api\ProductRepositoryInterface                           $productRepositoryInterface
+     * @param \Magento\Framework\Model\Context                                          $context
+     * @param \Magento\Framework\Registry                                               $registry
      */
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
@@ -131,7 +132,7 @@ class ProductUpdate implements ObserverInterface
     /**
      * Update products
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param  \Magento\Framework\Event\Observer $observer
      * @return $this
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
@@ -148,7 +149,8 @@ class ProductUpdate implements ObserverInterface
                     $sku = $product->getSku();
                     //recording disabled item as deleted
                     if (($product->getStatus() == '2' && !array_key_exists('status', $attributes_data))
-                        || (array_key_exists('status', $attributes_data) && $attributes_data['status'] == 2)) {
+                        || (array_key_exists('status', $attributes_data) && $attributes_data['status'] == 2)
+                    ) {
                         $this->helper->writeProductDeletion($sku, $productId, 0, $dt, $product);
                         continue;
                     }

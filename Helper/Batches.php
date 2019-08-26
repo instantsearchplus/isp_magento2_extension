@@ -75,10 +75,15 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $objectManager;
 
+    protected $_storeManager;
+
+    protected $pricePluginDisabled = false;
+
     const MULTIPLE_INSERT_SIZE = 200;
 
     public function __construct(
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Psr\Log\LoggerInterface $logger,
         \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
         \Magento\Catalog\Model\Product $productModel,
@@ -93,6 +98,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productModel = $productModel;
         $this->batchModel = $batchModel;
         $this->_resourceConnection = $resourceConnection;
+        $this->_storeManager = $storeManager;
         $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
     }
 
@@ -102,6 +108,16 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         $this->batchCollection = $batchCollection;
 
         return $this->batchCollection;
+    }
+
+    public function setPluginDisabled($disabled)
+    {
+        $this->pricePluginDisabled = $disabled;
+    }
+
+    public function getPluginDisabled()
+    {
+        return $this->pricePluginDisabled;
     }
 
     /**
@@ -125,6 +141,8 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->logger->critical($e);
                 $productStores = [$storeId];
             }
+            //preventing reindex plugin to run
+            $this->setPluginDisabled(true);
 
             $simpleProducts = [];
             if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
@@ -194,7 +212,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $sku
      * @param $productId
      * @param $storeId
-     * @param null $product
+     * @param null      $product
      */
     public function writeProductDeletion($sku, $productId, $storeId, $dt, $product = null)
     {
@@ -209,6 +227,8 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
             $this->logger->critical($e);
             $productStores = [$storeId];
         }
+        //preventing reindex plugin to run
+        $this->setPluginDisabled(true);
 
         $this->removeProductForEachStore($sku, $productId, $dt, $productStores);
     }
@@ -217,13 +237,15 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $sku
      * @param $productId
      * @param $storeId
-     * @param null $product
+     * @param null      $product
      */
     public function writeProductDeletionLight($sku, $productId, $storeId, $dt, $productStores = null)
     {
         if (!$productStores) {
             $productStores = [$storeId];
         }
+        //preventing reindex plugin to run
+        $this->setPluginDisabled(true);
 
         $this->removeProductForEachStore($sku, $productId, $dt, $productStores);
     }
@@ -269,7 +291,11 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $product_ids
      * @param $rows
      */
-    public function writeMassProductsUpdate($products_ids, $store_id) {
+    public function writeMassProductsUpdate($products_ids, $store_id)
+    {
+        //preventing reindex plugin to run
+        $this->setPluginDisabled(true);
+
         $connection = $this->_resourceConnection->getConnection();
         $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
         $counter = 0;
@@ -301,5 +327,28 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
             $connection->insertMultiple($table_name, $data);
             $this->logger->info('executed multiple insert of ' . count($data));
         }
+    }
+
+    public function getProductStoresById($product_ids)
+    {
+        if (!is_array($product_ids)) {
+            $products_id = array($product_ids);
+        }
+        $connection = $this->_resourceConnection->getConnection();
+        $table_name = $this->_resourceConnection->getTableName('catalog_product_website');
+
+        $sql = $connection->select()
+            ->from($table_name)
+            ->where(sprintf('%s.product_id IN (?)', $table_name), $product_ids);
+
+        $results = $connection->fetchAll($sql);
+        $storeIds = array();
+
+        foreach ($results as $row) {
+            $websiteStores = $this->_storeManager->getWebsite($row['website_id'])->getStoreIds();
+            $storeIds = array_merge($storeIds, $websiteStores);
+        }
+
+        return $storeIds;
     }
 }

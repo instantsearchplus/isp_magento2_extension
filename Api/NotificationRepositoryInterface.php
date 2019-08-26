@@ -47,7 +47,7 @@ interface NotificationRepositoryInterface
     /**
      * Save Notification.
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface $notification
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface $notification
      * @return \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -56,7 +56,7 @@ interface NotificationRepositoryInterface
     /**
      * Retrieve Notification.
      *
-     * @param int $notificationId
+     * @param  int $notificationId
      * @return \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -65,7 +65,7 @@ interface NotificationRepositoryInterface
     /**
      * Retrieve Notifications matching the specified criteria.
      *
-     * @param \Magento\Framework\Api\SearchCriteriaInterface $searchCriteria
+     * @param  \Magento\Framework\Api\SearchCriteriaInterface $searchCriteria
      * @return \Autocompleteplus\Autosuggest\Api\Data\NotificationSearchResultsInterface
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -74,7 +74,7 @@ interface NotificationRepositoryInterface
     /**
      * Delete Notification.
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface $notification
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\NotificationInterface $notification
      * @return bool true on success
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -83,7 +83,7 @@ interface NotificationRepositoryInterface
     /**
      * Delete Notification by ID.
      *
-     * @param int $notificationId
+     * @param  int $notificationId
      * @return bool true on success
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Magento\Framework\Exception\LocalizedException

@@ -57,7 +57,8 @@ class CatalogSearch extends \Magento\Search\Helper\Data
     
     /**
      * CatalogSearch constructor.
-     * @param Helper\Data $helper
+     *
+     * @param Helper\Data              $helper
      * @param \Psr\Log\LoggerInterface $logger
      */
     public function __construct(
@@ -80,7 +81,7 @@ class CatalogSearch extends \Magento\Search\Helper\Data
      * if enabled
      *
      * @param \Magento\Search\Helper\Data\Interceptor $subject
-     * @param \Closure $proceed
+     * @param \Closure                                $proceed
      *
      * @return string
      */

@@ -26,7 +26,7 @@ class Rule extends \Magento\CatalogRule\Model\Rule
     /**
      * Callback function for product matching
      *
-     * @param array $args
+     * @param  array $args
      * @return void
      */
     public function callbackValidateProduct($args)

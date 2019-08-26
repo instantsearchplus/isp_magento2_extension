@@ -70,8 +70,8 @@ class UpgradeData implements UpgradeDataInterface
         switch ($context->getVersion()) {
             // Always will be previous version of upgrade - not the "upgraded" version (ie: 1.0.0 -> 1.0.1 will result
             // in this switch statement receiving 1.0.0, and not 1.0.1).
-            case '4.0.7':
-                break;
+        case '4.0.7':
+            break;
         }
         $setup->endSetup();
     }

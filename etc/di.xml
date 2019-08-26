@@ -38,4 +38,8 @@
         <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Model\Plugin\Html\ConfigProvider"
                 sortOrder="1000"/>
     </type>
+    <type name="Magento\Catalog\Model\Indexer\Product\Price">
+        <plugin name="autosuggest_catalog_index_price" type="Autocompleteplus\Autosuggest\Model\Plugin\Catalog\Index\Price"
+                sortOrder="1000"/>
+    </type>
 </config>

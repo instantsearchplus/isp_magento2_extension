@@ -32,7 +32,8 @@ class Send extends \Autocompleteplus\Autosuggest\Controller\Products
 
     /**
      * Send constructor.
-     * @param \Magento\Framework\App\Action\Context $context
+     *
+     * @param \Magento\Framework\App\Action\Context                      $context
      * @param \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator
      */
     public function __construct(

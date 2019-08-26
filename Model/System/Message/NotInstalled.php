@@ -65,8 +65,8 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
 
     /**
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Magento\Framework\UrlInterface $urlBuilder
-     * @param \Autocompleteplus\Autosuggest\Helper\Api $helper
+     * @param \Magento\Framework\UrlInterface            $urlBuilder
+     * @param \Autocompleteplus\Autosuggest\Helper\Api   $helper
      */
     public function __construct(
         \Magento\Framework\AuthorizationInterface $authorization,
@@ -89,7 +89,7 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
      */
     public function getIdentity()
     {
-        return md5('AUTOSUGGEST_NOTINSTALLED_NOTIFICATION');
+        return hash('sha256', 'AUTOSUGGEST_NOTINSTALLED_NOTIFICATION');
     }
 
     public function checkEndpoint()
@@ -132,6 +132,7 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
 
     /**
      * Check whether notification is displayed
+     *
      * @return bool
      */
     public function isDisplayed()

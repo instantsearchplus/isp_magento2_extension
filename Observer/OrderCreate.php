@@ -55,14 +55,16 @@ class OrderCreate implements ObserverInterface
         \Magento\Framework\View\Element\Template\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Batches $batchesHelper,
         \Magento\Framework\Stdlib\DateTime\DateTime $dateTime,
-        \Magento\CatalogInventory\Model\Stock\Item $stockFactory,
-        \Psr\Log\LoggerInterface $logger
+        \Magento\CatalogInventory\Model\Stock\Item $stockFactory
     ) {
         $this->batchesHelper = $batchesHelper;
         $this->dateTime = $dateTime;
         $this->stockFactory = $stockFactory;
         $this->_storeManager = $context->getStoreManager();
-        $this->logger = $logger;
+
+        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_orders_debug.log');
+        $this->logger = new \Zend\Log\Logger();
+        $this->logger->addWriter($writer);
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)

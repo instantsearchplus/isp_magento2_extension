@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.16] - 2019-08-26 17:33:00
+### Added
+- Send store_info request
+- Price reindex plugin
+- Fit to code sniffer standards
+### Fixed
+- In get_index_price request EE support
+
 ## [4.7.13] - 2019-08-12 17:33:00
 ### Added
 - Fall back to thumbnail for variant image

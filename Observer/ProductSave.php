@@ -68,8 +68,9 @@ class ProductSave implements ObserverInterface
 
     /**
      * ProductSave constructor.
-     * @param \Autocompleteplus\Autosuggest\Helper\Data $helper
-     * @param \Psr\Log\LoggerInterface $logger
+     *
+     * @param \Autocompleteplus\Autosuggest\Helper\Data   $helper
+     * @param \Psr\Log\LoggerInterface                    $logger
      * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
      */
     public function __construct(
@@ -85,7 +86,7 @@ class ProductSave implements ObserverInterface
     /**
      * Update products
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param  \Magento\Framework\Event\Observer $observer
      * @return $this
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
@@ -96,8 +97,9 @@ class ProductSave implements ObserverInterface
         $productId = $product->getId();
         $sku = $product->getSku();
         $dt = $this->date->gmtTimestamp();
-        if (is_array($origData) &&
-            array_key_exists('sku', $origData)) {
+        if (is_array($origData) 
+            && array_key_exists('sku', $origData)
+        ) {
             $oldSku = $origData['sku'];
             if ($sku != $oldSku) {
                 $this->helper->writeProductDeletion($oldSku, $productId, 0, $dt, $product);

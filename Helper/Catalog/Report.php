@@ -161,18 +161,20 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
     public function getSecondarySearchableProductsCount()
     {
         $collection = $this->getEnabledProducts();
-        $collection->addAttributeToFilter('visibility', [
+        $collection->addAttributeToFilter(
+            'visibility', [
                 ['finset'  =>  3],
                 ['finset'  =>  4]
-            ]);
+            ]
+        );
         return $collection->getSize();
     }
 
     /**
-     * @param $store
-     * @param $customer_group
-     * @param $count
-     * @param $startInd
+     * @param  $store
+     * @param  $customer_group
+     * @param  $count
+     * @param  $startInd
      * @return array
      * @throws Varien_Exception
      */
@@ -191,13 +193,14 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
         $product_entity_table_name = $resource->getTableName('catalog_product_entity');
 
         $params = [];
-        $page = (int)ceil((float)$startInd/$count) ;
+        $page = (int)ceil((float)$startInd/$count);
         $store = $this->storeManager->getStore($store);
         $website_id = $store->getWebsiteId();
 
         $entity_id_col_name = 'entity_id';
+        $column_info = $connection->fetchAll(sprintf('SHOW COLUMNS FROM `%s` LIKE "%s";', $entity_int_table_name, $entity_id_col_name));
 
-        if ($vEdition == 'B2B') {
+        if (count($column_info) == 0) {
             $entity_id_col_name = 'row_id';
         }
 

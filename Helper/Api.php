@@ -59,8 +59,8 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     protected $storeManager;
 
     /**
-     * @param \Magento\Framework\App\Helper\Context $context
-     * @param \Magento\Config\Model\ResourceModel\Config $resourceConfig
+     * @param \Magento\Framework\App\Helper\Context              $context
+     * @param \Magento\Config\Model\ResourceModel\Config         $resourceConfig
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      */
     public function __construct(
@@ -149,7 +149,11 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     
     public function buildRequest($requestData = [], $timeout = 2)
     {
-        /** @var \Magento\Framework\HTTP\ZendClient $client */
+        /**
+* 
+         *
+ * @var \Magento\Framework\HTTP\ZendClient $client 
+*/
         $client = $this->httpClientFactory->create();
         $responseBody = [];
 
@@ -188,13 +192,15 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
             ScopeInterface::SCOPE_STORE
         );
         $this->setUrl($this->getApiEndpoint() . '/install_error');
-        $response = $this->buildRequest([
+        $response = $this->buildRequest(
+            [
             'site'  => $siteUrl,
             'msg'   => $message,
             'email' => $email,
             'multistore'    => $this->helper->getMultiStoreJson(),
             'f' => $this->helper->getVersion()
-        ]);
+            ]
+        );
         return $response;
     }
 
@@ -230,10 +236,12 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         );
 
         $this->setUrl($this->getApiEndpoint() . '/update_uuid');
-        $response = $this->buildRequest([
+        $response = $this->buildRequest(
+            [
             'store_id'  =>  $storeId,
             'site_url'  =>  $siteUrl
-        ]);
+            ]
+        );
         $responseData = json_decode($response->getBody());
         if ($this->validateUUID($responseData->uuid)) {
             $this->setApiUUID($responseData->uuid);

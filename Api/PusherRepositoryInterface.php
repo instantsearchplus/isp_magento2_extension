@@ -47,7 +47,7 @@ interface PusherRepositoryInterface
     /**
      * Save Pusher.
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\PusherInterface $pusher
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\PusherInterface $pusher
      * @return \Autocompleteplus\Autosuggest\Api\Data\PusherInterface
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -56,7 +56,7 @@ interface PusherRepositoryInterface
     /**
      * Retrieve Pusher.
      *
-     * @param int $pusherId
+     * @param  int $pusherId
      * @return \Autocompleteplus\Autosuggest\Api\Data\PusherInterface
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -65,7 +65,7 @@ interface PusherRepositoryInterface
     /**
      * Retrieve Pushers matching the specified criteria.
      *
-     * @param \Magento\Framework\Api\SearchCriteriaInterface $searchCriteria
+     * @param  \Magento\Framework\Api\SearchCriteriaInterface $searchCriteria
      * @return \Autocompleteplus\Autosuggest\Api\Data\PusherSearchResultsInterface
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -74,7 +74,7 @@ interface PusherRepositoryInterface
     /**
      * Delete Pusher.
      *
-     * @param \Autocompleteplus\Autosuggest\Api\Data\PusherInterface $pusher
+     * @param  \Autocompleteplus\Autosuggest\Api\Data\PusherInterface $pusher
      * @return bool true on success
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -83,7 +83,7 @@ interface PusherRepositoryInterface
     /**
      * Delete Pusher by ID.
      *
-     * @param int $pusherId
+     * @param  int $pusherId
      * @return bool true on success
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Magento\Framework\Exception\LocalizedException

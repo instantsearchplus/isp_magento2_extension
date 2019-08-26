@@ -37,9 +37,10 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
 
     /**
      * Sendupdated constructor.
-     * @param \Magento\Framework\App\Action\Context $context
+     *
+     * @param \Magento\Framework\App\Action\Context                      $context
      * @param \Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator $xmlGenerator
-     * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
+     * @param \Magento\Framework\Stdlib\DateTime\DateTime                $date
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
