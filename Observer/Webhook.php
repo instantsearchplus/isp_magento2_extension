@@ -177,7 +177,7 @@ class Webhook implements ObserverInterface
             }
 
         } catch (\Exception $e) {
-            $this->logger->critical($e);
+            $this->logger->err($e->getMessage());
         }
     }
 

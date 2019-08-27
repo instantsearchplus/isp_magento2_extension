@@ -82,7 +82,7 @@ class OrderCreate implements ObserverInterface
                 $this->batchesHelper->writeMassProductsUpdate($product_ids, $store_id);
             }
         } catch (\Exception $e) {
-            $this->logger->warning($e->getMessage());
+            $this->logger->warn($e->getMessage());
         }
         return $this;
     }

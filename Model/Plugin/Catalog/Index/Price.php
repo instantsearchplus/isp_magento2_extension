@@ -56,7 +56,7 @@ class Price
 
             $response = $this->apiHelper->buildRequest($params);
         } catch (\Exception $e) {
-            $this->logger->critical($e);
+            $this->logger->err($e->getMessage());
         }
         return $subject;
     }
@@ -88,7 +88,7 @@ class Price
                 $this->batchesHelper->writeMassProductsUpdate($product_ids, $store_id);
             }
         } catch (\Exception $e) {
-            $this->logger->critical($e);
+            $this->logger->critical($e->getMessage());
         }
         return $result;
     }

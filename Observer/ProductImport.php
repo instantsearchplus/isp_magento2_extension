@@ -241,7 +241,7 @@ class ProductImport implements ObserverInterface
 
                 } catch (\Exception $e) {
 
-                    $this->logger->critical($e);
+                    $this->logger->err($e->getMessage());
                     $productStores = [$storeId];
                 }
                 $parentProducts = $this->configurable->getParentIdsByChild($productId);
@@ -309,7 +309,7 @@ class ProductImport implements ObserverInterface
             }
 
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->err($e->getMessage());
         }
 
         return $this;

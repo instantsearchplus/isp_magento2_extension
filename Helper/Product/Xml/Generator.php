@@ -865,7 +865,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             }
         } catch (\Exception $e) {
-            $this->logger->warning($e->getMessage());
+            $this->logger->warn($e->getMessage());
         }
     }
 
@@ -1824,7 +1824,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->renderGroupedChildrenSkus($product, $productElem);
             }
         } catch (\Exception $e) {
-            $this->logger->warning($e->getMessage());
+            $this->logger->warn($e->getMessage());
         }
     }
 
