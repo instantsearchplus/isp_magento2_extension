@@ -57,6 +57,16 @@ class Getpriceindex extends \Autocompleteplus\Autosuggest\Controller\Products
         $count = $this->getRequest()->getParam('count', 1000);
         $offset = $this->getRequest()->getParam('offset', 0);
         $product_id = $this->getRequest()->getParam('id', 0);
+        $authKey = $this->getRequest()->getParam('authentication_key');
+        $uuid = $this->getRequest()->getParam('uuid');
+
+        if (!$this->isValid($uuid, $authKey)) {
+            $response = [
+                'status' => 'error: Authentication failed'
+            ];
+            $result->setData($response);
+            return $result;
+        }
 
 
         $responseArr = $this->catalogReport->getPricesFromIndex(
@@ -67,5 +77,16 @@ class Getpriceindex extends \Autocompleteplus\Autosuggest\Controller\Products
             $product_id
         );
         return $result->setData($responseArr);
+    }
+
+    public function isValid($uuid, $authKey)
+    {
+        if ($this->apiHelper->getApiUUID() == $uuid
+            && $this->apiHelper->getApiAuthenticationKey() == $authKey
+        ) {
+            return true;
+        }
+
+        return false;
     }
 }

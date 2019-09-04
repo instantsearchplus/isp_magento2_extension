@@ -314,7 +314,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         if (!$attributesSetsCache) {
             $this->attributesSetsCache = [];
         } else {
-            $this->attributesSetsCache = $this->serializer->unserialize($attributesSetsCache);
+            $this->attributesSetsCache = $this->base64JsonDecode($attributesSetsCache);
         }
         return $this->attributesSetsCache;
     }
@@ -326,7 +326,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         if (!$attributesSetCached) {
             $attributesSetCached = [];
         } else {
-            $attributesSetCached = $this->serializer->unserialize($attributesSetCached);
+            $attributesSetCached = $this->base64JsonDecode($attributesSetCached);
             $this->attributesSetsCache[$attrSetId] = $attributesSetCached;
         }
         return $attributesSetCached;
@@ -340,7 +340,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $storeId = $this->storeManager->getStore()->getId();
         foreach ($attributesSetsCache as $attrSetId => $setData) {
             $this->cache->save(
-                $this->serializer->serialize($setData),
+                $this->base64JsonEncode($setData),
                 self::AttributesSetsCache . '_' . $attrSetId . '_' . $storeId,
                 ["autocomplete_cache"],
                 900
