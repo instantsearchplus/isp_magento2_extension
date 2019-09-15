@@ -1,4 +1,4 @@
-# Instant Search + Magento 2
+# Instant Search + Magento 2  [![Latest Stable Version](https://poser.pugx.org/instantsearch/instantsearchplus/v/stable)](https://packagist.org/packages/instantsearch/instantsearchplus)
 Search That Boosts Conversion: Fastest Semantic Search, Search Filters, and Search Autocomplete
 
 Installation
