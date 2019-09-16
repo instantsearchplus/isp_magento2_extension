@@ -63,6 +63,7 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
         $data = json_decode($data_json);
 
         $slug = $request->getParam('slug');
+        $title = $request->getParam('title', '');
         $is_serp = $request->getParam('is_serp', '0');
 
         if (!$slug) {
@@ -82,7 +83,9 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
             $result->setData($response);
             return $result;
         }
-        $title = ucfirst($request->getParam('slug', $slug));
+        if ($title == '') {
+            $title = ucfirst($request->getParam('slug', $slug));
+        }
 
         try {
             $page = $this->pageFactory->create();

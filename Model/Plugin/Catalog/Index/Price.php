@@ -39,6 +39,11 @@ class Price
         $this->batchesHelper = $batchesHelper;
     }
 
+    /**
+     * afterExecuteFull pings isp server after full price reindex
+     * @param $subject
+     * @return mixed
+     */
     public function afterExecuteFull($subject)
     {
         try {
@@ -61,7 +66,15 @@ class Price
         return $subject;
     }
 
-    public function afterExecuteList($subject, $result, $args)
+    /**
+     * afterExecuteList reccords product updates into batches table
+     * to support third party plugins
+     *
+     * @param $subject
+     * @param $result
+     * @param mixed ...$args
+     */
+    public function afterExecuteList($subject, $result, ...$args)
     {
         try {
             $this->logger->info('pinging isp server after execute partial reindex');
@@ -69,6 +82,11 @@ class Price
                 $this->logger->info('exiting on plugin disabled flag');
                 return $result;
             }
+
+            if (!$args || !count($args)) {
+                return $result;
+            }
+
             $int_ids = [];
             $store_products = [];
             foreach ($args as $id) {

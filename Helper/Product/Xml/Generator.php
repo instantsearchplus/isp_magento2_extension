@@ -1331,7 +1331,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     $batch->setAction('ignore');
                 }
             } else {
-                if (!$send_oos && (!$stockItem || !boolval($stockItem->getIsInStock()))) {
+                if (!$send_oos && (!$stockItem || count($stockItem->getData()) == 0 || !boolval($stockItem->getIsInStock()))) {
                     $batch->setAction('remove');
                 } else {
                     $batch->setAction('ignore');
@@ -1969,7 +1969,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         $action = 'ignore';
                     }
                 } else {
-                    if ((!$stockItem || !boolval($stockItem->getIsInStock()))) {
+                    if ((!$stockItem || count($stockItem->getData()) == 0 ||  !boolval($stockItem->getIsInStock()))) {
                         $action = 'remove';
                     } else {
                         $action = 'ignore';
