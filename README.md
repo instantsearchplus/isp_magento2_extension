@@ -20,7 +20,7 @@ Installation
 Upgrade
 ------------  
 1. Run following commands  
-    a. ```composer require instantsearch/instantsearchplus:REPLACE_ME_WITH_THE_LAST_VERSION_NUMBER```  
+    a. ```composer require instantsearch/instantsearchplus: REPLACE_ME_WITH_THE_LAST_VERSION_NUMBER```  
     b. ```php bin/magento setup:upgrade```    
     c. ```php bin/magento cache:flush```   
 
