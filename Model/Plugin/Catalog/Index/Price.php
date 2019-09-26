@@ -106,7 +106,7 @@ class Price
                 $this->batchesHelper->writeMassProductsUpdate($product_ids, $store_id);
             }
         } catch (\Exception $e) {
-            $this->logger->critical($e->getMessage());
+            $this->logger->err($e->getMessage());
         }
         return $result;
     }

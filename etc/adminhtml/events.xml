@@ -6,6 +6,12 @@
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="catalog_category_save_after">
+        <observer name="category_save_after" instance="Autocompleteplus\Autosuggest\Observer\CategorySave"/>
+    </event>
+    <event name="catalog_category_save_before">
+        <observer name="category_save_before" instance="Autocompleteplus\Autosuggest\Observer\CategorySave"/>
+    </event>
     <event name="catalog_product_save_after">
         <observer name="batch_observer" instance="Autocompleteplus\Autosuggest\Observer\ProductSave" />
     </event>

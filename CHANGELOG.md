@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.20] - 2019-09-26 10:33:00
+### Fixed
+- Log print in reindex plugin
+### Added
+- Category save before/after event listener to transfer changes to reflect in smart navigation
+
 ## [4.7.19] - 2019-09-16 17:33:00
 ### Changed
 - Minimal php to 5.6
