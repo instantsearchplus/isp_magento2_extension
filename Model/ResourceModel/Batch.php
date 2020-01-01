@@ -63,7 +63,8 @@ class Batch extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
      */
     protected function _construct()
     {
-        $this->_init('autosuggest_batch', 'entity_id');
+        $this->_init('autosuggest_batch', 'batch_id');
+        $this->_isPkAutoIncrement = false;
     }
 
     /**

@@ -49,6 +49,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     const API_UUID = 'autosuggest/api/uuid';
     const API_ENDPOINT = 'autosuggest/api/endpoint';
     const API_ENDPOINT_URL = 'https://acp-magento.appspot.com';
+    const API_ENDPOINT_URL_UNSECURE = 'http://acp-magento.appspot.com';
 
     protected $curlFactory;
     protected $curlUrl;
@@ -90,6 +91,11 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     public function getApiEndpoint()
     {
         return self::API_ENDPOINT_URL;
+    }
+
+    public function getApiEndpointUnsecure()
+    {
+        return self::API_ENDPOINT_URL_UNSECURE;
     }
 
     public function setApiAuthenticationKey($authKey)
@@ -146,13 +152,13 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->requestType = $type;
     }
-    
+
     public function buildRequest($requestData = [], $timeout = 2)
     {
         /**
-* 
+*
          *
- * @var \Magento\Framework\HTTP\ZendClient $client 
+ * @var \Magento\Framework\HTTP\ZendClient $client
 */
         $client = $this->httpClientFactory->create();
         $responseBody = [];
@@ -204,9 +210,13 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         return $response;
     }
 
-    public function fetchProductListingData()
+    public function fetchProductListingData($secure=true)
     {
-        $this->setUrl($this->getApiEndpoint() . '/ma_load_search_page');
+        $endPoint = $this->getApiEndpoint();
+        if (!$secure) {
+            $endPoint = $this->getApiEndpointUnsecure();
+        }
+        $this->setUrl($endPoint . '/ma_load_search_page');
         $params = [
             'isp_platform' => 'magento',
             'r' => '002',
@@ -221,7 +231,8 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
                 return $responseData->html;
             }
         } catch (\Exception $e) {
-            return false;
+            if ($secure)
+                return $this->fetchProductListingData(false);
         }
 
         return false;

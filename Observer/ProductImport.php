@@ -151,14 +151,6 @@ class ProductImport implements ObserverInterface
         $this->getWebsitesStoreDict();
     }
 
-    public function getBatchCollection()
-    {
-        $batchCollection = $this->batchCollectionFactory->create();
-        $this->batchCollection = $batchCollection;
-
-        return $this->batchCollection;
-    }
-
     protected function getWebsitesStoreDict()
     {
         $connection = $this->_resourceConnection->getConnection();
@@ -190,18 +182,6 @@ class ProductImport implements ObserverInterface
         return $product_websites;
     }
 
-    protected function getAllBatches()
-    {
-        $batchCollection = $this->getBatchCollection();
-        $batchCollection->addFieldToSelect(['store_id', 'product_id']);
-        foreach ($batchCollection as $batch) {
-            if (!array_key_exists($batch['store_id'], $this->_product_batches_by_store)) {
-                $this->_product_batches_by_store[$batch['store_id']] = [];
-            }
-            $this->_product_batches_by_store[$batch['store_id']][] = $batch['product_id'];
-        }
-    }
-
     /**
      * Update products
      *
@@ -211,8 +191,6 @@ class ProductImport implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $storeId = 0;
-        $this->getAllBatches();
-        $to_insert = [];
         $to_update = [];
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
             $this->logger->info('enter into import observer with ' . count($bunch));
@@ -245,10 +223,23 @@ class ProductImport implements ObserverInterface
                     $productStores = [$storeId];
                 }
                 $parentProducts = $this->configurable->getParentIdsByChild($productId);
+                $dt = $this->date->gmtTimestamp();
                 foreach ($productStores as $productStoreId) {
-                    $this->pushIntoUpdateBuffers($productStoreId, $productId, $to_insert, $to_update);
-                    foreach ($parentProducts as $parrent) {
-                        $this->pushIntoUpdateBuffers($productStoreId, $parrent, $to_insert, $to_update);
+                    $to_update[] = [
+                        'product_id'=> $productId,
+                        'store_id'=> $productStoreId,
+                        'update_date'=> $dt,
+                        'action'=> 'update',
+                        'sku'=> 'ISP_NO_SKU'
+                    ];
+                    foreach ($parentProducts as $parrentId) {
+                        $to_update[] = [
+                            'product_id'=> $parrentId,
+                            'store_id'=> $productStoreId,
+                            'update_date'=> $dt,
+                            'action'=> 'update',
+                            'sku'=> 'ISP_NO_SKU'
+                        ];
                     }
                 }
             }
@@ -260,88 +251,11 @@ class ProductImport implements ObserverInterface
         $data = [];
 
         try {
-            foreach ($to_insert as $store => $productIds) {
-                foreach ($productIds as $p_id) {
-                    $counter++;
-                    $data[] = [
-                        'store_id' => (int)$store,
-                        'product_id' => (int)$p_id,
-                        'update_date' => (int)$this->date->gmtTimestamp() + $counter,
-                        'action' => 'update'
-                    ];
-                    if ($counter == self::MULTIPLE_INSERT_SIZE) {
-                        $connection->insertMultiple($table_name, $data);
-                        $this->logger->info('executed multiple insert of ' . count($data));
-                        $counter = 0;
-                        $data = [];
-                    }
-                }
-
-                if (count($data) > 0) {
-                    $connection->insertMultiple($table_name, $data);
-                    $this->logger->info('executed multiple insert of ' . count($data));
-                    $counter = 0;
-                    $data = [];
-                }
-            }
-
-            foreach ($to_update as $p_id) {
-                $counter++;
-                $data[] = (int)$p_id;
-                if ($counter == self::MULTIPLE_UPDATE_SIZE) {
-                    $bind = ['update_date' => $this->date->gmtTimestamp(), 'action' => 'update'];
-                    $where = [
-                        'product_id IN (?)' => $data,
-                    ];
-                    $connection->update($table_name, $bind, $where);
-                    $this->logger->info('executed multiple insert of ' . count($data));
-                    $counter = 0;
-                    $data = [];
-                }
-            }
-            if (count($data) > 0) {
-                $bind = ['update_date' => $this->date->gmtTimestamp(), 'action' => 'update'];
-                $where = [
-                    'product_id IN (?)' => $data,
-                ];
-                $connection->update($table_name, $bind, $where);
-                $this->logger->info('executed multiple insert of ' . count($data));
-            }
-
+            $connection->insertOnDuplicate($table_name, $to_update);
         } catch (\Exception $e) {
             $this->logger->err($e->getMessage());
         }
 
         return $this;
-    }
-
-    /**
-     * @param $productStoreId
-     * @param $productId
-     * @param $to_insert
-     * @param $to_update
-     */
-    protected function pushIntoUpdateBuffers($productStoreId, $productId, &$to_insert, &$to_update)
-    {
-        if (!array_key_exists($productStoreId, $this->_product_batches_by_store)) {
-            if (!array_key_exists($productStoreId, $to_insert)) {
-                $to_insert[$productStoreId] = [];
-            }
-            if (!in_array($productId, $to_insert[$productStoreId])) {
-                $to_insert[$productStoreId][] = $productId;
-            }
-        } elseif (!in_array($productId, $this->_product_batches_by_store[$productStoreId])) {
-            if (!array_key_exists($productStoreId, $to_insert)) {
-                $to_insert[$productStoreId] = [];
-            } elseif (in_array($productId, $to_insert[$productStoreId])) {
-                return;
-            }
-            $to_insert[$productStoreId][] = $productId;
-        } else {
-            if (in_array($productId, $to_update)) {
-                return;
-            }
-            $to_update[] = $productId;
-        }
     }
 }

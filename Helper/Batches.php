@@ -148,58 +148,28 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
             if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
                 $simpleProducts = $this->configurable->getParentIdsByChild($product->getId());
             }
-
+            $connection = $this->_resourceConnection->getConnection();
+            $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
             foreach ($productStores as $productStore) {
-                $batches = $this->getBatchCollection()
-                    ->addFieldToFilter('product_id', $productId)
-                    ->addFieldToFilter('store_id', $productStore)
-                    ->setPageSize(1);
-
-                if ($batches->getSize() > 0) {
-                    $batch = $batches->getFirstItem();
-                    $batch->setUpdateDate($dt)
-                        ->setAction('update')
-                        ->setProductId($productId)
-                        ->setStoreId($productStore)
-                        ->save();
-                } else {
-                    $batch = $this->objectManager->create('\Autocompleteplus\Autosuggest\Model\Batch');
-                    $batch->setUpdateDate($dt)
-                        ->setAction('update')
-                        ->setProductId($productId)
-                        ->setStoreId($productStore)
-                        ->setSku($sku)
-                        ->save();
-                }
+                $data = [
+                    'product_id'=> $productId,
+                    'store_id'=> $productStore,
+                    'update_date'=> $dt,
+                    'action'=> 'update',
+                    'sku'=> 'ISP_NO_SKU'
+                ];
+                $connection->insertOnDuplicate($table_name, $data);
 
                 if (is_array($simpleProducts) && count($simpleProducts) > 0) {
                     foreach ($simpleProducts as $configurableProduct) {
-                        $batchCollection = $this->getBatchCollection();
-                        $batchCollection->addFieldToFilter(
-                            'product_id',
-                            $configurableProduct
-                        )
-                            ->addFieldToFilter('store_id', $productStore)
-                            ->setPageSize(1);
-
-                        if ($batchCollection->getSize() > 0) {
-                            $batch = $batchCollection->getFirstItem();
-                            if ($batch->getAction() !== 'remove') {
-                                $batch->setUpdateDate($dt)
-                                    ->setAction('update')
-                                    ->setProductId($configurableProduct)
-                                    ->setStoreId($productStore)
-                                    ->save();
-                            }
-                        } else {
-                            $batch = $this->objectManager->create('\Autocompleteplus\Autosuggest\Model\Batch');
-                            $batch->setUpdateDate($dt)
-                                ->setProductId($configurableProduct)
-                                ->setAction('update')
-                                ->setStoreId($productStore)
-                                ->setSku('ISP_NO_SKU')
-                                ->save();
-                        }
+                        $data = [
+                            'product_id'=> $configurableProduct,
+                            'store_id'=> $productStore,
+                            'update_date'=> $dt,
+                            'action'=> 'update',
+                            'sku'=> 'ISP_NO_SKU'
+                        ];
+                        $connection->insertOnDuplicate($table_name, $data);
                     }
                 }
             }
@@ -261,29 +231,17 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         if ($sku == null) {
             $sku = 'dummy_sku';
         }
-
+        $connection = $this->_resourceConnection->getConnection();
+        $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
         foreach ($productStores as $productStore) {
-            $batchCollection = $this->getBatchCollection();
-            $batchCollection->addFieldToFilter('product_id', $productId)
-                ->addFieldToFilter('store_id', $productStore)
-                ->setPageSize(1);
-
-            if ($batchCollection->getSize() > 0) {
-                $batch = $batchCollection->getFirstItem();
-                $batch->setUpdateDate($dt)
-                    ->setAction('remove')
-                    ->setProductId($productId)
-                    ->setStoreId($productStore)
-                    ->save();
-            } else {
-                $batch = $this->objectManager->create('\Autocompleteplus\Autosuggest\Model\Batch');
-                $batch->setUpdateDate($dt)
-                    ->setAction('remove')
-                    ->setProductId($productId)
-                    ->setStoreId($productStore)
-                    ->setSku($sku)
-                    ->save();
-            }
+            $data = [
+                'product_id'=> $productId,
+                'store_id'=> $productStore,
+                'update_date'=> $dt,
+                'action'=> 'remove',
+                'sku'=> $sku
+            ];
+            $connection->insertOnDuplicate($table_name, $data);
         }
     }
 

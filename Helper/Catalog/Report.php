@@ -182,17 +182,24 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $resource = $objectManager->get('Magento\Framework\App\ResourceConnection');
-        $productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
         $connection = $resource->getConnection();
-
-        $vEdition = $productMetadata->getEdition();
 
         $price_index_table_name = $resource->getTableName('catalog_product_index_price');
         $eav_table_name = $resource->getTableName('eav_attribute');
         $entity_int_table_name = $resource->getTableName('catalog_product_entity_int');
-        $product_entity_table_name = $resource->getTableName('catalog_product_entity');
+        $cataloginventory_stock_status_table_name = $resource->getTableName('cataloginventory_stock_status');
+        $cataloginventory_stock_item = $resource->getTableName('cataloginventory_stock_item');
+        $catalog_product_super_link = $resource->getTableName('catalog_product_super_link');
 
-        $params = [];
+        $sql = $connection->select()
+            ->from($eav_table_name, 'attribute_id')
+            ->where(sprintf('%s.attribute_code = ?', $eav_table_name), 'visibility')
+            ->limitPage(1, 1);
+
+        $visibility_attribute_id = $connection->fetchOne($sql);
+
+        $connection->query("SET sql_mode='NO_ENGINE_SUBSTITUTION';");
+
         $page = (int)ceil((float)$startInd/$count);
         $store = $this->storeManager->getStore($store);
         $website_id = $store->getWebsiteId();
@@ -205,20 +212,12 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $fields = [
-            sprintf("%s.attribute_id AS attribute_id", $eav_table_name),
-            sprintf("%s.%s AS entity_id", $entity_int_table_name, $entity_id_col_name),
-            sprintf("%s.value AS value", $entity_int_table_name),
-            sprintf("%s.attribute_code AS attribute_code", $eav_table_name),
-            sprintf("%s.type_id AS type_id", $product_entity_table_name),
-            sprintf("%s.*", $price_index_table_name)
+            sprintf("%s.entity_id", $price_index_table_name),
+            sprintf("%s.final_price", $price_index_table_name)
         ];
 
         $sql = $connection->select()
-            ->from($eav_table_name, $fields)
-            ->join(
-                $entity_int_table_name,
-                sprintf("%s.attribute_id = %s.attribute_id", $eav_table_name, $entity_int_table_name)
-            )
+            ->from($entity_int_table_name, [])
             ->join(
                 $price_index_table_name,
                 sprintf(
@@ -226,37 +225,57 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
                     $entity_int_table_name,
                     $entity_id_col_name,
                     $price_index_table_name
-                )
+                ),
+                $fields
             )
             ->join(
-                $product_entity_table_name,
+                $cataloginventory_stock_item,
                 sprintf(
-                    "%s.entity_id = %s.entity_id",
-                    $product_entity_table_name,
+                    "%s.product_id = %s.entity_id",
+                    $cataloginventory_stock_item,
                     $price_index_table_name
-                )
+                ),
+                []
             )
-            ->where(sprintf('%s.attribute_code = ?', $eav_table_name), 'visibility')
+            ->joinLeft(
+                $catalog_product_super_link,
+                sprintf(
+                    "%s.entity_id = %s.parent_id",
+                    $price_index_table_name,
+                    $catalog_product_super_link
+                ),
+                []
+            )
+            ->joinLeft(
+                $cataloginventory_stock_status_table_name,
+                sprintf(
+                    "%s.product_id = %s.product_id",
+                    $cataloginventory_stock_status_table_name,
+                    $catalog_product_super_link
+                ),
+                []
+            )
+            ->where(sprintf('%s.attribute_id = ?', $entity_int_table_name), $visibility_attribute_id)
             ->where(sprintf('%s.value IN (?)', $entity_int_table_name), [3,4])
             ->where(sprintf('%s.customer_group_id = ?', $price_index_table_name), $customer_group)
             ->where(sprintf('%s.website_id = ?', $price_index_table_name), $website_id)
-            ->limitPage($page, $count);
+            ->where(new \Zend_Db_Expr(
+                sprintf("((%s.qty > 0) OR (%s.stock_status = 1))", $cataloginventory_stock_item, $cataloginventory_stock_status_table_name)
+            ));
 
         if ($product_id > 0) {
             $sql->where(sprintf("`%s`.`entity_id` = ?", $price_index_table_name), $product_id);
         }
+
+        $sql->group(sprintf('%s.entity_id', $price_index_table_name))
+            ->limitPage($page, $count);
 
         $results = $connection->fetchAll($sql);
         $result = [];
         foreach ($results as $res) {
             $result[$res['entity_id']] = [
                 'id' => $res['entity_id'],
-                'final_price' => $res['final_price'],
-                'min_price' => $res['min_price'],
-                'tier_price' => $res['tier_price'],
-                'website_id' => $res['website_id'],
-                'customer_group_id' => $res['customer_group_id'],
-                'type_id' => $res['type_id']
+                'final_price' => $res['final_price']
             ];
         }
         return $result;

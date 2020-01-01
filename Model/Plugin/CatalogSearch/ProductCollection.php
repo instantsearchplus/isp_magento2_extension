@@ -188,35 +188,7 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
                 ScopeInterface::SCOPE_STORE
             );
 
-            $url_domain = $this->api->getApiEndpoint().'/ma_search';
-
-            $url = $url_domain.'?q='.urlencode($query)
-                .'&p=1&products_per_page=1000&v='
-                .$extension_version.'&store_id='
-                .$storeId.'&UUID='.$uuid.'&h='.$site_url;
-
-            $this->api->setUrl($url);
-
-            $enabledFulltext = false;
-            $responseData = [];
-
-            try {
-                $response = $this->api->buildRequest();
-
-                $responseData = json_decode($response->getBody());
-                if ($responseData) {
-                    $enabledFulltext = array_key_exists('fulltext_disabled', $responseData) ?
-                        !$responseData->fulltext_disabled : false;
-                }
-
-                if ($enabledFulltext) {
-                    $enabledFulltext = ((array_key_exists('id_list', $responseData)) &&
-                        (array_key_exists('total_results', $responseData))) ? true : false;
-                }
-
-            } catch (\Exception $e) {
-                $this->logger->critical($e);
-            }
+            list($enabledFulltext, $responseData) = $this->getIdsOnly($query, $extension_version, $storeId, $uuid, $site_url);
 
             $this->clearSessionData();
 
@@ -343,5 +315,53 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
             unset($joinFroms['search_result']);
             $sql->setPart('FROM', $joinFroms);
         }
+    }
+
+    /**
+     * @param $query
+     * @param $extension_version
+     * @param $storeId
+     * @param $uuid
+     * @param $site_url
+     * @return array
+     */
+    protected function getIdsOnly($query, $extension_version, $storeId, $uuid, $site_url, $secure=true)
+    {
+        $endPoint = $this->api->getApiEndpoint();
+        if (!$secure) {
+            $endPoint = $this->api->getApiEndpointUnsecure();
+        }
+        $url_domain = $endPoint . '/ma_search';
+
+        $url = $url_domain . '?q=' . urlencode($query)
+            . '&p=1&products_per_page=1000&v='
+            . $extension_version . '&store_id='
+            . $storeId . '&UUID=' . $uuid . '&h=' . $site_url;
+
+        $this->api->setUrl($url);
+
+        $enabledFulltext = false;
+        $responseData = [];
+
+        try {
+            $response = $this->api->buildRequest();
+
+            $responseData = json_decode($response->getBody());
+            if ($responseData) {
+                $enabledFulltext = array_key_exists('fulltext_disabled', $responseData) ?
+                    !$responseData->fulltext_disabled : false;
+            }
+
+            if ($enabledFulltext) {
+                $enabledFulltext = ((array_key_exists('id_list', $responseData)) &&
+                    (array_key_exists('total_results', $responseData))) ? true : false;
+            }
+
+        } catch (\Exception $e) {
+            $this->logger->critical($e);
+            if ($secure)
+                return $this->getIdsOnly($query, $extension_version, $storeId, $uuid, $site_url, false);
+        }
+        return array($enabledFulltext, $responseData);
     }
 }

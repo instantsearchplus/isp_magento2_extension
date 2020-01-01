@@ -78,13 +78,6 @@ class InstallSchema implements InstallSchemaInterface
         $batchTable = $installer->getConnection()
             ->newTable($installer-> getTable('autosuggest_batch'))
             ->addColumn(
-                'entity_id',
-                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
-                null,
-                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
-                'Batch ID'
-            )
-            ->addColumn(
                 'product_id',
                 \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
                 null,
@@ -120,8 +113,14 @@ class InstallSchema implements InstallSchemaInterface
                 'Product SKU'
             )
             ->addIndex(
-                $installer->getIdxName('autosuggest_batch_index', ['product_id', 'store_id']),
-                ['product_id', 'store_id']
+                $setup->getIdxName('autosuggest_batch_index', ['product_id', 'store_id']),
+                ['product_id', 'store_id'],
+                ['type' => AdapterInterface::INDEX_TYPE_PRIMARY]
+            )
+            ->addIndex(
+                $setup->getIdxName('autosuggest_batch_update_dt_index', ['update_date', 'store_id']),
+                ['update_date', 'store_id'],
+                ['type' => AdapterInterface::INDEX_TYPE_INDEX]
             )
             ->setComment('InstantSearch+ Batches');
         $installer->getConnection()->createTable($batchTable);

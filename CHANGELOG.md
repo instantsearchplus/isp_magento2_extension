@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.22] - 2019-12-31 17:54:00
+### Fixed
+- Bundle products ajax add to cart
+- Deal with rules that will end not later then 1 month period
+- Fetch used_products with limited fields only
+- Skip not populated attributes
+- Take multiselect type attributes in cache
+- Use low level convertAndRound method
+- Change collection loading order to avoid duplicate collection loading
+- Optimize orders count sending
+- OPtimize price index request
+### Added
+- Fallback on http for getting search results
+- Optimized db index
+- InsertOnDuplicate optimization
+- Categories dictionary cache
+### Removed
+- Batch Id column
+- Newfrom field if it is empty
+- Product_parents field
+
 ## [4.7.20] - 2019-09-26 10:33:00
 ### Fixed
 - Log print in reindex plugin

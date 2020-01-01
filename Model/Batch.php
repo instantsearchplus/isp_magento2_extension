@@ -77,17 +77,7 @@ class Batch extends \Magento\Framework\Model\AbstractModel implements BatchInter
      */
     public function getIdentities()
     {
-        return [self::CACHE_TAG . '_' . $this->getId(), self::CACHE_TAG . '_' . $this->getProductId()];
-    }
-
-    /**
-     * Retrieve batch id
-     *
-     * @return int
-     */
-    public function getId()
-    {
-        return $this->getData(self::BATCH_ID);
+        return [self::CACHE_TAG . '_' . $this->getStoreId(), self::CACHE_TAG . '_' . $this->getProductId()];
     }
 
     public function getProductId()
@@ -113,12 +103,6 @@ class Batch extends \Magento\Framework\Model\AbstractModel implements BatchInter
     public function getSku()
     {
         return $this->getData(self::SKU);
-    }
-
-    public function setId($id)
-    {
-        $this->setData(self::BATCH_ID, $id);
-        return $this;
     }
 
     public function setProductId($productId)

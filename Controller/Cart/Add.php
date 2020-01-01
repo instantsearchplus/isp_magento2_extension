@@ -134,6 +134,16 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
                 return $result->setData($responseData);
             }
 
+            if ($product->getTypeId() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) {
+                $responseData = [
+                    'success' => false,
+                    'message' => 'Please specify product option(s).',
+                    'url' => $productUrl
+                ];
+                $this->messageManager->addErrorMessage('Please specify product option(s).');
+                return $result->setData($responseData);
+            }
+
             $this->cart->addProduct($product, $params);
             if (!empty($related)) {
                 $this->cart->addProductsByIds(explode(',', $related));
