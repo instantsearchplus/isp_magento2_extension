@@ -67,16 +67,7 @@ class ProductImport implements ObserverInterface
      */
     protected $date;
 
-    /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory
-     */
-    protected $batchCollectionFactory;
-
     protected $productModel;
-
-    protected $batchModel;
-
-    protected $productRepositoryInterface;
 
     protected $context;
 
@@ -110,10 +101,7 @@ class ProductImport implements ObserverInterface
      * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
      * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable              $configurable
      * @param \Magento\Framework\Stdlib\DateTime\DateTime                               $date
-     * @param \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory
      * @param \Magento\Catalog\Model\Product                                            $productModel
-     * @param \Autocompleteplus\Autosuggest\Model\Batch                                 $batchModel
-     * @param \Magento\Catalog\Api\ProductRepositoryInterface                           $productRepositoryInterface
      * @param \Magento\Framework\Model\Context                                          $context
      * @param \Magento\Framework\Registry                                               $registry
      */
@@ -121,10 +109,7 @@ class ProductImport implements ObserverInterface
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
         \Magento\Catalog\Model\Product $productModel,
-        \Autocompleteplus\Autosuggest\Model\Batch $batchModel,
-        \Magento\Catalog\Api\ProductRepositoryInterface $productRepositoryInterface,
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
         \Magento\Store\Model\StoreRepository $storeManager,
@@ -139,10 +124,7 @@ class ProductImport implements ObserverInterface
         $this->logger->addWriter($writer);
 
         $this->date = $date;
-        $this->batchCollectionFactory = $batchCollectionFactory;
         $this->productModel = $productModel;
-        $this->batchModel = $batchModel;
-        $this->productRepositoryInterface = $productRepositoryInterface;
         $this->context = $context;
         $this->registry = $registry;
         $this->_storeManager = $storeManager;

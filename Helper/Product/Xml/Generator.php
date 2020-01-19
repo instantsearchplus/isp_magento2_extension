@@ -958,7 +958,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     $simpleSkusArr = [];
                     $variantElem = $this->createChild('variants', false, false, $productElem);
                     $child_attributes_to_select = array('image', 'small_image', 'product_thumbnail_image', 'visibility', 'type_id', 'name');
-                    array_merge($child_attributes_to_select, $variant_codes);
+                    $child_attributes_to_select = array_merge($child_attributes_to_select, $variant_codes);
                     $configChildren = $this->getConfigurableChildren($product, $child_attributes_to_select, true);
                     foreach ($configChildren as $child_product) {
 

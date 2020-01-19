@@ -95,7 +95,6 @@ class CategorySave implements ObserverInterface
         $category = $observer->getEvent()->getCategory();
 
         $products = $this->createProductsCollection($category);
-        $product_ids = [];
         $store_products = [];
 
         foreach ($products as $product) {

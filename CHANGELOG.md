@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.23] - 2020-01-19 17:54:00
+### Fixed
+- Variants rendering
+- Products Import
+- Category Save
+
 ## [4.7.22] - 2019-12-31 17:54:00
 ### Fixed
 - Bundle products ajax add to cart

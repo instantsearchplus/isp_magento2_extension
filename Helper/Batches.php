@@ -257,13 +257,6 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         $connection = $this->_resourceConnection->getConnection();
         $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
         $counter = 0;
-        $where = [
-            'product_id IN (?)' => $products_ids,
-            'store_id = ?' => $store_id
-        ];
-
-        $connection->delete($table_name, $where);
-
         $data = [];
         foreach ($products_ids as $p_id) {
             $counter++;
@@ -274,15 +267,23 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                 'action' => 'update'
             ];
             if ($counter == self::MULTIPLE_INSERT_SIZE) {
-                $connection->insertMultiple($table_name, $data);
                 $this->logger->info('executed multiple insert of ' . count($data));
                 $counter = 0;
-                $data = [];
+                try {
+                    $connection->insertOnDuplicate($table_name, $data);
+                    $data = [];
+                } catch (\Exception $e) {
+                    $this->logger->err($e->getMessage());
+                }
             }
         }
 
         if (count($data) > 0) {
-            $connection->insertMultiple($table_name, $data);
+            try {
+                $connection->insertOnDuplicate($table_name, $data);
+            } catch (\Exception $e) {
+                $this->logger->err($e->getMessage());
+            }
             $this->logger->info('executed multiple insert of ' . count($data));
         }
     }

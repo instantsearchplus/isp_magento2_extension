@@ -66,15 +66,6 @@ class ProductUpdate implements ObserverInterface
      */
     protected $date;
 
-    /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory
-     */
-    protected $batchCollectionFactory;
-
-    protected $productModel;
-
-    protected $batchModel;
-
     protected $productRepositoryInterface;
 
     protected $context;
@@ -85,15 +76,14 @@ class ProductUpdate implements ObserverInterface
      */
     protected $batchCollection;
 
+    protected $_resourceConnection;
+
     /**
      * ProductSave constructor.
      *
      * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
      * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable              $configurable
      * @param \Magento\Framework\Stdlib\DateTime\DateTime                               $date
-     * @param \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory
-     * @param \Magento\Catalog\Model\Product                                            $productModel
-     * @param \Autocompleteplus\Autosuggest\Model\Batch                                 $batchModel
      * @param \Magento\Catalog\Api\ProductRepositoryInterface                           $productRepositoryInterface
      * @param \Magento\Framework\Model\Context                                          $context
      * @param \Magento\Framework\Registry                                               $registry
@@ -102,10 +92,8 @@ class ProductUpdate implements ObserverInterface
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory,
-        \Magento\Catalog\Model\Product $productModel,
-        \Autocompleteplus\Autosuggest\Model\Batch $batchModel,
         \Magento\Catalog\Api\ProductRepositoryInterface $productRepositoryInterface,
+        \Magento\Framework\App\ResourceConnection $resourceConnection,
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry
     ) {
@@ -113,20 +101,10 @@ class ProductUpdate implements ObserverInterface
         $this->configurable = $configurable;
         $this->logger = $context->getLogger();
         $this->date = $date;
-        $this->batchCollectionFactory = $batchCollectionFactory;
-        $this->productModel = $productModel;
-        $this->batchModel = $batchModel;
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->context = $context;
         $this->registry = $registry;
-    }
-
-    public function getBatchCollection()
-    {
-        $batchCollection = $this->batchCollectionFactory->create();
-        $this->batchCollection = $batchCollection;
-
-        return $this->batchCollection;
+        $this->_resourceConnection = $resourceConnection;
     }
 
     /**
@@ -140,6 +118,8 @@ class ProductUpdate implements ObserverInterface
         $bunch = $observer->getEvent()->getProductIds();
         $attributes_data = $observer->getEvent()->getAttributesData();
         $storeId = 0;
+        $data = [];
+        $counter = 0;
         foreach ($bunch as $productIdStr) {
             $productId = (int)$productIdStr;
             $dt = $this->date->gmtTimestamp();
@@ -168,57 +148,23 @@ class ProductUpdate implements ObserverInterface
                 }
 
                 foreach ($productStores as $productStore) {
-                    $batches = $this->getBatchCollection()
-                        ->addFieldToFilter('product_id', $productId)
-                        ->addFieldToFilter('store_id', $productStore)
-                        ->setPageSize(1);
-
-                    if ($batches->getSize() > 0) {
-                        $batch = $batches->getFirstItem();
-                        $batch->setUpdateDate($dt)
-                            ->setAction('update')
-                            ->setProductId($productId)
-                            ->setStoreId($productStore)
-                            ->save();
-                    } else {
-                        $batch = new \Autocompleteplus\Autosuggest\Model\Batch($this->context, $this->registry);
-                        $batch->setUpdateDate($dt)
-                            ->setAction('update')
-                            ->setProductId($productId)
-                            ->setStoreId($productStore)
-                            ->setSku($sku)
-                            ->save();
-                    }
+                    $counter++;
+                    $data[] = [
+                        'store_id' => (int)$productStore,
+                        'product_id' => (int)$productId,
+                        'update_date' => (int)$this->date->gmtTimestamp() + $counter,
+                        'action' => 'update'
+                    ];
 
                     if (is_array($simpleProducts) && count($simpleProducts) > 0) {
                         foreach ($simpleProducts as $configurableProduct) {
-                            $batchCollection = $this->getBatchCollection();
-                            $batchCollection->addFieldToFilter(
-                                'product_id',
-                                $configurableProduct
-                            )
-                                ->addFieldToFilter('store_id', $productStore)
-                                ->setPageSize(1);
-
-                            if ($batchCollection->getSize() > 0) {
-                                $batch = $batchCollection->getFirstItem();
-                                if ($batch->getAction() !== 'remove') {
-                                    $batch->setUpdateDate($dt)
-                                        ->setAction('update')
-                                        ->setProductId($configurableProduct)
-                                        ->setStoreId($productStore)
-                                        ->save();
-                                }
-                            } else {
-                                $batch = new \Autocompleteplus\Autosuggest\Model\Batch($this->context, $this->registry);
-
-                                $batch->setUpdateDate($dt)
-                                    ->setProductId($configurableProduct)
-                                    ->setAction('update')
-                                    ->setStoreId($productStore)
-                                    ->setSku('ISP_NO_SKU')
-                                    ->save();
-                            }
+                            $counter++;
+                            $data[] = [
+                                'store_id' => (int)$productStore,
+                                'product_id' => (int)$configurableProduct,
+                                'update_date' => (int)$this->date->gmtTimestamp() + $counter,
+                                'action' => 'update'
+                            ];
                         }
                     }
                 }
@@ -226,7 +172,9 @@ class ProductUpdate implements ObserverInterface
                 $this->logger->critical($e);
             }
         }
-
+        $connection = $this->_resourceConnection->getConnection();
+        $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
+        $connection->insertOnDuplicate($table_name, $data);
         return $this;
     }
 }

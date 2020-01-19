@@ -60,13 +60,13 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
         }
 
         $data_json = $request->getParam('data');
-        $data = json_decode($data_json);
+        $data = json_decode($data_json, true);
 
         $slug = $request->getParam('slug');
         $title = $request->getParam('title', '');
         $is_serp = $request->getParam('is_serp', '0');
 
-        if (!$slug) {
+        if (!$slug && (!$data || count($data) == 0)) {
             $response = [
                 'success' => false,
                 'error' => 'no slug found'
@@ -74,15 +74,38 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
             $result->setData($response);
             return $result;
         }
-        
+
+        if ($slug) {
+            $data[$slug] = $title;
+        }
+        $response = array();
+        foreach ($data as $slug => $title) {
+            $response = $this->createSinglePage($title, $response, $slug, $storeId, $is_serp);
+        }
+
+        $result->setData($response);
+        return $result;
+    }
+
+    /**
+     * @param $title
+     * @param $request
+     * @param $slug
+     * @param $storeId
+     * @param $is_serp
+     * @return array
+     */
+    protected function createSinglePage($title, $response, $slug, $storeId, $is_serp)
+    {
         if (strlen($slug) > 50) {
-            $response = [
+            $response[$slug] = [
                 'success' => false,
                 'error' => 'slug is not valid'
             ];
-            $result->setData($response);
-            return $result;
+            return $response;
         }
+
+        $request = $this->getRequest();
         if ($title == '') {
             $title = ucfirst($request->getParam('slug', $slug));
         }
@@ -90,7 +113,7 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
         try {
             $page = $this->pageFactory->create();
             if ($page->checkIdentifier($slug, $storeId)) {
-                $response = [
+                $response[$slug] = [
                     'success' => false,
                     'error' => 'The page with this identifier(slug) already exists'
                 ];
@@ -108,21 +131,19 @@ class CreatePage extends \Autocompleteplus\Autosuggest\Controller\Landing
                     ->setContent($page_content)
                     ->save();
                 $this->clearCache();
-                $response = [
-                'success' => true
+                $response[$slug] = [
+                    'success' => true
                 ];
                 if ((int)$is_serp == 1) {
                     $this->helper->setSerpSlug($slug, 'stores', $storeId);
                 }
             }
         } catch (\Exception $e) {
-            $response = [
-            'success' => false,
-            'error' => $e->getMessage()
+            $response[$slug] = [
+                'success' => false,
+                'error' => $e->getMessage()
             ];
         }
-
-        $result->setData($response);
-        return $result;
+        return $response;
     }
 }
