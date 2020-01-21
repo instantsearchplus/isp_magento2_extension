@@ -1560,7 +1560,15 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $pricesToCompare[] = (float)$product->getMinimalPrice();
         }
 
+        if ($product->getMaxPrice()) {
+            $pricesToCompare[] = (float)$product->getMaxPrice();
+        }
+
         foreach ($this->getConfigurableChildren($product, array('id', 'sku', 'type_id'), false) as $child) {
+            if ($child->getPrice() && $compare_at_price < $child->getPrice()) {
+                $compare_at_price = (float)$child->getPrice();
+            }
+
             if ($child->getFinalPrice()) {
                 $pricesToCompare[] = (float)$child->getFinalPrice();
             }
@@ -1570,22 +1578,19 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $min_price = min($pricesToCompare);
-        if ($min_price) {
-            $min_price = $this->priceCurrencyInterface->convertAndRound($min_price);
-        }
+        $min_price = $this->priceCurrencyInterface->convertAndRound($min_price);
+
+        $max_price = max($pricesToCompare);
+        $max_price = $this->priceCurrencyInterface->convertAndRound($max_price);
 
         $regularPrice = $product->getRegularPrice();
-        if ($regularPrice) {
-            $regularPrice = $this->priceCurrencyInterface->convertAndRound($regularPrice);
-            if ($regularPrice > $min_price)
-                $compare_at_price = $regularPrice;
+        if ($regularPrice > $compare_at_price) {
+            $compare_at_price = $regularPrice;
         }
 
-        if ($product->getMaxPrice()) {
-            $max_price = $this->priceCurrencyInterface->convertAndRound($product->getMaxPrice());
-            if ($max_price > $min_price)
-                $compare_at_price = max($compare_at_price, $max_price);
-        }
+        $compare_at_price = $this->priceCurrencyInterface->convertAndRound($compare_at_price);
+        if ($compare_at_price <= $min_price)
+            $compare_at_price = 0;
 
         $price_range = [
             'price_min' => $min_price,
