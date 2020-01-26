@@ -1,6 +1,6 @@
 <script>
-    <?php if ($block->getis_serp() == '0') : ?>
-        var lp_slug = "<?php if ($block->getData('slug')) { /* @noEscape */echo $block->getData('slug'); } ?>";
+    <?php if (!filter_var($block->getis_serp(), FILTER_VALIDATE_BOOLEAN)) : ?>
+    var lp_slug = "<?php if ($block->getData('slug')) { /* @noEscape */echo $block->getData('slug'); } ?>";
     <?php endif; ?>
     var __isp_fulltext_search_obj = {
         uuid: "<?= /* @noEscape */ $block->getApiUUID();?>",
