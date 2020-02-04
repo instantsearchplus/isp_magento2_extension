@@ -110,7 +110,7 @@ class Updatesitemap extends \Autocompleteplus\Autosuggest\Controller\Products
     {
         $write = false;
         if ($this->directory->isFile($this->_file)) {
-            if (strpos($this->directory->readFile($this->_file), $sitemapUrl) == true) {
+            if (strpos($this->directory->readFile($this->_file), $sitemapUrl) === true) {
                 $write = true;
             } else {
                 $response = [

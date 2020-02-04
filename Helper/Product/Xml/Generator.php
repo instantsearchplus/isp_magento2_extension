@@ -201,6 +201,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     protected $interval;
 
     /**
+     * @var bool
+     */
+    protected $minimalOrder;
+
+    /**
      * @var int
      */
     protected $pageNum;
@@ -639,6 +644,27 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         return $products;
     }
 
+    public function getMinimumOrder() {
+        if (!$this->minimalOrder) {
+            $connection = $this->resourceConnection->getConnection();
+            $sales_order = $this->resourceConnection->getTableName('sales_order');
+            $sql = $connection->select()
+                ->from($sales_order, 'entity_id')
+                ->where('store_id = ?', $this->getStoreId())
+                ->where('created_at BETWEEN NOW() - INTERVAL ? MONTH AND NOW()', $this->getInterval())
+                ->order(array('entity_id'))
+                ->limit(1);
+            $result = $connection->fetchCol($sql);
+            if (count($result) > 0) {
+                $this->minimalOrder = $result[0];
+            } else {
+                $this->minimalOrder = -1;
+            }
+        }
+
+        return $this->minimalOrder;
+    }
+
     public function setOffset($offset)
     {
         $this->offset = $offset;
@@ -957,7 +983,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 if (count($variants) > 0) {
                     $simpleSkusArr = [];
                     $variantElem = $this->createChild('variants', false, false, $productElem);
-                    $child_attributes_to_select = array('image', 'small_image', 'product_thumbnail_image', 'visibility', 'type_id', 'name');
+                    $child_attributes_to_select = array('special_price', 'image', 'small_image', 'product_thumbnail_image', 'visibility', 'type_id', 'name');
                     $child_attributes_to_select = array_merge($child_attributes_to_select, $variant_codes);
                     $configChildren = $this->getConfigurableChildren($product, $child_attributes_to_select, true);
                     foreach ($configChildren as $child_product) {
@@ -1564,7 +1590,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $pricesToCompare[] = (float)$product->getMaxPrice();
         }
 
-        foreach ($this->getConfigurableChildren($product, array('id', 'sku', 'type_id'), false) as $child) {
+        foreach ($this->getConfigurableChildren($product, array('id', 'sku', 'type_id', 'special_price'), false) as $child) {
             if ($child->getPrice() && $compare_at_price < $child->getPrice()) {
                 $compare_at_price = (float)$child->getPrice();
             }
@@ -1606,14 +1632,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected function _getPurchasePopularity($product)
     {
+        if ($this->getMinimumOrder() < 0) {
+            return 0;
+        }
         $connection = $this->resourceConnection->getConnection();
         $sales_order_item_table_name = $this->resourceConnection->getTableName('sales_order_item');
         $sql = $connection->select()
             ->from($sales_order_item_table_name, 'SUM(qty_ordered) AS qty_ordered')
             ->where('store_id = ?', $this->getStoreId())
             ->where('product_id = ?', $product->getId())
-            ->where('created_at BETWEEN NOW() - INTERVAL ? MONTH AND NOW()', $this->getInterval())
-            ->group(['product_id']);
+            ->where('order_id  >= ?', $this->getMinimumOrder());
         $results = $connection->fetchAll($sql);
         foreach ($results as $order_item) {
             if (is_array($order_item) && array_key_exists('qty_ordered', $order_item)) {
@@ -1726,7 +1754,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
             $finalPrice = min($productPrices);
 
-            $purchasePopularity = $this->_getPurchasePopularity($product);
             $currency = $this->getCurrencyCode();
             $xmlAttributes = [
                 'action' => $action,
@@ -1827,7 +1854,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             }
 
-            $this->createChild('purchase_popularity', false, intval($purchasePopularity), $productElem);
+            if (filter_var($this->getOrders(), FILTER_VALIDATE_BOOLEAN)) {
+                $purchasePopularity = $this->_getPurchasePopularity($product);
+                $this->createChild('purchase_popularity', false, intval($purchasePopularity), $productElem);
+            }
 
             $_isEnabled = $this->_getProductEnabledString($product);
             $this->createChild('product_status', false, $_isEnabled, $productElem);
