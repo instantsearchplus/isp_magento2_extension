@@ -222,6 +222,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
+    public function getSmartNavigationNative($scopeId = 0)
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_SMART_NAVIGATION_CONFIG,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $scopeId
+        );
+    }
+
     public function getStoreInformation($store_id)
     {
         $country_code = $this->getCountryCode($store_id);

@@ -1262,7 +1262,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             'action'    =>  $batch->getAction(),
             'id'    =>  $batch->getProductId(),
             'storeid'   =>  $batch->getStoreId()
-            ], false, $this->xmlGenerator->getSimpleXml()
+        ], false, $this->xmlGenerator->getSimpleXml()
         );
 
         $this->createChild('sku', false, $batch->getSku(), $productElement);
@@ -1337,9 +1337,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
          */
         $this->xmlGenerator->setRootAttributes(
             [
-            'version'   =>  $this->helper->getVersion(),
-            'magento'   =>  $this->helper->getMagentoVersion(),
-            'fromdatetime'  =>  $from
+                'version'   =>  $this->helper->getVersion(),
+                'magento'   =>  $this->helper->getMagentoVersion(),
+                'fromdatetime'  =>  $from
             ]
         );
 
@@ -1462,8 +1462,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
          */
         $this->xmlGenerator->setRootAttributes(
             [
-            'version'   =>  $this->helper->getVersion(),
-            'magento'   =>  $this->helper->getMagentoVersion()
+                'version'   =>  $this->helper->getVersion(),
+                'magento'   =>  $this->helper->getMagentoVersion()
             ]
         );
 
@@ -1583,38 +1583,35 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $pricesToCompare = array($finalPrice);
 
         if ($product->getMinimalPrice()) {
-            $pricesToCompare[] = (float)$product->getMinimalPrice();
+            $pricesToCompare[] = $this->priceCurrencyInterface->convertAndRound((float)$product->getMinimalPrice());
         }
 
         if ($product->getMaxPrice()) {
-            $pricesToCompare[] = (float)$product->getMaxPrice();
+            $pricesToCompare[] = $this->priceCurrencyInterface->convertAndRound((float)$product->getMaxPrice());
         }
 
         foreach ($this->getConfigurableChildren($product, array('id', 'sku', 'type_id', 'special_price'), false) as $child) {
             if ($child->getPrice() && $compare_at_price < $child->getPrice()) {
-                $compare_at_price = (float)$child->getPrice();
+                $compare_at_price = $this->priceCurrencyInterface->convertAndRound((float)$child->getPrice());
             }
 
             if ($child->getFinalPrice()) {
-                $pricesToCompare[] = (float)$child->getFinalPrice();
+                $pricesToCompare[] = $this->priceCurrencyInterface->convertAndRound((float)$child->getFinalPrice());
             }
             if ($child->getCatalogRulePrice()) {
-                $pricesToCompare[] = (float)$child->getCatalogRulePrice();
+                $pricesToCompare[] = $this->priceCurrencyInterface->convertAndRound((float)$child->getCatalogRulePrice());
             }
         }
 
         $min_price = min($pricesToCompare);
-        $min_price = $this->priceCurrencyInterface->convertAndRound($min_price);
 
         $max_price = max($pricesToCompare);
-        $max_price = $this->priceCurrencyInterface->convertAndRound($max_price);
 
-        $regularPrice = $product->getRegularPrice();
+        $regularPrice = $this->priceCurrencyInterface->convertAndRound((float)$product->getRegularPrice());
         if ($regularPrice > $compare_at_price) {
             $compare_at_price = $regularPrice;
         }
 
-        $compare_at_price = $this->priceCurrencyInterface->convertAndRound($compare_at_price);
         if ($compare_at_price <= $min_price)
             $compare_at_price = 0;
 
@@ -1641,7 +1638,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             ->from($sales_order_item_table_name, 'SUM(qty_ordered) AS qty_ordered')
             ->where('store_id = ?', $this->getStoreId())
             ->where('product_id = ?', $product->getId())
-            ->where('order_id  >= ?', $this->getMinimumOrder());
+            ->where('order_id >= ?', $this->getMinimumOrder());
         $results = $connection->fetchAll($sql);
         foreach ($results as $order_item) {
             if (is_array($order_item) && array_key_exists('qty_ordered', $order_item)) {
@@ -1697,8 +1694,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
             $imagePath = $product->getSmallImage() ? $product->getSmallImage() : $product->getImage();
             $_baseImage = $this->storeManager
-                ->getStore()
-                ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
+                    ->getStore()
+                    ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
                 . 'catalog/product' . $imagePath;
 
             $productPrices = array();
@@ -1745,6 +1742,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $productPrices[] = $finalPrice;
+            $productPrices[] = $priceRange['price_max'];
             $catalogRulePrice = $this->getCatalogRulePrice($product);
             if ($catalogRulePrice) {
                 $productPrices[] = $catalogRulePrice;
@@ -1787,6 +1785,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $productPrices[] = $regularPrice;
             }
 
+            if ($product->getTypeId() == Configurable::TYPE_CODE && array_key_exists('compare_at_price', $priceRange)) {
+                $xmlAttributes['price_compare_at_price'] = $priceRange['compare_at_price'];
+            }
+
             $raw_msrp = $product->getMsrp();
             if (!$raw_msrp) {
                 $raw_msrp = $product->getgcm_msrp();
@@ -1800,10 +1802,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $compare_at_price = max($productPrices);
             if ($compare_at_price > $finalPrice) {
                 $xmlAttributes['price_compare_at_price'] = $compare_at_price;
-            }
-
-            if ($product->getTypeId() == Configurable::TYPE_CODE && array_key_exists('compare_at_price', $priceRange)) {
-                $xmlAttributes['price_compare_at_price'] = $priceRange['compare_at_price'];
             }
 
             $productElem = $this->createChild('product', $xmlAttributes, false, $this->xmlGenerator->getSimpleXml());
@@ -1927,7 +1925,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'attribute', [
                 'is_filterable' => 0,
                 'name' => 'category_names'
-                ], false, $productElem
+            ], false, $productElem
             );
             $this->createChild(
                 'attribute_values',
@@ -1995,7 +1993,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'attribute', [
                 'is_filterable' => 0,
                 'name' => 'configurable_simple_skus'
-                ], false, $productElem
+            ], false, $productElem
             );
             $this->createChild(
                 'attribute_values',
@@ -2126,7 +2124,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     'id'    =>  $productId,
                     'type' => $itemType,
                     'storeid'   =>  $storeId
-                    ], false, $this->xmlGenerator->getSimpleXml()
+                ], false, $this->xmlGenerator->getSimpleXml()
                 );
 
                 $this->createChild('sku', false, $sku, $productElement);

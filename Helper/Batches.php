@@ -310,4 +310,23 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
 
         return $storeIds;
     }
+
+    public function getCategoryProducts($category_id)
+    {
+        $connection = $this->_resourceConnection->getConnection();
+        $table_name = $this->_resourceConnection->getTableName('catalog_category_product');
+
+        $sql = $connection->select()
+            ->from($table_name)
+            ->where(sprintf('%s.category_id=?', $table_name), $category_id);
+
+        $results = $connection->fetchAll($sql);
+        $productIds = array();
+
+        foreach ($results as $row) {
+            $productIds[] = (int)$row['product_id'];
+        }
+
+        return $productIds;
+    }
 }

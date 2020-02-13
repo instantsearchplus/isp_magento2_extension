@@ -18,6 +18,6 @@ class Connection extends \Autocompleteplus\Autosuggest\Controller\Products
     public function execute()
     {
         $this->getResponse()->setBody(1);
-        return $this->getResponse()->sendResponse();
+        $this->getResponse()->sendResponse();
     }
 }

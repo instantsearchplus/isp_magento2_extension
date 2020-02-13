@@ -115,11 +115,11 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
         if ($getModules) {
             $installedModules = array_filter(
                 $modules, function ($name) {
-                    $isMagentoModule = (substr($name, 0, 7) == 'Magento');
-                    $isEnabled = $this->moduleManager->isEnabled($name);
-                    $isOutputEnabled = $this->moduleManager->isOutputEnabled($name);
-                    return !$isMagentoModule && $isEnabled && $isOutputEnabled;
-                }, \ARRAY_FILTER_USE_KEY
+                $isMagentoModule = (substr($name, 0, 7) == 'Magento');
+                $isEnabled = $this->moduleManager->isEnabled($name);
+                $isOutputEnabled = $this->moduleManager->isOutputEnabled($name);
+                return !$isMagentoModule && $isEnabled && $isOutputEnabled;
+            }, \ARRAY_FILTER_USE_KEY
             );
         }
 
@@ -133,7 +133,8 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
             'store_id' => $storeId,
             'modules' => $installedModules,
             'miniform_change' => $this->helper->canUseMiniFormRewrite(),
-            'serp_slug' => $this->helper->getSerpSlug($storeId)
+            'serp_slug' => $this->helper->getSerpSlug($storeId),
+            'smart_nav_native' => $this->helper->getSmartNavigationNative($storeId)
         ];
 
         $result = $this->resultJsonFactory->create();

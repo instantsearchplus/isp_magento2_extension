@@ -97,13 +97,13 @@ class CategorySave implements ObserverInterface
         $products = $this->createProductsCollection($category);
         $store_products = [];
 
-        foreach ($products as $product) {
-            $store_ids = $product->getStoreIds();
+        foreach ($products as $product_id) {
+            $store_ids = $this->helper->getProductStoresById($product_id);
             foreach ($store_ids as $store_id) {
                 if (!array_key_exists($store_id, $store_products)) {
                     $store_products[$store_id] = [];
                 }
-                $store_products[$store_id][] = (int)$product->getId();
+                $store_products[$store_id][] = $product_id;
             }
         }
 
@@ -124,10 +124,7 @@ class CategorySave implements ObserverInterface
      */
     protected function createProductsCollection($category)
     {
-        $collection = $this->productCollectionFactory->create();
-        $collection->addCategoryFilter($category);
-        $collection->addAttributeToFilter('visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH);
-        $collection->addAttributeToFilter('status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED);
+        $collection = $this->helper->getCategoryProducts($category->getId());
         return $collection;
     }
 }
