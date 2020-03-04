@@ -174,7 +174,9 @@ class ProductUpdate implements ObserverInterface
         }
         $connection = $this->_resourceConnection->getConnection();
         $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
-        $connection->insertOnDuplicate($table_name, $data);
+        if (count($data) > 0) {
+            $connection->insertOnDuplicate($table_name, $data);
+        }
         return $this;
     }
 }

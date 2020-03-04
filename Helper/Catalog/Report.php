@@ -198,6 +198,13 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
 
         $visibility_attribute_id = $connection->fetchOne($sql);
 
+        $sql = $connection->select()
+            ->from($eav_table_name, 'attribute_id')
+            ->where(sprintf('%s.attribute_code = ?', $eav_table_name), 'status')
+            ->limitPage(1, 1);
+
+        $status_attribute_id = $connection->fetchOne($sql);
+
         $connection->query("SET sql_mode='NO_ENGINE_SUBSTITUTION';");
 
         $page = (int)ceil((float)$startInd/$count);
@@ -260,7 +267,14 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
             ->where(sprintf('%s.customer_group_id = ?', $price_index_table_name), $customer_group)
             ->where(sprintf('%s.website_id = ?', $price_index_table_name), $website_id)
             ->where(new \Zend_Db_Expr(
-                sprintf("((%s.qty > 0) OR (%s.stock_status = 1))", $cataloginventory_stock_item, $cataloginventory_stock_status_table_name)
+                sprintf("((%s.qty > 0) OR (%s.stock_status = 1 AND %s.product_id NOT IN (SELECT %s FROM %s WHERE attribute_id = %d AND value = 2)))",
+                    $cataloginventory_stock_item,
+                    $cataloginventory_stock_status_table_name,
+                    $cataloginventory_stock_status_table_name,
+                    $entity_id_col_name,
+                    $entity_int_table_name,
+                    $status_attribute_id
+                )
             ));
 
         if ($product_id > 0) {

@@ -434,8 +434,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->xmlGenerator->setRootElementName('catalog');
         $this->xmlGenerator->setRootAttributes(
             [
-            'version'   =>  $this->helper->getVersion(),
-            'magento'   =>  $this->helper->getMagentoVersion()
+                'version'   =>  $this->helper->getVersion(),
+                'magento'   =>  $this->helper->getMagentoVersion()
             ]
         );
         $this->_customersGroups = [];
@@ -478,6 +478,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 ->where('to_date BETWEEN ? AND NOW() + INTERVAL 1 MONTH', $dateTs)
                 ->orWhere('from_date >= ?', $dateTs)
                 ->where('is_active = ?', true);
+
             $activeRulesCount = $ruleCollection->count();
             $this->cache->save(
                 (string)$activeRulesCount,
@@ -1011,8 +1012,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
                         $imagePath = $child_product->getImage() ? $child_product->getImage() : $child_product->getSmallImage();
                         $_baseImage = $this->storeManager
-                            ->getStore()
-                            ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
+                                ->getStore()
+                                ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
                             . 'catalog/product' . $imagePath;
 
                         if (strpos($_baseImage, 'no_selection') !== false) {
@@ -1105,7 +1106,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         'attribute', [
                         'is_filterable' => 0,
                         'name' => 'configurable_simple_skus'
-                        ], false, $productElem
+                    ], false, $productElem
                     );
                     $this->createChild(
                         'attribute_values',
@@ -1580,13 +1581,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $min_price = 0;
         $max_price = 0;
         $compare_at_price = 0;
-        $pricesToCompare = array($finalPrice);
+        $pricesToCompare = array();
+        if ($finalPrice && $finalPrice > 0) {
+            $pricesToCompare[] = $finalPrice;
+        }
 
-        if ($product->getMinimalPrice()) {
+        if ($product->getMinimalPrice() && $product->getMinimalPrice() > 0) {
             $pricesToCompare[] = $this->priceCurrencyInterface->convertAndRound((float)$product->getMinimalPrice());
         }
 
-        if ($product->getMaxPrice()) {
+        if ($product->getMaxPrice() && $product->getMaxPrice() > 0) {
             $pricesToCompare[] = $this->priceCurrencyInterface->convertAndRound((float)$product->getMaxPrice());
         }
 
@@ -1595,17 +1599,18 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $compare_at_price = $this->priceCurrencyInterface->convertAndRound((float)$child->getPrice());
             }
 
-            if ($child->getFinalPrice()) {
+            if ($child->getFinalPrice() && $child->getFinalPrice() > 0) {
                 $pricesToCompare[] = $this->priceCurrencyInterface->convertAndRound((float)$child->getFinalPrice());
             }
-            if ($child->getCatalogRulePrice()) {
+            if ($child->getCatalogRulePrice() && $child->getCatalogRulePrice() > 0) {
                 $pricesToCompare[] = $this->priceCurrencyInterface->convertAndRound((float)$child->getCatalogRulePrice());
             }
         }
 
-        $min_price = min($pricesToCompare);
-
-        $max_price = max($pricesToCompare);
+        if (count($pricesToCompare) > 0) {
+            $min_price = min($pricesToCompare);
+            $max_price = max($pricesToCompare);
+        }
 
         $regularPrice = $this->priceCurrencyInterface->convertAndRound((float)$product->getRegularPrice());
         if ($regularPrice > $compare_at_price) {
@@ -1734,7 +1739,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             if ($this->getRulesCount() > 0) {
-                if ($product->getCatalogRulePrice()) {
+                if ($product->getCatalogRulePrice() && $product->getCatalogRulePrice() > 0) {
                     $this->catalogRuleAffectedProducts[(int)$product->getId()] = $product;
                 } else {
                     $this->catalogFutureRuleAffectedProducts[] = (int)$product->getId();
@@ -1742,12 +1747,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $productPrices[] = $finalPrice;
-            $productPrices[] = $priceRange['price_max'];
+            if ($priceRange['price_max'] && $priceRange['price_max'] > 0) {
+                $productPrices[] = $priceRange['price_max'];
+            }
             $catalogRulePrice = $this->getCatalogRulePrice($product);
-            if ($catalogRulePrice) {
+            if ($catalogRulePrice && $catalogRulePrice > 0) {
                 $productPrices[] = $catalogRulePrice;
             }
-            if ($priceRange['price_min']) {
+            if ($priceRange['price_min'] && $priceRange['price_min'] > 0) {
                 $productPrices[] = $priceRange['price_min'];
             }
             $finalPrice = min($productPrices);
@@ -1776,12 +1783,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $productPrice = $this->priceCurrencyInterface->convertAndRound($product->getPrice());
-            if ($productPrice) {
+            if ($productPrice && $productPrice > 0) {
                 $productPrices[] = $productPrice;
             }
 
             $regularPrice = $this->priceCurrencyInterface->convertAndRound($product->getRegularPrice());
-            if ($regularPrice) {
+            if ($regularPrice && $regularPrice > 0) {
                 $productPrices[] = $regularPrice;
             }
 
@@ -1795,7 +1802,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
             $msrp = round(floatval($raw_msrp), 2);
             $msrp = $this->priceCurrencyInterface->convertAndRound($msrp);
-            if ($msrp) {
+            if ($msrp && $msrp > 0) {
                 $productPrices[] = $msrp;
             }
 
