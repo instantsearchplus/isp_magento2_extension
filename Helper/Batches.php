@@ -169,7 +169,9 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                             'action'=> 'update',
                             'sku'=> 'ISP_NO_SKU'
                         ];
-                        $connection->insertOnDuplicate($table_name, $data);
+                        if (count($data) > 0) {
+                            $connection->insertOnDuplicate($table_name, $data);
+                        }
                     }
                 }
             }
@@ -228,20 +230,26 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected function removeProductForEachStore($sku, $productId, $dt, $productStores)
     {
-        if ($sku == null) {
-            $sku = 'dummy_sku';
-        }
-        $connection = $this->_resourceConnection->getConnection();
-        $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
-        foreach ($productStores as $productStore) {
-            $data = [
-                'product_id'=> $productId,
-                'store_id'=> $productStore,
-                'update_date'=> $dt,
-                'action'=> 'remove',
-                'sku'=> $sku
-            ];
-            $connection->insertOnDuplicate($table_name, $data);
+        try {
+            if ($sku == null) {
+                $sku = 'dummy_sku';
+            }
+            $connection = $this->_resourceConnection->getConnection();
+            $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
+            foreach ($productStores as $productStore) {
+                $data = [
+                    'product_id' => $productId,
+                    'store_id' => $productStore,
+                    'update_date' => $dt,
+                    'action' => 'remove',
+                    'sku' => $sku
+                ];
+                if (count($data) > 0) {
+                    $connection->insertOnDuplicate($table_name, $data);
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->critical($e);
         }
     }
 
@@ -270,7 +278,9 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->logger->info('executed multiple insert of ' . count($data));
                 $counter = 0;
                 try {
-                    $connection->insertOnDuplicate($table_name, $data);
+                    if (count($data) > 0) {
+                        $connection->insertOnDuplicate($table_name, $data);
+                    }
                     $data = [];
                 } catch (\Exception $e) {
                     $this->logger->err($e->getMessage());

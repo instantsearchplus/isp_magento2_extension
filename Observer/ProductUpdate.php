@@ -120,62 +120,65 @@ class ProductUpdate implements ObserverInterface
         $storeId = 0;
         $data = [];
         $counter = 0;
-        foreach ($bunch as $productIdStr) {
-            $productId = (int)$productIdStr;
-            $dt = $this->date->gmtTimestamp();
-            try {
+        try {
+            foreach ($bunch as $productIdStr) {
+                $productId = (int)$productIdStr;
+                $dt = $this->date->gmtTimestamp();
                 try {
-                    $product = $this->productRepositoryInterface->getById($productId);
-                    $sku = $product->getSku();
-                    //recording disabled item as deleted
-                    if (($product->getStatus() == '2' && !array_key_exists('status', $attributes_data))
-                        || (array_key_exists('status', $attributes_data) && $attributes_data['status'] == 2)
-                    ) {
-                        $this->helper->writeProductDeletion($sku, $productId, 0, $dt, $product);
-                        continue;
+                    try {
+                        $product = $this->productRepositoryInterface->getById($productId);
+                        $sku = $product->getSku();
+                        //recording disabled item as deleted
+                        if (($product->getStatus() == '2' && !array_key_exists('status', $attributes_data))
+                            || (array_key_exists('status', $attributes_data) && $attributes_data['status'] == 2)
+                        ) {
+                            $this->helper->writeProductDeletion($sku, $productId, 0, $dt, $product);
+                            continue;
+                        }
+                        $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds'))
+                            ? $product->getStoreIds() : [$storeId];
+                    } catch (\Exception $e) {
+                        $this->logger->critical($e);
+                        $productStores = [$storeId];
                     }
-                    $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds'))
-                        ? $product->getStoreIds() : [$storeId];
-                } catch (\Exception $e) {
 
-                    $this->logger->critical($e);
-                    $productStores = [$storeId];
-                }
+                    $simpleProducts = [];
+                    if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
+                        $simpleProducts = $this->configurable->getParentIdsByChild($product->getId());
+                    }
 
-                $simpleProducts = [];
-                if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
-                    $simpleProducts = $this->configurable->getParentIdsByChild($product->getId());
-                }
+                    foreach ($productStores as $productStore) {
+                        $counter++;
+                        $data[] = [
+                            'store_id' => (int)$productStore,
+                            'product_id' => (int)$productId,
+                            'update_date' => (int)$this->date->gmtTimestamp() + $counter,
+                            'action' => 'update'
+                        ];
 
-                foreach ($productStores as $productStore) {
-                    $counter++;
-                    $data[] = [
-                        'store_id' => (int)$productStore,
-                        'product_id' => (int)$productId,
-                        'update_date' => (int)$this->date->gmtTimestamp() + $counter,
-                        'action' => 'update'
-                    ];
-
-                    if (is_array($simpleProducts) && count($simpleProducts) > 0) {
-                        foreach ($simpleProducts as $configurableProduct) {
-                            $counter++;
-                            $data[] = [
-                                'store_id' => (int)$productStore,
-                                'product_id' => (int)$configurableProduct,
-                                'update_date' => (int)$this->date->gmtTimestamp() + $counter,
-                                'action' => 'update'
-                            ];
+                        if (is_array($simpleProducts) && count($simpleProducts) > 0) {
+                            foreach ($simpleProducts as $configurableProduct) {
+                                $counter++;
+                                $data[] = [
+                                    'store_id' => (int)$productStore,
+                                    'product_id' => (int)$configurableProduct,
+                                    'update_date' => (int)$this->date->gmtTimestamp() + $counter,
+                                    'action' => 'update'
+                                ];
+                            }
                         }
                     }
+                } catch (\Exception $e) {
+                    $this->logger->critical($e);
                 }
-            } catch (\Exception $e) {
-                $this->logger->critical($e);
             }
-        }
-        $connection = $this->_resourceConnection->getConnection();
-        $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
-        if (count($data) > 0) {
-            $connection->insertOnDuplicate($table_name, $data);
+            $connection = $this->_resourceConnection->getConnection();
+            $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
+            if (count($data) > 0) {
+                $connection->insertOnDuplicate($table_name, $data);
+            }
+        } catch (\Exception $e) {
+            $this->logger->critical($e);
         }
         return $this;
     }

@@ -146,6 +146,51 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 $err_msg = $e->getMessage();
             }
 
+        } elseif (version_compare($context->getVersion(), '4.7.29') < 0) {
+            $batchTable = $setup->getConnection()
+                ->newTable($setup->getTable('autosuggest_price'))
+                ->addColumn(
+                    'product_id',
+                    \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                    null,
+                    ['unsigned' => true, 'nullable' => false],
+                    'Product ID'
+                )
+                ->addColumn(
+                    'website_id',
+                    \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                    null,
+                    ['nullable' => false],
+                    'Website ID'
+                )
+                ->addColumn(
+                    'final_price',
+                    \Magento\Framework\DB\Ddl\Table::TYPE_FLOAT,
+                    null,
+                    ['unsigned' => true, 'nullable' => false],
+                    'Final Price'
+                )
+                ->addColumn(
+                    'update_date',
+                    \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                    null,
+                    ['nullable' => false],
+                    'Update Time'
+                )
+                ->addColumn(
+                    'is_updated',
+                    \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
+                    null,
+                    ['nullable' => false],
+                    'Is updated'
+                )
+                ->addIndex(
+                    $setup->getIdxName('autosuggest_price_index', ['product_id', 'website_id']),
+                    ['product_id', 'website_id'],
+                    ['type' => AdapterInterface::INDEX_TYPE_PRIMARY]
+                )
+                ->setComment('InstantSearch+ Prices');
+            $setup->getConnection()->createTable($batchTable);
         }
         $setup->endSetup();
     }

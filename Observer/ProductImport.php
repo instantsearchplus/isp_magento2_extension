@@ -233,7 +233,9 @@ class ProductImport implements ObserverInterface
         $data = [];
 
         try {
-            $connection->insertOnDuplicate($table_name, $to_update);
+            if (count($to_update) > 0) {
+                $connection->insertOnDuplicate($table_name, $to_update);
+            }
         } catch (\Exception $e) {
             $this->logger->err($e->getMessage());
         }

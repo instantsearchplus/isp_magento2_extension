@@ -101,7 +101,11 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
         $this->helper = $helper;
         $this->api = $api;
         $this->storeManager = $storeManager;
-        $this->logger = $logger;
+
+        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_ma_search_debug.log');
+        $this->logger = new \Zend\Log\Logger();
+        $this->logger->addWriter($writer);
+
         $this->catalogSession = $catalogSession;
 
         $laeyeredTmp = $this->helper->canUseSearchLayered();
@@ -358,7 +362,7 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
             }
 
         } catch (\Exception $e) {
-            $this->logger->critical($e);
+            $this->logger->err($e);
             if ($secure)
                 return $this->getIdsOnly($query, $extension_version, $storeId, $uuid, $site_url, false);
         }
