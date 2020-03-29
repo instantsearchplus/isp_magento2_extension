@@ -15,6 +15,10 @@
     <preference for="Autocompleteplus\Autosuggest\Api\NotificationRepositoryInterface" type="Autocompleteplus\Autosuggest\Model\NotificationRepository" />
     <preference for="Autocompleteplus\Autosuggest\Api\PusherRepositoryInterface" type="Autocompleteplus\Autosuggest\Model\PusherRepository" />
 
+    <type name="Magento\Search\Model\EngineResolver">
+        <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Model\Plugin\CatalogSearch\EngineResolver"
+                sortOrder="1000"/>
+    </type>
     <type name="Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection">
         <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Model\Plugin\CatalogSearch\ProductCollection"
                 sortOrder="1000"/>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Index File
+ * EngineResolver File
  *
  * NOTICE OF LICENSE
  *
@@ -19,10 +19,11 @@
  * @link      http://opensource.org/licenses/osl-3.0.php
  */
 
-namespace Autocompleteplus\Autosuggest\Model\Plugin\CatalogSearch\Result;
+namespace Autocompleteplus\Autosuggest\Model\Plugin\CatalogSearch;
+
 
 /**
- * Index
+ * EngineResolver
  *
  * NOTICE OF LICENSE
  *
@@ -40,16 +41,15 @@ namespace Autocompleteplus\Autosuggest\Model\Plugin\CatalogSearch\Result;
  * @license   Open Software License (OSL 3.0)*
  * @link      http://opensource.org/licenses/osl-3.0.php
  */
-class Index
-{	
-    public function aroundExecute(
-        \Magento\CatalogSearch\Controller\Result\Index $subject,
-        \Closure $proceed 
-    ) {
-		if (is_array($_ENV)) {
-			$_ENV['in_search'] = true; 
+class EngineResolver
+{
+	
+	public function aroundGetCurrentSearchEngine($subject, \Closure $proceed) {
+		
+		if (is_array($_ENV) && array_key_exists('in_search', $_ENV) && $_ENV['in_search']) {
+			return 'mysql';
+		} else {
+			return $proceed();
 		}
-        $returnValue = $proceed();
-        return $returnValue;
-    }
+	}
 }

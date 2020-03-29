@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.30] - 2020-03-29 17:54:00
+### Added
+- ElasticSearch support on Isp+ basic mode
+
 ## [4.7.29] - 2020-03-22 17:54:00
 ### Added
 - Price compare

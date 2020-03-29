@@ -104,8 +104,7 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
 
         $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_ma_search_debug.log');
         $this->logger = new \Zend\Log\Logger();
-        $this->logger->addWriter($writer);
-
+		$this->logger->addWriter($writer);
         $this->catalogSession = $catalogSession;
 
         $laeyeredTmp = $this->helper->canUseSearchLayered();
@@ -160,6 +159,12 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
             $this->catalogSession->setIspSearchResultsFor($responseData->results_for);
         } else {
             $this->catalogSession->setIspSearchResultsFor(false);
+        }
+    }
+
+    public function before_loadEntities($subject) {
+        if ($this->is_fulltext_enabled && $subject->getPageSize()) {
+            $subject->getSelect()->limitPage($subject->getCurPage(), $subject->getPageSize());
         }
     }
 
