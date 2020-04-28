@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [4.7.32] - 2020-04-28 17:54:00
+## [4.7.33] - 2020-04-28 17:54:00
 ### Added
 - Use Magento registry for ElasticSearch support on Isp+ basic mode
 - Isp thumbnail support
