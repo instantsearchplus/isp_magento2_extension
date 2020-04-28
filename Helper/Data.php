@@ -102,11 +102,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_PATH_REGION_CODE = 'general/store_information/region_id';
     const XML_PATH_SERP_SLUG = 'autosuggest/search/slug';
     const XML_FORM_URL_CONFIG = 'autosuggest/search/miniform_change';
+    const XML_BASIC_ENABLED_CONFIG = 'autosuggest/search/basic_enabled';
     const XML_SMART_NAVIGATION_CONFIG = 'autosuggest/search/smart_navigation';
     const MODULE_NAME = 'Autocompleteplus_Autosuggest';
     const XML_PATH_API_ENDPOINT = 'autosuggest/api/endpoint';
     const XML_PATH_DASHBOARD_ENDPOINT = 'autosuggest/dashboard/endpoint';
     const XML_PATH_DASHBOARD_PARAMS = 'autosuggest/dashboard/params';
+    const XML_PATH_SHOW_OOS = 'cataloginventory/options/show_out_of_stock';
     const SCOPE_CONFIG_STORES = 'stores';
 
     public function __construct(
@@ -231,6 +233,23 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
+    public function getBasicEnabled($scopeId = 0)
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_BASIC_ENABLED_CONFIG,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $scopeId
+        );
+    }
+
+    public function getDisplayOutOfStock()
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_SHOW_OOS,
+            self::SCOPE_CONFIG_STORES
+        );
+    }
+
     public function getStoreInformation($store_id)
     {
         $country_code = $this->getCountryCode($store_id);
@@ -293,6 +312,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $this->resourceConfig->saveConfig(
             self::XML_SMART_NAVIGATION_CONFIG,
+            intval($enabled),
+            $scope,
+            $scopeId
+        );
+        return $this;
+    }
+
+    public function setBasicEnabled($enabled, $scope = 'default', $scopeId = 0)
+    {
+        $this->resourceConfig->saveConfig(
+            self::XML_BASIC_ENABLED_CONFIG,
             intval($enabled),
             $scope,
             $scopeId

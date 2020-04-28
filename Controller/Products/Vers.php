@@ -134,7 +134,9 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
             'modules' => $installedModules,
             'miniform_change' => $this->helper->canUseMiniFormRewrite(),
             'serp_slug' => $this->helper->getSerpSlug($storeId),
-            'smart_nav_native' => $this->helper->getSmartNavigationNative($storeId)
+            'smart_nav_native' => $this->helper->getSmartNavigationNative($storeId),
+            'show_out_of_stock' => $this->helper->getDisplayOutOfStock(),
+            'basic_enabled' => $this->helper->getBasicEnabled($storeId)
         ];
 
         $result = $this->resultJsonFactory->create();

@@ -28,7 +28,7 @@ class Setlayeredsearchon extends \Autocompleteplus\Autosuggest\Controller\Layere
         } else {
             $this->helper->setMiniFormRewrite(false, $scope, $scopeId);
         }
-        
+        $this->helper->setBasicEnabled(false, $scope, $scopeId);
         $this->clearCache();
 
         $response = [

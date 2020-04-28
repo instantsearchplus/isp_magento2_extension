@@ -15,6 +15,8 @@
     <preference for="Autocompleteplus\Autosuggest\Api\NotificationRepositoryInterface" type="Autocompleteplus\Autosuggest\Model\NotificationRepository" />
     <preference for="Autocompleteplus\Autosuggest\Api\PusherRepositoryInterface" type="Autocompleteplus\Autosuggest\Model\PusherRepository" />
 
+	<!--BASIC MODE START-->
+	<preference for="Magento\Framework\Search\Adapter\Mysql\Query\Builder\Match" type="Autocompleteplus\Autosuggest\Model\Plugin\CatalogSearch\Match" />
     <type name="Magento\Search\Model\EngineResolver">
         <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Model\Plugin\CatalogSearch\EngineResolver"
                 sortOrder="1000"/>
@@ -31,6 +33,13 @@
         <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Helper\Plugin\CatalogSearch"
                 sortOrder="1000"/>
     </type>
+	<!--BASIC MODE END-->
+
+    <type name="Magento\Catalog\Model\Product\Action">
+        <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Model\Plugin\Catalog\Product\Action"
+                sortOrder="1000"/>
+    </type>
+
     <type name="Magento\CatalogRule\Model\ResourceModel\Rule">
         <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Helper\Plugin\CatalogRule"
                 sortOrder="1000"/>

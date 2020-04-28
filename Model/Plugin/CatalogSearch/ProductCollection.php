@@ -65,6 +65,8 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
 
     protected $_totalRecords = null;
 
+    protected $registry;
+
     /**
      * Store manager
      *
@@ -94,14 +96,15 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
         \Autocompleteplus\Autosuggest\Helper\Api $api,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Catalog\Model\Session $catalogSession
+        \Magento\Catalog\Model\Session $catalogSession,
+        \Magento\Framework\Registry $registry
     ) {
 
         $this->scopeConfig = $scopeConfig;
         $this->helper = $helper;
         $this->api = $api;
         $this->storeManager = $storeManager;
-
+        $this->registry = $registry;
         $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_ma_search_debug.log');
         $this->logger = new \Zend\Log\Logger();
 		$this->logger->addWriter($writer);
@@ -163,6 +166,7 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
     }
 
     public function before_loadEntities($subject) {
+        // fix magento missing pagination on mysql search engine
         if ($this->is_fulltext_enabled && $subject->getPageSize()) {
             $subject->getSelect()->limitPage($subject->getCurPage(), $subject->getPageSize());
         }
@@ -221,6 +225,8 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
                         }
                     }
                     $this->list_ids = $product_ids;
+                    $this->registry->register('isp_basic_ids', $product_ids);
+                    $this->helper->setBasicEnabled(1, 'stores', $this->storeManager->getStore()->getId());
                     $idStr = (count($product_ids) > 0) ? implode(',', $product_ids) : '0';
                 } else {
                     $idStr = '0';
@@ -265,7 +271,6 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
 
         if (!$this->is_layered_enabled) {
             if ($this->is_fulltext_enabled) {
-                $this->removeMagentoSearchFilter($subject->getSelect());
                 if ($attribute == 'relevance') {
                     $dir = strtolower($dir) == strtolower(Select::SQL_ASC) ?
                         Select::SQL_DESC : Select::SQL_ASC;
@@ -294,7 +299,6 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
         if (!$this->is_layered_enabled && $this->is_fulltext_enabled) {
             if ($this->_totalRecords === null) {
                 $sql = $subject->getSelectCountSql();
-                $this->removeMagentoSearchFilter($sql);
                 $this->_totalRecords = $subject->getConnection()->fetchOne($sql, []);
             }
             return (int)$this->_totalRecords;
@@ -309,7 +313,6 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
             if (!$subject->isLoaded()) {
                 $subject->getSize();
             }
-            $this->removeMagentoSearchFilter($subject->getSelect());
         }
         return $proceed();
     }

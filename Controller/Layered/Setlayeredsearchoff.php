@@ -10,6 +10,8 @@ class Setlayeredsearchoff extends \Autocompleteplus\Autosuggest\Controller\Layer
         $authKey = $request->getParam('authentication_key');
         $uuid = $request->getParam('uuid');
         $scope = $request->getParam('scope', 'stores');
+        $basic_enabled = $request->getParam('basic_enabled', null);
+        $basic_enabled = filter_var($basic_enabled, FILTER_VALIDATE_BOOLEAN);
         $scopeId = $request->getParam('store_id', 1);
         $result = $this->resultJsonFactory->create();
 
@@ -23,6 +25,7 @@ class Setlayeredsearchoff extends \Autocompleteplus\Autosuggest\Controller\Layer
 
         $this->helper->setSearchLayered(false, $scope, $scopeId);
         $this->helper->setMiniFormRewrite(false, $scope, $scopeId);
+        $this->helper->setBasicEnabled($basic_enabled, $scope, $scopeId);
         $this->clearCache();
 
         $response = [

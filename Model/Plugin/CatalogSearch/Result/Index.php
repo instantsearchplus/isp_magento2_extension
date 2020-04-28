@@ -41,13 +41,27 @@ namespace Autocompleteplus\Autosuggest\Model\Plugin\CatalogSearch\Result;
  * @link      http://opensource.org/licenses/osl-3.0.php
  */
 class Index
-{	
+{
+    protected $helper;
+    protected $registry;
+    protected $storeManager;
+
+    public function __construct(
+        \Autocompleteplus\Autosuggest\Helper\Data $helper,
+        \Magento\Framework\Registry $registry,
+        \Magento\Store\Model\StoreManagerInterface $storeManager
+    ) {
+        $this->helper = $helper;
+        $this->registry = $registry;
+        $this->storeManager = $storeManager;
+    }
+
     public function aroundExecute(
         \Magento\CatalogSearch\Controller\Result\Index $subject,
         \Closure $proceed 
     ) {
-		if (is_array($_ENV)) {
-			$_ENV['in_search'] = true; 
+		if ($this->helper->getBasicEnabled($this->storeManager->getStore()->getId())) {
+            $this->registry->register('in_search', true);
 		}
         $returnValue = $proceed();
         return $returnValue;

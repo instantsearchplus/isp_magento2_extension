@@ -43,10 +43,24 @@ namespace Autocompleteplus\Autosuggest\Model\Plugin\CatalogSearch;
  */
 class EngineResolver
 {
+    protected $helper;
+    protected $registry;
+    protected $storeManager;
+
+    public function __construct(
+        \Autocompleteplus\Autosuggest\Helper\Data $helper,
+        \Magento\Framework\Registry $registry,
+        \Magento\Store\Model\StoreManagerInterface $storeManager
+    ) {
+        $this->helper = $helper;
+        $this->registry = $registry;
+        $this->storeManager = $storeManager;
+    }
 	
 	public function aroundGetCurrentSearchEngine($subject, \Closure $proceed) {
-		
-		if (is_array($_ENV) && array_key_exists('in_search', $_ENV) && $_ENV['in_search']) {
+		$in_search = $this->registry->registry('in_search');
+		$basic_enabled = $this->helper->getBasicEnabled($this->storeManager->getStore()->getId());
+		if ($basic_enabled && $in_search) {
 			return 'mysql';
 		} else {
 			return $proceed();

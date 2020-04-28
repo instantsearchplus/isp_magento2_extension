@@ -1696,7 +1696,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         try {
             $product->getTypeInstance()->setStoreFilter($this->storeManager->getStore(), $product);
             $this->configurableChildren = null;
-            $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
+
+            if ($this->image->init($product, 'instant_search_product_thumbnail_image')->getWidth()) {
+                $_thumbs = $this->image->init($product, 'instant_search_product_thumbnail_image')->getUrl();
+            } else {
+                $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
+            }
+
             $imagePath = $product->getSmallImage() ? $product->getSmallImage() : $product->getImage();
             $_baseImage = $this->storeManager
                     ->getStore()
