@@ -71,6 +71,8 @@ class CategorySave implements ObserverInterface
      */
     protected $productCollectionFactory;
 
+    protected $apiHelper;
+
     /**
      * CategorySave constructor.
      * @param \Autocompleteplus\Autosuggest\Helper\Batches $helper
@@ -80,19 +82,34 @@ class CategorySave implements ObserverInterface
      */
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
-        \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory  $productCollectionFactory
+        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory  $productCollectionFactory,
+        \Autocompleteplus\Autosuggest\Helper\Api $apiHelper
     ) {
         $this->helper = $helper;
-        $this->logger = $logger;
+
+        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_reindex_debug.log');
+        $this->logger = new \Zend\Log\Logger();
+        $this->logger->addWriter($writer);
+
         $this->date = $date;
         $this->productCollectionFactory = $productCollectionFactory;
+        $this->apiHelper = $apiHelper;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $category = $observer->getEvent()->getCategory();
+
+        if ($observer->getEvent()->getName() == 'catalog_category_delete_after_done') {
+            $category = $observer->getProduct();
+        }
+
+        if (($category->isObjectNew() && $observer->getEvent()->getName() == 'catalog_category_save_before')
+            || $category->isDeleted()
+        ) {
+            $this->ping_isp_server_on_new_category();
+        }
 
         $products = $this->createProductsCollection($category);
         $store_products = [];
@@ -109,10 +126,10 @@ class CategorySave implements ObserverInterface
 
         foreach ($store_products as $store_id => $products) {
             if (count($products) > 1000) {
-               $chunks = array_chunk($products, 1000);
-               foreach ($chunks as $chunk) {
-                   $this->helper->writeMassProductsUpdate($chunks, $store_id);
-               }
+                $chunks = array_chunk($products, 1000);
+                foreach ($chunks as $chunk) {
+                    $this->helper->writeMassProductsUpdate($chunks, $store_id);
+                }
             } else {
                 $this->helper->writeMassProductsUpdate($products, $store_id);
             }
@@ -126,5 +143,27 @@ class CategorySave implements ObserverInterface
     {
         $collection = $this->helper->getCategoryProducts($category->getId());
         return $collection;
+    }
+
+    protected function ping_isp_server_on_new_category()
+    {
+        try {
+            $this->logger->info('pinging isp server after execute full reindex');
+            $auth_key = $this->apiHelper->getApiAuthenticationKey();
+            $uuid = $this->apiHelper->getApiUUID();
+            $web_hook_url = $this->apiHelper->getApiEndpoint() . '/reindex_after_update_catalog';
+            $this->apiHelper->setUrl($web_hook_url);
+
+            $params = [
+                'isp_platform' => 'magento',
+                'auth_key' => $auth_key,
+                'uuid' => $uuid,
+                'update_type' => 'categories'
+            ];
+
+            $response = $this->apiHelper->buildRequest($params);
+        } catch (\Exception $e) {
+            $this->logger->err($e->getMessage());
+        }
     }
 }
