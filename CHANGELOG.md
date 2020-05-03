@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.35] - 2020-05-03 13:35:00
+### Fixed
+- Connection ping
+### Added
+- Layered flag to version request
+
 ## [4.7.34] - 2020-04-30 17:54:00
 ### Added
 - Add/Delete category support

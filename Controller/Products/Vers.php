@@ -133,6 +133,7 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
             'store_id' => $storeId,
             'modules' => $installedModules,
             'miniform_change' => $this->helper->canUseMiniFormRewrite(),
+            'layered' => $this->helper->canUseSearchLayered(),
             'serp_slug' => $this->helper->getSerpSlug($storeId),
             'smart_nav_native' => $this->helper->getSmartNavigationNative($storeId),
             'show_out_of_stock' => $this->helper->getDisplayOutOfStock(),
