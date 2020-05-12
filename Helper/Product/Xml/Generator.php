@@ -282,6 +282,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $configurableChildren;
 
+    protected $scheduledUpdatesBuffer;
+
     const ISPKEY = 'ISPKEY_';
 
     const ActiveRulesCount = 'ActiveRulesCount2';
@@ -457,6 +459,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->stockFactory = $stockFactory;
         $this->categoriesLocalList = array();
+        $this->scheduledUpdatesBuffer = array();
 
         parent::__construct($context);
     }
@@ -934,11 +937,28 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             if ($attrValue) {
-                $attributeElem = $this->createChild(
-                    'attribute', [
+                $attrs = [
                     'is_filterable' => $is_filterable,
                     'name' => $attr->getAttributeCode()
-                ], false, $productElem
+                ];
+
+                if (in_array($attr->getAttributeCode(), [
+                    'special_from_date',
+                    'special_to_date',
+                    'news_to_date',
+                    'news_from_date'
+                ])) {
+                    $localDate = new \DateTime(
+                        $attrValue, new \DateTimeZone(
+                            $this->helper->getTimezone($this->getStoreId())
+                        )
+                    );
+                    $attrValue = $localDate->format('Y-m-d H:i:d');
+                    $attrs['dt'] = $localDate->getTimestamp();
+                }
+
+                $attributeElem = $this->createChild(
+                    'attribute', $attrs, false, $productElem
                 );
 
                 $this->createChild(
@@ -1192,6 +1212,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             }
         }
+
+        $this->flushUpdatesBuffer();
         return $this->xmlGenerator->generateXml();
     }
 
@@ -1452,7 +1474,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->scheduleDistantUpdate(date('Y-m-d', $res['from_time']), null, $dateTs, $res['product_id']);
             }
         }
-
+        $this->flushUpdatesBuffer();
         return $this->xmlGenerator->generateXml();
     }
 
@@ -1717,13 +1739,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
                 $priceRange = $this->generatePriceRange($product, $finalPrice);
             }
-
+            $scheduled = false;
             $specialFromDate = $product->getSpecialFromDate();
             $specialToDate = $product->getSpecialToDate();
             $specialPrice = $this->priceCurrencyInterface->convertAndRound($product->getSpecialPrice());
             $nowDateGmt = strtotime('now');
-            if (!is_null($specialPrice) && $specialPrice != false && $action != 'getbyid') {
-                $this->scheduleDistantUpdate($specialFromDate, $specialToDate, $nowDateGmt, $product);
+            if (!is_null($specialPrice) && $specialPrice != false) {
+                $scheduled = $this->scheduleDistantUpdate($specialFromDate, $specialToDate, $nowDateGmt, $product);
             }
 
             if ($updatedate && $updatedate > $nowDateGmt) {
@@ -1873,19 +1895,58 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $_isEnabled = $this->_getProductEnabledString($product);
             $this->createChild('product_status', false, $_isEnabled, $productElem);
 
+            $creation_date = null;
+
             if ($product->getNewsFromDate()) {
+                $newFromDtGmt = $this->dateTime->timestamp($product->getNewsFromDate());
+                $nowDateGmt = strtotime('now');
+                if ($newFromDtGmt < $nowDateGmt) {
+                    $creation_date = $newFromDtGmt;
+                }
+                $newToDtGmt = null;
+                if ($product->getNewsToDate()) {
+                    $newToDtGmt = $this->dateTime->timestamp($product->getNewsToDate());
+                    if ($newToDtGmt < $nowDateGmt) {
+                        $creation_date = null;
+                    }
+                    $this->createChild(
+                        'newto',
+                        false,
+                        $newToDtGmt,
+                        $productElem
+                    );
+                }
+
                 $this->createChild(
                     'newfrom',
                     false,
-                    $this->dateTime->timestamp($product->getNewsFromDate()),
+                    $newFromDtGmt,
+                    $productElem
+                );
+
+                $scheduledTemp = $this->scheduleDistantUpdate($product->getNewsFromDate(), $product->getNewsToDate(), $nowDateGmt, $product);
+                if (!$scheduled) {
+                    $scheduled = $scheduledTemp;
+                }
+            }
+
+            if ($scheduled) {
+                $this->createChild(
+                    'update_scheduled',
+                    ['scheduled_date' => $this->scheduledUpdatesBuffer[$product->getId()]['update_date']],
+                    $scheduled,
                     $productElem
                 );
             }
 
+
+            if (!$creation_date) {
+                $creation_date = $this->dateTime->timestamp($product->getCreatedAt());
+            }
             $this->createChild(
                 'creation_date',
                 false,
-                $this->dateTime->timestamp($product->getCreatedAt()),
+                $creation_date,
                 $productElem
             );
             $this->createChild(
@@ -2029,6 +2090,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected function scheduleDistantUpdate($specialFromDate, $specialToDate, $nowDateGmt, $product)
     {
+        $scheduled = false;
         if (is_numeric($product)) {
             $product = $this->productModel->load($product);
         }
@@ -2042,13 +2104,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $specialFromDateGmt = $localDate->getTimestamp();
         }
         if ($specialFromDateGmt && $specialFromDateGmt > $nowDateGmt) {
-            $this->batchesHelper->writeProductUpdate(
-                $product,
-                $product->getId(),
-                $this->getStoreId(),
-                $specialFromDateGmt,
-                $product->getSku()
-            );
+            $scheduled = $this->updateScheduledUpsertsBuffer($product, $specialFromDateGmt);
         } elseif ($specialToDate != null) {
             $localDate = new \DateTime(
                 $specialToDate, new \DateTimeZone(
@@ -2062,15 +2118,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
             $specialToDateGmt = $localDate->getTimestamp();
             if ($specialToDateGmt > $nowDateGmt) {
-                $this->batchesHelper->writeProductUpdate(
-                    $product,
-                    $product->getId(),
-                    $this->getStoreId(),
-                    $specialToDateGmt,
-                    $product->getSku()
-                );
+                $scheduled = $this->updateScheduledUpsertsBuffer($product, $specialToDateGmt);
             }
         }
+        return $scheduled;
     }
 
     /**
@@ -2230,6 +2281,38 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $this->eAValues = $optionValues;
         } else {
             $this->eAValues = $this->base64JsonDecode($eAValuesCache);
+        }
+    }
+
+    /**
+     * @param $product
+     * @param $dt
+     */
+    protected function updateScheduledUpsertsBuffer($product, $dt)
+    {
+        $scheduled = false;
+        if ((!array_key_exists($product->getId(), $this->scheduledUpdatesBuffer)
+            || $this->scheduledUpdatesBuffer[$product->getId()]['update_date'] > $dt)) {
+            $this->scheduledUpdatesBuffer[$product->getId()] = [
+                'product_id' => $product->getId(),
+                'store_id' => $this->getStoreId(),
+                'update_date' => $dt,
+                'action' => 'update',
+                'sku' => $product->getSku()
+            ];
+            $scheduled = true;
+        }
+        return $scheduled;
+    }
+
+    protected function flushUpdatesBuffer()
+    {
+        if (count($this->scheduledUpdatesBuffer) > 0) {
+            $data = [];
+            foreach ($this->scheduledUpdatesBuffer as $productId => $updateData) {
+                $data[] = $updateData;
+            }
+            $this->batchesHelper->upsertData($data);
         }
     }
 }

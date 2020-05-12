@@ -42,6 +42,7 @@ namespace Autocompleteplus\Autosuggest\Helper;
  */
 class Batches extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    const AUTOSUGGEST_BATCH_TABLE_NAME = 'autosuggest_batch';
     /**
      * @var \Magento\ConfigurableProduct\Model\Product\Type\Configurable
      */
@@ -79,6 +80,8 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $pricePluginDisabled = false;
 
+    protected $dbConnection;
+
     const MULTIPLE_INSERT_SIZE = 200;
 
     public function __construct(
@@ -99,6 +102,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         $this->batchModel = $batchModel;
         $this->_resourceConnection = $resourceConnection;
         $this->_storeManager = $storeManager;
+        $this->dbConnection = $this->_resourceConnection->getConnection();
         $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
     }
 
@@ -148,8 +152,6 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
             if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
                 $simpleProducts = $this->configurable->getParentIdsByChild($product->getId());
             }
-            $connection = $this->_resourceConnection->getConnection();
-            $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
             foreach ($productStores as $productStore) {
                 $data = [
                     'product_id'=> $productId,
@@ -158,7 +160,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                     'action'=> 'update',
                     'sku'=> 'ISP_NO_SKU'
                 ];
-                $connection->insertOnDuplicate($table_name, $data);
+                $this->upsertData($data);
 
                 if (is_array($simpleProducts) && count($simpleProducts) > 0) {
                     foreach ($simpleProducts as $configurableProduct) {
@@ -170,7 +172,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                             'sku'=> 'ISP_NO_SKU'
                         ];
                         if (count($data) > 0) {
-                            $connection->insertOnDuplicate($table_name, $data);
+                            $this->upsertData($data);
                         }
                     }
                 }
@@ -234,8 +236,6 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
             if ($sku == null) {
                 $sku = 'dummy_sku';
             }
-            $connection = $this->_resourceConnection->getConnection();
-            $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
             foreach ($productStores as $productStore) {
                 $data = [
                     'product_id' => $productId,
@@ -245,7 +245,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                     'sku' => $sku
                 ];
                 if (count($data) > 0) {
-                    $connection->insertOnDuplicate($table_name, $data);
+                    $this->upsertData($data);
                 }
             }
         } catch (\Exception $e) {
@@ -262,8 +262,6 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         //preventing reindex plugin to run
         $this->setPluginDisabled(true);
 
-        $connection = $this->_resourceConnection->getConnection();
-        $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
         $counter = 0;
         $data = [];
         foreach ($products_ids as $p_id) {
@@ -277,24 +275,15 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
             if ($counter == self::MULTIPLE_INSERT_SIZE) {
                 $this->logger->info('executed multiple insert of ' . count($data));
                 $counter = 0;
-                try {
-                    if (count($data) > 0) {
-                        $connection->insertOnDuplicate($table_name, $data);
-                    }
+                if (count($data) > 0) {
+                    $this->upsertData($data);
                     $data = [];
-                } catch (\Exception $e) {
-                    $this->logger->err($e->getMessage());
                 }
             }
         }
 
         if (count($data) > 0) {
-            try {
-                $connection->insertOnDuplicate($table_name, $data);
-            } catch (\Exception $e) {
-                $this->logger->err($e->getMessage());
-            }
-            $this->logger->info('executed multiple insert of ' . count($data));
+            $this->upsertData($data);
         }
     }
 
@@ -303,14 +292,13 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         if (!is_array($product_ids)) {
             $products_id = array($product_ids);
         }
-        $connection = $this->_resourceConnection->getConnection();
         $table_name = $this->_resourceConnection->getTableName('catalog_product_website');
 
-        $sql = $connection->select()
+        $sql = $this->dbConnection->select()
             ->from($table_name)
             ->where(sprintf('%s.product_id IN (?)', $table_name), $product_ids);
 
-        $results = $connection->fetchAll($sql);
+        $results = $this->dbConnection->fetchAll($sql);
         $storeIds = array();
 
         foreach ($results as $row) {
@@ -323,14 +311,13 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getCategoryProducts($category_id)
     {
-        $connection = $this->_resourceConnection->getConnection();
         $table_name = $this->_resourceConnection->getTableName('catalog_category_product');
 
-        $sql = $connection->select()
+        $sql = $this->dbConnection->select()
             ->from($table_name)
             ->where(sprintf('%s.category_id=?', $table_name), $category_id);
 
-        $results = $connection->fetchAll($sql);
+        $results = $this->dbConnection->fetchAll($sql);
         $productIds = array();
 
         foreach ($results as $row) {
@@ -338,5 +325,23 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $productIds;
+    }
+
+    /**
+     * @param $table_name
+     * @param $data
+     */
+    public function upsertData($data, $table_name=null)
+    {
+        if (!$table_name) {
+            $table_name = self::AUTOSUGGEST_BATCH_TABLE_NAME;
+        }
+        $table_name = $this->_resourceConnection->getTableName($table_name);
+        try {
+            $this->dbConnection->insertOnDuplicate($table_name, $data);
+        } catch (\Exception $e) {
+            $this->logger->err($e->getMessage());
+        }
+        $this->logger->info('executed multiple insert of ' . count($data));
     }
 }

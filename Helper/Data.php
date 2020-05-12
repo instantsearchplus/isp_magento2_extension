@@ -109,6 +109,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_PATH_DASHBOARD_ENDPOINT = 'autosuggest/dashboard/endpoint';
     const XML_PATH_DASHBOARD_PARAMS = 'autosuggest/dashboard/params';
     const XML_PATH_SHOW_OOS = 'cataloginventory/options/show_out_of_stock';
+    const XML_PATH_SEARCH_ENGINE = 'catalog/search/engine';
+    const XML_PATH_FLAT_CATALOG = 'catalog/frontend/flat_catalog_product';
     const SCOPE_CONFIG_STORES = 'stores';
 
     public function __construct(
@@ -219,6 +221,24 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->scopeConfig->getValue(
             self::XML_PATH_SEARCH_LAYERED,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $scopeId
+        );
+    }
+
+    public function getSearchEngine($scopeId = 0)
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_SEARCH_ENGINE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $scopeId
+        );
+    }
+
+    public function getFlatCatalogUsage($scopeId = 0)
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_FLAT_CATALOG,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $scopeId
         );

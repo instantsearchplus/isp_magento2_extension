@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.36] - 2020-05-12 13:35:00
+### Added
+- New_from and new_to scheduling
+- Add flags of search engine and flat catalog usage to vers request
+
 ## [4.7.35] - 2020-05-03 13:35:00
 ### Fixed
 - Connection ping
