@@ -74,6 +74,10 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
      */
     protected $storeManager;
 
+    protected $product_list_order;
+
+    protected $product_list_dir;
+
     /**
      * ProductCollection constructor.
      *
@@ -97,7 +101,8 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Catalog\Model\Session $catalogSession,
-        \Magento\Framework\Registry $registry
+        \Magento\Framework\Registry $registry,
+        \Magento\Framework\App\RequestInterface $request
     ) {
 
         $this->scopeConfig = $scopeConfig;
@@ -107,8 +112,11 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
         $this->registry = $registry;
         $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_ma_search_debug.log');
         $this->logger = new \Zend\Log\Logger();
-		$this->logger->addWriter($writer);
+        $this->logger->addWriter($writer);
         $this->catalogSession = $catalogSession;
+
+        $this->product_list_order = $request->getParam('product_list_order');
+        $this->product_list_dir = $request->getParam('product_list_dir');
 
         $laeyeredTmp = $this->helper->canUseSearchLayered();
 
@@ -249,51 +257,6 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
         return $subject;
     }
 
-    /**
-     * AroundSetOrder
-     * overrides order by relevance, because magento has a defult order
-     * for relevance which is desc - we change the direction
-     *
-     * @param \Magento\CatalogSearch\Model\ResourceModel\Fulltext\Collection $subject
-     * original class that we override the function from
-     * @param Closure                                                        $proceed   original function
-     * @param string                                                         $attribute sort attribute name
-     * @param string                                                         $dir       order direction
-     *
-     * @return mixed
-     */
-    public function aroundSetOrder(
-        $subject,
-        \Closure $proceed,
-        $attribute,
-        $dir = Select::SQL_ASC
-    ) {
-
-        if (!$this->is_layered_enabled) {
-            if ($this->is_fulltext_enabled) {
-                if ($attribute == 'relevance') {
-                    $dir = strtolower($dir) == strtolower(Select::SQL_ASC) ?
-                        Select::SQL_DESC : Select::SQL_ASC;
-
-                    $id_str = (count($this->list_ids) > 0) ?
-                        implode(',', $this->list_ids) : '0';
-                    if (!empty($id_str)) {
-                        $sort = "FIELD(e.entity_id, {$id_str}) {$dir}";
-                        $subject->getSelect()->order(new \Zend_Db_Expr($sort));
-                    }
-                    return $subject;
-                } else {
-                    return $proceed($attribute, $dir);
-                }
-
-            } else {
-                return $proceed($attribute, $dir);
-            }
-        }
-
-        return $proceed($attribute, $dir);
-    }
-
     public function aroundGetSize($subject, \Closure $proceed)
     {
         if (!$this->is_layered_enabled && $this->is_fulltext_enabled) {
@@ -348,7 +311,25 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
         $url = $url_domain . '?q=' . urlencode($query)
             . '&p=1&products_per_page=1000&v='
             . $extension_version . '&store_id='
-            . $storeId . '&UUID=' . $uuid . '&h=' . $site_url;
+            . $storeId . '&UUID=' . $uuid;
+
+        if ($this->product_list_order) {
+            $sort_by = '';
+            switch ($this->product_list_order) {
+                case 'price': $sort_by = $this->product_list_dir == 'asc' ? 'price_min_to_max' : 'price_max_to_min';
+                    break;
+                case 'name': $sort_by = $this->product_list_dir == 'asc' ? 'a_to_z' : 'z_to_a';
+                    break;
+                default:
+                    break;
+            }
+
+            if ($sort_by != '') {
+                $url = $url . '&sort_by=' . $sort_by;
+            }
+        }
+
+        $url .=  '&h=' . $site_url;
 
         $this->api->setUrl($url);
 

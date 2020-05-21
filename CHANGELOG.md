@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.37] - 2020-05-21 13:35:00
+### Fixed
+- Basic mode sorting
+
 ## [4.7.36] - 2020-05-12 13:35:00
 ### Added
 - New_from and new_to scheduling
