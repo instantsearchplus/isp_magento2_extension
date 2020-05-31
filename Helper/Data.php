@@ -111,6 +111,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_PATH_SHOW_OOS = 'cataloginventory/options/show_out_of_stock';
     const XML_PATH_SEARCH_ENGINE = 'catalog/search/engine';
     const XML_PATH_FLAT_CATALOG = 'catalog/frontend/flat_catalog_product';
+    const XML_PATH_SINGLE_STORE = 'autosuggest/install/single_store';
+    const XML_PATH_SINGLE_STORE_ID = 'autosuggest/install/single_store_id';
     const SCOPE_CONFIG_STORES = 'stores';
 
     public function __construct(
@@ -242,6 +244,25 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $scopeId
         );
+    }
+
+    public function getSingleStoreEnabled($scopeId = 0)
+    {
+        $singleStoreEnabled = $this->scopeConfig->getValue(
+            self::XML_PATH_SINGLE_STORE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $scopeId
+        );
+
+        if (filter_var($singleStoreEnabled, FILTER_VALIDATE_BOOLEAN)) {
+            $singleStoreId = $this->scopeConfig->getValue(
+                self::XML_PATH_SINGLE_STORE_ID,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                $scopeId
+            );
+            return sprintf('%s:%s', $singleStoreEnabled, $singleStoreId);
+        }
+        return false;
     }
 
     public function getSmartNavigationNative($scopeId = 0)
@@ -412,11 +433,26 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             'trans_email/ident_support/email',
             ScopeInterface::SCOPE_STORE
         );
+
+        $singleStoreData = $this->getSingleStoreEnabled();
+        if (!$singleStoreData) {
+            $singleStoreEnabled = false;
+            $singleStoreId = null;
+        } else {
+            $singleStoreData = explode(':', $singleStoreData);
+            $singleStoreEnabled = filter_var($singleStoreData[0], FILTER_VALIDATE_BOOLEAN);
+            $singleStoreId = $singleStoreData[1];
+        }
+
         $storesArr = [];
         foreach ($websites as $website) {
             $stores = $website->getStores();
             foreach ($stores as $store) {
-                $storesArr[$store->getId()] = $store->getData();
+                if (!$singleStoreEnabled) {
+                    $storesArr[$store->getId()] = $store->getData();
+                } elseif (intval($singleStoreId) == intval($store->getId())) {
+                    $storesArr[$store->getId()] = $store->getData();
+                }
             }
         }
         if (count($storesArr) == 1) {

@@ -142,6 +142,11 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
             'flat_products_enabled' => $this->helper->getFlatCatalogUsage($storeId)
         ];
 
+        $singleStoreData = $this->helper->getSingleStoreEnabled();
+        if ($singleStoreData) {
+            $responseData['single_store_enabled'] = $singleStoreData;
+        }
+
         $result = $this->resultJsonFactory->create();
         return $result->setData($responseData);
     }
