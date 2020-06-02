@@ -99,7 +99,6 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
         \Autocompleteplus\Autosuggest\Helper\Data $helper,
         \Autocompleteplus\Autosuggest\Helper\Api $api,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Psr\Log\LoggerInterface $logger,
         \Magento\Catalog\Model\Session $catalogSession,
         \Magento\Framework\Registry $registry,
         \Magento\Framework\App\RequestInterface $request
