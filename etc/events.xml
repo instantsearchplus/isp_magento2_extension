@@ -28,6 +28,6 @@
         <observer name="new_ordercomment_observer_ordernew" instance="Autocompleteplus\Autosuggest\Observer\OrderCreate" />
     </event>
     <event name="isp_sales_order_place_after">
-        <observer name="isp_sales_order_place_after" instance="Autocompleteplus\Autosuggest\Observer\ProductPurchased" />
+        <observer name="isp_sales_order_place_after" instance="Autocompleteplus\Autosuggest\Observer\IspProductSaveLight" />
     </event>
 </config>
