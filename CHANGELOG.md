@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.41] - 2020-06-04 13:35:00
+### Fixed
+- Automatically detect product stores by product ID in save after custom purchase event
+
 ## [4.7.40] - 2020-06-03 13:35:00
 ### Fixed
 - After product save custom event listener

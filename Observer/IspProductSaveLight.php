@@ -97,15 +97,24 @@ class IspProductSaveLight implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $productIds = $observer->getEvent()->getProductIds();
-        $storeId = $observer->getEvent()->getStoreId();
         $this->logger->info('updating items:');
         $this->logger->info(print_r($productIds, true));
-        $this->helper->writeMassProductsUpdate($productIds, $storeId);
+
+        $storesProductsData = array();
+        foreach ($productIds as $productId) {
+            $productStores = $this->helper->getProductStoresById($productId);
+            foreach ($productStores as $storeId) {
+                if (!array_key_exists($storeId, $storesProductsData)) {
+                    $storesProductsData[$storeId] = array();
+                }
+                $storesProductsData[$storeId][] = $productId;
+            }
+        }
+
+        foreach ($storesProductsData as $storeId => $productIdByStore) {
+            $this->helper->writeMassProductsUpdate($productIdByStore, $storeId);
+        }
 
         return $this;
     }
-}
-
-{
-
 }
