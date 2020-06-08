@@ -207,7 +207,11 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
         foreach ($website_stores as $w_st) {
             $website_stores_ids[] = $w_st->getStoreId();
         }
+
         list($price_index_result, $product_ids) = $this->getPriceIndexRows($customer_group, $count, $website_id, $page, $product_id);
+        if (count($product_ids) > 0) {
+            return $price_index_result;
+        }
 
         if ($page == 0) {
             $this->connection->query(sprintf("UPDATE %s SET is_updated=0 WHERE website_id = %s", $autosuggest_price_table, $website_id));

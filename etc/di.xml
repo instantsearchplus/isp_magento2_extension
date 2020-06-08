@@ -39,7 +39,14 @@
         <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Model\Plugin\Catalog\Product\Action"
                 sortOrder="1000"/>
     </type>
-
+    <type name="Magento\Catalog\Controller\Category\View">
+        <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Model\Plugin\Html\CategoryView"
+                sortOrder="1000"/>
+    </type>
+    <type name="Magento\Catalog\Model\Design">
+        <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Model\Plugin\Html\Design"
+                sortOrder="1000"/>
+    </type>
     <type name="Magento\CatalogRule\Model\ResourceModel\Rule">
         <plugin name="autocompleteplus" type="Autocompleteplus\Autosuggest\Helper\Plugin\CatalogRule"
                 sortOrder="1000"/>

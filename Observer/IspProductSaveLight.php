@@ -104,10 +104,10 @@ class IspProductSaveLight implements ObserverInterface
         foreach ($productIds as $productId) {
             $productStores = $this->helper->getProductStoresById($productId);
             foreach ($productStores as $storeId) {
-                if (!array_key_exists($storeId, $storesProductsData)) {
-                    $storesProductsData[$storeId] = array();
-                }
-                $storesProductsData[$storeId][] = $productId;
+               if (!array_key_exists($storeId, $storesProductsData)) {
+                   $storesProductsData[$storeId] = array();
+               }
+               $storesProductsData[$storeId][] = $productId;
             }
         }
 
