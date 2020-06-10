@@ -1613,7 +1613,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         if ($product->getMaxPrice() && $product->getMaxPrice() > 0) {
-            $pricesToCompare[] = $this->priceCurrencyInterface->convertAndRound((float)$product->getMaxPrice());
+            $max_price = $this->priceCurrencyInterface->convertAndRound((float)$product->getMaxPrice());
         }
 
         foreach ($this->getConfigurableChildren($product, array('id', 'sku', 'type_id', 'special_price'), false) as $child) {
@@ -1631,6 +1631,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         if (count($pricesToCompare) > 0) {
             $min_price = min($pricesToCompare);
+            $pricesToCompare[] = $max_price;
             $max_price = max($pricesToCompare);
         }
 

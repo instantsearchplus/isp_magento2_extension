@@ -208,8 +208,13 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
             $website_stores_ids[] = $w_st->getStoreId();
         }
 
-        list($price_index_result, $product_ids) = $this->getPriceIndexRows($customer_group, $count, $website_id, $page, $product_id);
-        if (count($product_ids) > 0) {
+        try {
+            list($price_index_result, $product_ids) = $this->getPriceIndexRows($customer_group, $count, $website_id, $page, $product_id);
+        } catch (\Exception $e) {
+            return [];
+        }
+
+        if ($product_id != 0) {
             return $price_index_result;
         }
 
@@ -364,6 +369,12 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
             sprintf("%s.final_price", $price_index_table_name)
         ];
 
+        if ($product_id != 0) {
+            $fields[] = sprintf("%s.min_price", $price_index_table_name);
+            $fields[] = sprintf("%s.max_price", $price_index_table_name);
+            $fields[] = sprintf("%s.price", $price_index_table_name);
+        }
+
         $sql = $this->connection->select()
             ->from($entity_int_table_name, [])
             ->join(
@@ -432,6 +443,12 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
                 'id' => $res['entity_id'],
                 'final_price' => $res['final_price']
             ];
+
+            if ($product_id != 0) {
+                $price_index_rows[$res['entity_id']]['min_price'] = $res['min_price'];
+                $price_index_rows[$res['entity_id']]['max_price'] = $res['max_price'];
+                $price_index_rows[$res['entity_id']]['price'] = $res['price'];
+            }
 
             $product_ids[] = $res['entity_id'];
         }

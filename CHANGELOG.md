@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.43] - 2020-06-10 13:35:00
+### Fixed
+- Min-price calculation
+
 ## [4.7.42] - 2020-06-08 13:35:00
 ### Fixed
 - Print price from index
