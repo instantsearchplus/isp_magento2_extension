@@ -171,6 +171,10 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
             'sessionID' =>  $this->getSessionId(),
             'is_user_logged_in'=> ($this->isLoggedInUser() ? '1' : '0'),
             'QuoteID'   =>  $this->cart->getQuote()->getId(),
+            'ext' => $this->helper->getVersion(),
+            'serp_slug' => $this->helper->getSerpSlug($storeId),
+            'isp_product_id' => $this->catalogSession->getIspProductId(),
+            'product_id' => $this->catalogSession->getIspProductId()
         ];
 
         if ($this->customerSession->isLoggedIn()) {
@@ -178,18 +182,8 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
                 ->getCustomerGroupId();
         }
 
-        if ($this->getCurrentProduct()) {
-            $parameters = array_merge(
-                $parameters,
-                [
-                    'product_url' => $this->getCurrentProduct()->getProductUrl(),
-                    'product_sku' => $this->getCurrentProduct()->getSku(),
-                    'product_id' => $this->getCurrentProduct()->getId(),
-                ]
-            );
-        }
-
         $this->catalogSession->unsIspProductSku();
+        $this->catalogSession->unsIspProductId();
 
         return $parameters;
     }

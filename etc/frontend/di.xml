@@ -16,4 +16,11 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\Customer\CustomerData\SectionPoolInterface">
+        <arguments>
+            <argument name="sectionSourceMap" xsi:type="array">
+                <item name="isp_config" xsi:type="string">Autocompleteplus\Autosuggest\CustomerData\IspConfigData</item>
+            </argument>
+        </arguments>
+    </type>
 </config>
