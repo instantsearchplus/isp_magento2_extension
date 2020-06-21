@@ -60,15 +60,15 @@ class Match extends \Magento\Framework\Search\Adapter\Mysql\Query\Builder\Match
 
     public function __construct(
         \Magento\Framework\Registry $registry,
-        \Magento\Catalog\Model\Session $catalogSession,
+		\Magento\Catalog\Model\Session $catalogSession,
         ResolverInterface $resolver,
         Fulltext $fulltextHelper,
         $fulltextSearchMode = Fulltext::FULLTEXT_MODE_BOOLEAN,
         array $preprocessors = []
     ) {
         $this->registry = $registry;
-        $this->catalogSession = $catalogSession;
-        $this->resolver = $resolver;
+		$this->catalogSession = $catalogSession;
+		$this->resolver = $resolver;
         $this->replaceSymbols = str_split(self::SPECIAL_CHARACTERS, 1);
         $this->fulltextHelper = $fulltextHelper;
         $this->fulltextSearchMode = $fulltextSearchMode;
@@ -88,7 +88,7 @@ class Match extends \Magento\Framework\Search\Adapter\Mysql\Query\Builder\Match
         $isp_basic_ids = $this->registry->registry('isp_basic_ids');
         if (filter_var($this->catalogSession->getIsFullTextEnable(), FILTER_VALIDATE_BOOLEAN) && $isp_basic_ids) {
             $idStr = implode(',', $isp_basic_ids);
-            $select->where('eav_index.entity_id IN ('.$idStr.')');
+			$select->where('eav_index.entity_id IN ('.$idStr.')');
 
             $joinFroms = $select->getPart('FROM');
             if (array_key_exists('search_index', $joinFroms)) {
@@ -100,39 +100,39 @@ class Match extends \Magento\Framework\Search\Adapter\Mysql\Query\Builder\Match
             }
             $select->setPart('FROM', $joinFroms);
 
-        } else {
-            /** @var $query \Magento\Framework\Search\Request\Query\Match */
-            $queryValue = $this->prepareQuery($query->getValue(), $conditionType);
+		} else {
+			/** @var $query \Magento\Framework\Search\Request\Query\Match */
+			$queryValue = $this->prepareQuery($query->getValue(), $conditionType);
 
-            $fieldList = [];
-            foreach ($query->getMatches() as $match) {
-                $fieldList[] = $match['field'];
-            }
-            $resolvedFieldList = $this->resolver->resolve($fieldList);
+			$fieldList = [];
+			foreach ($query->getMatches() as $match) {
+				$fieldList[] = $match['field'];
+			}
+			$resolvedFieldList = $this->resolver->resolve($fieldList);
 
-            $fieldIds = [];
-            $columns = [];
-            foreach ($resolvedFieldList as $field) {
-                if ($field->getType() === FieldInterface::TYPE_FULLTEXT && $field->getAttributeId()) {
-                    $fieldIds[] = $field->getAttributeId();
-                }
-                $column = $field->getColumn();
-                $columns[$column] = $column;
-            }
+			$fieldIds = [];
+			$columns = [];
+			foreach ($resolvedFieldList as $field) {
+				if ($field->getType() === FieldInterface::TYPE_FULLTEXT && $field->getAttributeId()) {
+					$fieldIds[] = $field->getAttributeId();
+				}
+				$column = $field->getColumn();
+				$columns[$column] = $column;
+			}
 
-            $matchQuery = $this->fulltextHelper->getMatchQuery(
-                $columns,
-                $queryValue,
-                $this->fulltextSearchMode
-            );
-            $scoreBuilder->addCondition($matchQuery, true);
+			$matchQuery = $this->fulltextHelper->getMatchQuery(
+				$columns,
+				$queryValue,
+				$this->fulltextSearchMode
+			);
+			$scoreBuilder->addCondition($matchQuery, true);
 
-            if ($fieldIds) {
-                $matchQuery = sprintf('(%s AND search_index.attribute_id IN (%s))', $matchQuery, implode(',', $fieldIds));
-            }
+			if ($fieldIds) {
+				$matchQuery = sprintf('(%s AND search_index.attribute_id IN (%s))', $matchQuery, implode(',', $fieldIds));
+			}
 
-            $select->where($matchQuery);
-        }
+			$select->where($matchQuery);
+		}
 
 
         return $select;

@@ -205,6 +205,10 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
             'm2' => true
         ];
 
+        if ($this->registry->registry('category_id')) {
+           $parameters['category_id'] = $this->registry->registry('category_id');
+        }
+
         return $parameters;
     }
 }

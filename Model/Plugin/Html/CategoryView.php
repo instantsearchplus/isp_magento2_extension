@@ -44,6 +44,9 @@ class CategoryView
         if ($this->helper->getSmartNavigationNative($this->storeManager->getStore()->getId())) {
             $this->registry->register('in_category', true);
         }
-        return $proceed();
+        $this->registry->register('category_id', $subject->getRequest()->getParam('id'));
+        $page = $proceed();
+        $page->getConfig()->addBodyClass('category-id-' . $subject->getRequest()->getParam('id'));
+        return $page;
     }
 }
