@@ -1757,7 +1757,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $lastModifiedDate = $updatedate;
             }
 
-            if ($product->getTypeId() == Grouped::TYPE_CODE) {
+            if ($product->getTypeId() == Grouped::TYPE_CODE
+                || $product->getTypeId() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) {
                 $priceRange = [
                     'price_min' => $this->priceCurrencyInterface->convertAndRound($product->getMinPrice()),
                     'price_max' => $this->priceCurrencyInterface->convertAndRound($product->getMaxPrice())

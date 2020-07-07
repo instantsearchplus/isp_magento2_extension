@@ -12,12 +12,14 @@
                     || $('body').hasClass('instantsearchplus-result-index')
                     || $('body').hasClass('catalogsearch-result-index')) {
                     var sections = ['isp_config'];//replace cart with your custom section name if you want to load your custom data
-                    customerData.reload(sections, true).done(
-                        function(d) {
-                            window.checkout.QuoteID = d['isp_config'].QuoteID;
-                            window.checkout.isp_product_id = d['isp_config'].product_id;
-                        }
-                    );
+                    try {
+                        customerData.reload(sections, true).done(
+                            function (d) {
+                                window.checkout.QuoteID = d['isp_config'].QuoteID;
+                                window.checkout.isp_product_id = d['isp_config'].product_id;
+                            }
+                        );
+                    } catch (e) {}
                 }
             });
         }

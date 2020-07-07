@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.7.48] - 2020-07-07 13:35:00
+### Added
+- Bundle product prices support
+### Fixed
+- Js error in sections refresh
+
 ## [4.7.46] - 2020-06-21 13:35:00
 ### Added
 - Category_id to acp-magento and to body tag class
