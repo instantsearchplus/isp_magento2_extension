@@ -46,7 +46,9 @@ class CategoryView
         }
         $this->registry->register('category_id', $subject->getRequest()->getParam('id'));
         $page = $proceed();
-        $page->getConfig()->addBodyClass('category-id-' . $subject->getRequest()->getParam('id'));
+        if (method_exists($page, 'getConfig')) {
+            $page->getConfig()->addBodyClass('category-id-' . $subject->getRequest()->getParam('id'));
+        }
         return $page;
     }
 }
