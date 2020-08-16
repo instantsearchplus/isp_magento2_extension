@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 - ISP+ Basic mode support
 
+## [4.8.03] - 2020-08-16 13:35:00
+### Added
+- Basic mode merchandising support
+
 ## [4.8.01] - 2020-07-12 13:35:00
 ### Added
 - Bundle product prices support
