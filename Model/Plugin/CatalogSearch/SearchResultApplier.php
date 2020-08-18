@@ -91,12 +91,12 @@ class SearchResultApplier
         $addOrder = true;
 
         if (filter_var($this->catalogSession->getIsFullTextEnable(), FILTER_VALIDATE_BOOLEAN) && $isp_basic_ids) {
-            $score = count($isp_basic_ids);
             $scoredItems = [];
-            foreach ($isp_basic_ids as $prod) {
-                if ($prod != null && is_numeric($prod)) {
-                    $scoredItems[] = new ItemWithScore($prod, $score);
-                    $score--;
+            $isp_basic_ids = array_reverse($isp_basic_ids);
+            foreach ($this->searchResult->getItems() as $prod) {
+                if ($prod->getId() != null && is_numeric($prod->getId()) && !in_array($prod->getId(), $scoredItems)) {
+                    $score = array_search($prod->getId(), $isp_basic_ids);
+                    $scoredItems[] = new ItemWithScore($prod->getId(), $score);
                 }
             }
             $table = $temporaryStorage->storeApiDocuments($scoredItems);
