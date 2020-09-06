@@ -90,7 +90,7 @@ class SearchResultApplier
         $isp_basic_ids = $this->registry->registry('isp_basic_ids');
         $addOrder = true;
 
-        if (filter_var($this->catalogSession->getIsFullTextEnable(), FILTER_VALIDATE_BOOLEAN) && $isp_basic_ids) {
+        if (filter_var($this->catalogSession->getIsFullTextEnable(), FILTER_VALIDATE_BOOLEAN) && $isp_basic_ids && count($isp_basic_ids) > 0) {
             $scoredItems = [];
             $isp_basic_ids = array_reverse($isp_basic_ids);
             foreach ($this->searchResult->getItems() as $prod) {
@@ -116,14 +116,19 @@ class SearchResultApplier
             $table = $temporaryStorage->storeApiDocuments($this->searchResult->getItems());
         }
 
-        $this->collection->getSelect()->joinInner(
-            [
-                'search_result' => $table->getName(),
-            ],
-            'e.entity_id = search_result.' . TemporaryStorage::FIELD_ENTITY_ID,
-            []
-        );
-        if (isset($this->orders['relevance']) || $addOrder) {
+        $joinFroms = $this->collection->getSelect()->getPart('FROM');
+
+        if (!array_key_exists('search_result', $joinFroms)) {
+            $this->collection->getSelect()->joinInner(
+                [
+                    'search_result' => $table->getName(),
+                ],
+                'e.entity_id = search_result.' . TemporaryStorage::FIELD_ENTITY_ID,
+                []
+            );
+        }
+
+        if (array_key_exists('relevance', $this->orders) && isset($this->orders['relevance']) && $addOrder) {
             $this->collection->getSelect()->order(
                 'search_result.' . TemporaryStorage::FIELD_SCORE . ' ' . $this->orders['relevance']
             );

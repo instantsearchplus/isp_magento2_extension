@@ -209,6 +209,7 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
             );
 
             list($enabledFulltext, $responseData) = $this->getIdsOnly($query, $extension_version, $storeId, $uuid, $site_url);
+            $product_ids = [];
 
             $this->clearSessionData();
 
@@ -222,7 +223,6 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
 
                 if ($responseData->total_results) {
                     $id_list = $responseData->id_list;
-                    $product_ids = [];
                     /**
                      * Validate received ids
                      */
@@ -233,7 +233,9 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
                     }
                     $product_ids = array_unique($product_ids);
                     $this->list_ids = $product_ids;
-                    $this->registry->register('isp_basic_ids', $product_ids);
+                    if (count($product_ids) > 0) {
+                        $this->registry->register('isp_basic_ids', $product_ids);
+                    }
                     $this->helper->setBasicEnabled(1, 'stores', $this->storeManager->getStore()->getId());
                     $idStr = (count($product_ids) > 0) ? implode(',', $product_ids) : '0';
                 } else {
@@ -248,7 +250,9 @@ class ProductCollection extends \Magento\CatalogSearch\Model\ResourceModel\Fullt
                  * }
                  */
 
-                $subject->getSelect()->where('e.entity_id IN ('.$idStr.')');
+                if (count($product_ids) > 0) {
+                    $subject->getSelect()->where('e.entity_id IN (' . $idStr . ')');
+                }
             }
         }
 

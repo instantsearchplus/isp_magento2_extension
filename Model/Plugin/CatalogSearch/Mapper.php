@@ -177,7 +177,7 @@ class Mapper extends \Magento\Framework\Search\Adapter\Mysql\Mapper
         );
 
         $isp_basic_ids = $this->registry->registry('isp_basic_ids');
-        if (!filter_var($this->catalogSession->getIsFullTextEnable(), FILTER_VALIDATE_BOOLEAN) || !$isp_basic_ids) {
+        if (!filter_var($this->catalogSession->getIsFullTextEnable(), FILTER_VALIDATE_BOOLEAN) || !$isp_basic_ids || count($isp_basic_ids) == 0) {
             $select->limit($request->getSize(), $request->getFrom());
             $select->order('relevance ' . Select::SQL_DESC)->order('entity_id ' . Select::SQL_DESC);
         } else {
