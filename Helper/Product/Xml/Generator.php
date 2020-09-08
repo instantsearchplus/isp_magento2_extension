@@ -1727,6 +1727,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $imagePath = $product->getSmallImage() ? $product->getSmallImage() : $product->getImage();
+            if ($imagePath && substr( $imagePath, 0, 1 ) !== "/") {
+                $imagePath = '/' . $imagePath;
+            }
             $_baseImage = $this->storeManager
                     ->getStore()
                     ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
