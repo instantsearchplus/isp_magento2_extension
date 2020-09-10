@@ -20,6 +20,14 @@ class Getlayeredsearchconfig extends \Autocompleteplus\Autosuggest\Controller\La
             return $result;
         }
 
+        if (!$this->isStoreExists($scopeId)) {
+            $response = [
+                'status' => 'error: Store does not exists'
+            ];
+            $result->setData($response);
+            return $result;
+        }
+
         $currentState = $this->helper->getSearchLayered($scopeId);
 
         $response = [

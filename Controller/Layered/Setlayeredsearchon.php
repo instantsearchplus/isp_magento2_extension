@@ -21,7 +21,15 @@ class Setlayeredsearchon extends \Autocompleteplus\Autosuggest\Controller\Layere
             $result->setData($response);
             return $result;
         }
-        
+
+        if (!$this->isStoreExists($scopeId)) {
+            $response = [
+                'status' => 'error: Store does not exists'
+            ];
+            $result->setData($response);
+            return $result;
+        }
+
         $this->helper->setSearchLayered(true, $scope, $scopeId);
         if ($mini_form_url_instantsearchplus === '1') {
             $this->helper->setMiniFormRewrite(true, $scope, $scopeId);

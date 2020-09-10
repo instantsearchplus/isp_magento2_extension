@@ -46,24 +46,40 @@ abstract class Layered extends \Magento\Framework\App\Action\Action
     protected $apiHelper;
     protected $resultJsonFactory;
     protected $cacheTypeList;
+    protected $storeManager;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Api $apiHelper,
         \Autocompleteplus\Autosuggest\Helper\Data $helper,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
-        \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList
+        \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
+        \Magento\Store\Model\StoreManagerInterface $storeManager
     ) {
         $this->apiHelper = $apiHelper;
         $this->helper = $helper;
         $this->resultJsonFactory = $resultJsonFactory;
         $this->cacheTypeList = $cacheTypeList;
+        $this->storeManager = $storeManager;
         parent::__construct($context);
+    }
+
+    public function isStoreExists($storeId) {
+        try {
+            $store = $this->storeManager->getStore($storeId);
+            if ($store) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function isValid($uuid, $authKey)
     {
-        if ($this->apiHelper->getApiUUID() == $uuid 
+        if ($this->apiHelper->getApiUUID() == $uuid
             && $this->apiHelper->getApiAuthenticationKey() == $authKey
         ) {
             return true;
