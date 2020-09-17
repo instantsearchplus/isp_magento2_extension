@@ -1004,9 +1004,21 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 if (count($variants) > 0) {
                     $simpleSkusArr = [];
                     $variantElem = $this->createChild('variants', false, false, $productElem);
-                    $child_attributes_to_select = array('special_price', 'image', 'small_image', 'product_thumbnail_image', 'visibility', 'type_id', 'name');
+
+                    $child_attributes_to_select = array(
+                        'special_price',
+                        'image',
+                        'small_image',
+                        'product_thumbnail_image',
+                        'visibility',
+                        'type_id',
+                        'name',
+                        'status',
+                        'qty'
+                    );
                     $child_attributes_to_select = array_merge($child_attributes_to_select, $variant_codes);
                     $configChildren = $this->getConfigurableChildren($product, $child_attributes_to_select, true);
+
                     foreach ($configChildren as $child_product) {
 
                         /**
@@ -1040,10 +1052,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             $_baseImage = $this->image->init($child_product, 'product_thumbnail_image')->getUrl();
                         }
 
+                        $is_variant_sellable = '';
                         if (method_exists($child_product, 'isSaleable')) {
                             $is_variant_sellable = ($child_product->isSaleable()) ? 1 : 0;
-                        } else {
-                            $is_variant_sellable = '';
+                            if (!$is_variant_sellable && $child_product->hasData('is_salable')) {
+                                $is_variant_sellable = ($child_product->getData('is_salable')) ? 1 : 0;
+                            }
                         }
 
                         if (method_exists($child_product, 'getVisibility')) {

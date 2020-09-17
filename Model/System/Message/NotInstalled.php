@@ -137,15 +137,9 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
      */
     public function isDisplayed()
     {
-        if ($this->request->getParam('isAjax') === 'true') {
-            return ($this->_authorization->isAllowed(
+        return ($this->_authorization->isAllowed(
                 'Autocompleteplus_Autosuggest::autosuggest'
-            ) && ($this->checkAuthenticationKey() ||
-            $this->checkEndpoint() ||
-            $this->checkUUID()));
-        } else {
-            return true;
-        }
+            ) && ($this->checkAuthenticationKey() || $this->checkEndpoint() || $this->checkUUID()));
     }
 
     /**
