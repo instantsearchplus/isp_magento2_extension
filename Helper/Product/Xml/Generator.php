@@ -874,7 +874,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         try {
             $action = $attr->getAttributeCode();
             $attrValue = $product->getData($action);
-
             if ($attrValue == null) {
                 if (intval($attr->getIsRequired())) {
                     $attrValue = $attr->getDefaultValue();
@@ -883,6 +882,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     return;
                 }
             }
+
             $is_filterable = $attr->getIsFilterable();
             $attribute_label = $attr->getFrontendLabel();
 
@@ -913,20 +913,15 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         }
                         break;
                     case 'multiselect':
-                        $valueIds = explode(',', $attrValue);
-                        $attrValueStr = '';
-                        foreach ($valueIds as $vId){
-                            $vIdInt = intval($vId);
-                            if (array_key_exists($vIdInt, $this->eAValues)) {
-                                if ($attrValueStr == '')
-                                    $attrValueStr = $this->eAValues[$vIdInt];
-                                else
-                                    $attrValueStr = sprintf('%s, %s', $attrValueStr, $this->eAValues[$vIdInt]);
-                            } else {
-                                $attrValueStr = $product->getResource()
-                                    ->getAttribute($action)->getFrontend()->getValue($product);
-                                break;
-                            }
+                        if (method_exists($product, 'getAttributeText')) {
+                            /**
+                             * We generate key for cached attributes array
+                             * we make it as string to avoid null to be a key
+                             */
+                            $attrValueStr = $this->getAttrValue($product, $attrValue, $action);
+                        } else {
+                            $attrValueStr = $product->getResource()
+                                ->getAttribute($action)->getFrontend()->getValue($product);
                         }
                         $attrValue = $attrValueStr;
                         break;
@@ -1018,7 +1013,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     );
                     $child_attributes_to_select = array_merge($child_attributes_to_select, $variant_codes);
                     $configChildren = $this->getConfigurableChildren($product, $child_attributes_to_select, true);
-
                     foreach ($configChildren as $child_product) {
 
                         /**
@@ -2249,6 +2243,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             || !array_key_exists($attrValidKey, $this->attributesValuesCache[$action])
         ) {
             $attrValueText = $product->getAttributeText($action);
+            if (is_array($attrValueText)) {
+                $attrValueText = implode(',', $attrValueText);
+            }
             if (!array_key_exists($action, $this->attributesValuesCache)) {
                 $this->attributesValuesCache[$action] = [];
             }

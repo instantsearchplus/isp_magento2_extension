@@ -27,7 +27,7 @@ abstract class Redirect extends \Magento\Backend\App\Action
 
     protected function _isAllowed()
     {
-        return $this->_authorization->isAllowed('Autocompleteplus_Autosuggest::instantsearch_configuration');
+        return $this->_authorization->isAllowed('Autocompleteplus_Autosuggest::instantsearch_dashboard');
     }
 
     protected function _initAction()
