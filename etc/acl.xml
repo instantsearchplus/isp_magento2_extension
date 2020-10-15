@@ -3,7 +3,7 @@
     <acl>
         <resources>
             <resource id="Magento_Backend::admin">
-                <resource id="Autocompleteplus_Autosuggest::instantsearch_dashboard" title="InstantSearch+ Dashboard" sortOrder="1000" action="autosuggest/redirect/index" />
+                <resource id="Autocompleteplus_Autosuggest::instantsearch_dashboard" title="InstantSearch+ Dashboard" sortOrder="1000"/>
                 <resource id="Magento_Backend::stores">
                     <resource id="Magento_Backend::stores_settings">
                         <resource id="Magento_Config::config">
