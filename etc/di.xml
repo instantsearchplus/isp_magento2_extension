@@ -46,4 +46,8 @@
         <plugin name="autosuggest_catalog_index_price" type="Autocompleteplus\Autosuggest\Model\Plugin\Catalog\Index\Price"
                 sortOrder="1000"/>
     </type>
+    <type name="Magento\Staging\Model\Entity\Update\Save">
+        <plugin name="autosuggest_catalog_staging_product_save" type="Autocompleteplus\Autosuggest\Model\Plugin\Catalog\Staging\ProductSave"
+                sortOrder="1000"/>
+    </type>
 </config>

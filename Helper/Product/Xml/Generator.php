@@ -248,6 +248,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     protected $attrSetOPtions;
 
     /**
+     * @var \Magento\Framework\EntityManager\EntityMetadataInterface
+     */
+    protected $entityMetadata;
+
+    /**
      * @var array keeps customer groups names and ids
      */
     protected $_customersGroups;
@@ -400,7 +405,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Catalog\Model\Product\Attribute\Repository $productAttributeRepository,
         \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrencyInterface,
         \Magento\CatalogInventory\Model\Stock\Item $stockFactory,
-        \Magento\CatalogRule\Model\ResourceModel\Rule $ruleModel
+        \Magento\CatalogRule\Model\ResourceModel\Rule $ruleModel,
+        \Magento\Framework\EntityManager\MetadataPool $metadataPool
     ) {
         $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_import_debug.log');
         $this->logger = new \Zend\Log\Logger();
@@ -452,6 +458,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->attributesSetsCache = $this->getAttributesSetsCache();
         $this->priceCurrencyInterface = $priceCurrencyInterface;
         $this->ruleModel = $ruleModel;
+        $this->entityMetadata = $metadataPool->getMetadata('Magento\Catalog\Api\Data\ProductInterface');
 
         foreach ($customerGroupManager->toOptionArray() as $custGr) {
             $this->_customersGroups[$custGr['value']] = $custGr['label'];
@@ -1009,7 +1016,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         'type_id',
                         'name',
                         'status',
-                        'qty'
+                        'qty',
+                        'sku'
                     );
                     $child_attributes_to_select = array_merge($child_attributes_to_select, $variant_codes);
                     $configChildren = $this->getConfigurableChildren($product, $child_attributes_to_select, true);
@@ -1070,7 +1078,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             'visibility' => $is_variant_visible,
                             'is_in_stock' => $is_variant_in_stock,
                             'is_seallable' => $is_variant_sellable,
-                            'price' => $variantFinalPrice
+                            'price' => $variantFinalPrice,
+                            'sku' => $child_product->getSku()
                         ];
                         $matches = [];
                         preg_match('/.*\.(jpg|jpeg|png|gif)$/', $_baseImage, $matches);
@@ -1760,6 +1769,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $scheduled = $this->scheduleDistantUpdate($specialFromDate, $specialToDate, $nowDateGmt, $product);
             }
 
+            $nextScheduledStagingTime = $this->getNextProductScheduledUpdateDateById($product->getId());
+            if($nextScheduledStagingTime) {
+                $scheduled = $this->scheduleDistantUpdate($nextScheduledStagingTime, null, $nowDateGmt, $product);
+            }
+
             if ($updatedate && $updatedate > $nowDateGmt) {
                 $lastModifiedDate = strtotime(
                     (string) $product->getUpdatedAt()
@@ -2109,27 +2123,35 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
         $specialFromDateGmt = null;
         if ($specialFromDate != null) {
-            $localDate = new \DateTime(
-                $specialFromDate, new \DateTimeZone(
-                    $this->helper->getTimezone($this->getStoreId())
-                )
-            );
-            $specialFromDateGmt = $localDate->getTimestamp();
+            if (!is_integer($specialFromDate)) {
+                $localDate = new \DateTime(
+                    $specialFromDate, new \DateTimeZone(
+                        $this->helper->getTimezone($this->getStoreId())
+                    )
+                );
+                $specialFromDateGmt = $localDate->getTimestamp();
+            } else {
+                $specialFromDateGmt = $specialFromDate;
+            }
         }
         if ($specialFromDateGmt && $specialFromDateGmt > $nowDateGmt) {
             $scheduled = $this->updateScheduledUpsertsBuffer($product, $specialFromDateGmt);
         } elseif ($specialToDate != null) {
-            $localDate = new \DateTime(
-                $specialToDate, new \DateTimeZone(
-                    $this->helper->getTimezone($this->getStoreId())
-                )
-            );
-            $hour = $localDate->format('H');
-            $mins = $localDate->format('i');
-            if ($hour == '00' && $mins == '00') {
-                $localDate->modify('+86700 seconds'); //make "to" limit inclusive and another 5 minutes for safety
+            if (!is_integer($specialToDate)) {
+                $localDate = new \DateTime(
+                    $specialToDate, new \DateTimeZone(
+                        $this->helper->getTimezone($this->getStoreId())
+                    )
+                );
+                $hour = $localDate->format('H');
+                $mins = $localDate->format('i');
+                if ($hour == '00' && $mins == '00') {
+                    $localDate->modify('+86700 seconds'); //make "to" limit inclusive and another 5 minutes for safety
+                }
+                $specialToDateGmt = $localDate->getTimestamp();
+            } else {
+                $specialToDateGmt = $specialToDate;
             }
-            $specialToDateGmt = $localDate->getTimestamp();
             if ($specialToDateGmt > $nowDateGmt) {
                 $scheduled = $this->updateScheduledUpsertsBuffer($product, $specialToDateGmt);
             }
@@ -2269,6 +2291,49 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             return json_decode($string, true);
         }
         return $result;
+    }
+
+    public function getNextProductScheduledUpdateDateById($id) {
+        $connection = $this->resourceConnection->getConnection();
+        $tableName = $this->resourceConnection->getTableName($this->entityMetadata->getEntityTable());
+        $select = $connection->select()
+            ->from($tableName)
+            ->where( $tableName . '.' . $this->entityMetadata->getIdentifierField() . ' = ' . $id .
+                ' AND ' . $tableName . '.created_in > 1')
+            ->setPart('disable_staging_preview', true);
+
+        $updates = [];
+        $rows = $connection->fetchAll($select);
+
+        $nowDt = strtotime('now');
+        $closestDate = $nowDt;
+
+        $smallestStartDt = PHP_INT_MAX;
+        $smallestEndDt = PHP_INT_MAX;
+        $prevEndDt = 0;
+        foreach ($rows as $r) {
+            if ($r['created_in'] == $prevEndDt) {
+                continue;
+            }
+            $createdIn = (int)$r['created_in'];
+            if ($createdIn < $smallestStartDt && $createdIn > $nowDt) {
+                $smallestStartDt = $createdIn;
+            }
+            $updatedIn = (int)$r['updated_in'];
+            if ($updatedIn < $smallestStartDt && $updatedIn > $nowDt) {
+                $smallestStartDt = $updatedIn;
+            }
+            $prevEndDt = $r['updated_in'];
+        }
+        if ($smallestStartDt > $nowDt) {
+            $closestDate = $smallestStartDt;
+        } elseif ($smallestEndDt > $nowDt) {
+            $closestDate = $smallestEndDt;
+        }
+        if ($closestDate == PHP_INT_MAX) {
+            $closestDate = false;
+        }
+        return $closestDate;
     }
 
     public function checkCachedAttrValues($store_id){
