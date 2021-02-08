@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.9.09] - 2021-02-08 13:09:00
+### Added
+- Alternative stock field support
+
 ## [4.9.08] - 2021-01-31 13:09:00
 ### Added
 - Staging updates support

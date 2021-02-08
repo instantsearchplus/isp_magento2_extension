@@ -30,6 +30,11 @@
                     <comment>Will provide more content for InstantSearch+ to provide relevant results to your customers.</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="stock_source" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Variant stock status source</label>
+                    <comment>Determines according to which field the item will become out of stock</comment>
+                    <source_model>Autocompleteplus\Autosuggest\Model\Adminhtml\Source\Stock</source_model>
+                </field>
             </group>
         </section>
     </system>

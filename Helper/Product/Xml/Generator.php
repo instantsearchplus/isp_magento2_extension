@@ -1041,8 +1041,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                                 $child_product->getId(),
                                 $product->getStore()->getWebsiteId()
                             );
-
-                        $is_variant_in_stock = ($stockitem->getIsInStock()) ? 1 : 0;
+                        $varStockSource = $this->helper->useQtyAsStockSource();
+                        if ($varStockSource != 'qty') {
+                            $is_variant_in_stock = ($stockitem->getIsInStock()) ? 1 : 0;
+                        } else {
+                            $is_variant_in_stock = ($stockitem->getQty() > 0) ? 1 : 0;
+                        }
 
                         $imagePath = $child_product->getImage() ? $child_product->getImage() : $child_product->getSmallImage();
                         $_baseImage = $this->storeManager

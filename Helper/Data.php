@@ -96,6 +96,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     const ENABLED = 'autosuggest/general/enabled';
     const PRODUCT_ATTRIBUTES = 'autosuggest/product/attributes';
+    const STOCK_SOURCE = 'autosuggest/product/stock_source';
     const PRODUCT_IMAGE_FIELD = 'autosuggest/product/image_field';
     const XML_PATH_SEARCH_LAYERED = 'autosuggest/search/layered';
     const XML_PATH_COUNTRY_CODE = 'general/store_information/country_id';
@@ -170,6 +171,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function canUseProductAttributes()
     {
         return $this->scopeConfig->getValue(self::PRODUCT_ATTRIBUTES);
+    }
+
+    public function useQtyAsStockSource()
+    {
+        return $this->scopeConfig->getValue(self::STOCK_SOURCE);
     }
 
     public function canUseSearchLayered()
@@ -496,7 +502,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 if ($useStoreCode) {
                     $storeComplete['url'] = $storeUrls[0].$value['code'];
                 }
-                
+
                 $storeData[] = $storeComplete;
             }
             $dataArr = [
