@@ -69,7 +69,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
     public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
         $setup->startSetup();
-        if(version_compare($context->getVersion(), '4.7.22') < 0) {
+        if(version_compare($context->getVersion(), '4.7.22', '<')) {
             $batchTable = $setup->getConnection()
                 ->newTable($setup->getTable('autosuggest_batch'))
                 ->addColumn(
@@ -146,7 +146,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 $err_msg = $e->getMessage();
             }
 
-        } elseif (version_compare($context->getVersion(), '4.7.29') < 0) {
+        } elseif (version_compare($context->getVersion(), '4.7.29', '<')) {
             $batchTable = $setup->getConnection()
                 ->newTable($setup->getTable('autosuggest_price'))
                 ->addColumn(

@@ -289,6 +289,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $scheduledUpdatesBuffer;
 
+    protected $productMetadata;
+
     const ISPKEY = 'ISPKEY_';
 
     const ActiveRulesCount = 'ActiveRulesCount2';
@@ -406,7 +408,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrencyInterface,
         \Magento\CatalogInventory\Model\Stock\Item $stockFactory,
         \Magento\CatalogRule\Model\ResourceModel\Rule $ruleModel,
-        \Magento\Framework\EntityManager\MetadataPool $metadataPool
+        \Magento\Framework\EntityManager\MetadataPool $metadataPool,
+        \Magento\Framework\App\ProductMetadataInterface $productMetadata
     ) {
         $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_import_debug.log');
         $this->logger = new \Zend\Log\Logger();
@@ -467,7 +470,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->stockFactory = $stockFactory;
         $this->categoriesLocalList = array();
         $this->scheduledUpdatesBuffer = array();
-
+        $this->productMetadata = $productMetadata;
         parent::__construct($context);
     }
 
@@ -1773,9 +1776,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $scheduled = $this->scheduleDistantUpdate($specialFromDate, $specialToDate, $nowDateGmt, $product);
             }
 
-            $nextScheduledStagingTime = $this->getNextProductScheduledUpdateDateById($product->getId());
-            if($nextScheduledStagingTime) {
-                $scheduled = $this->scheduleDistantUpdate($nextScheduledStagingTime, null, $nowDateGmt, $product);
+            if ($this->productMetadata->getEdition() != 'Community') {
+                $nextScheduledStagingTime = $this->getNextProductScheduledUpdateDateById($product->getId());
+                if($nextScheduledStagingTime) {
+                    $scheduled = $this->scheduleDistantUpdate($nextScheduledStagingTime, null, $nowDateGmt, $product);
+                }
             }
 
             if ($updatedate && $updatedate > $nowDateGmt) {
@@ -2070,6 +2075,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->renderGroupedChildrenSkus($product, $productElem);
             }
         } catch (\Exception $e) {
+            echo $e->getTraceAsString();
+            echo '<br/>';
+            echo $e->getMessage();
             $this->logger->warn($e->getMessage());
         }
     }
