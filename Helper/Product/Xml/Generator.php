@@ -980,6 +980,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             }
         } catch (\Exception $e) {
+            $this->logger->warn(print_r($e->getTraceAsString(), true));
             $this->logger->warn($e->getMessage());
         }
     }
@@ -1207,7 +1208,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $resultsToSchedule = $this->getActiveRulesFromProducts(
                 $this->storeManager->getStore()->getWebsiteId(),
                 $this->catalogRuleAffectedProducts,
-                $storeId,
                 $dateTs
             );
             foreach ($resultsToSchedule as $res) {
@@ -1224,7 +1224,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $resultsToSchedule = $this->getFutureRulesFromProducts(
                 $this->storeManager->getStore()->getWebsiteId(),
                 $this->catalogFutureRuleAffectedProducts,
-                $storeId,
                 $dateTs
             );
             foreach ($resultsToSchedule as $res) {
@@ -1641,7 +1640,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         foreach ($this->getConfigurableChildren($product, array('id', 'sku', 'type_id', 'special_price'), false) as $child) {
-            if ($child->getPrice() && $compare_at_price < $child->getPrice()) {
+            if ($child->getPrice() && $compare_at_price < $child->getPrice() && $child->getFinalPrice() < $child->getPrice()) {
                 $compare_at_price = $this->priceCurrencyInterface->convertAndRound((float)$child->getPrice());
             }
 
@@ -1767,6 +1766,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
                 $priceRange = $this->generatePriceRange($product, $finalPrice);
             }
+
             $scheduled = false;
             $specialFromDate = $product->getSpecialFromDate();
             $specialToDate = $product->getSpecialToDate();
@@ -1811,9 +1811,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $productPrices[] = $finalPrice;
-            if ($priceRange['price_max'] && $priceRange['price_max'] > 0) {
-                $productPrices[] = $priceRange['price_max'];
-            }
             $catalogRulePrice = $this->getCatalogRulePrice($product);
             if ($catalogRulePrice && $catalogRulePrice > 0) {
                 $productPrices[] = $catalogRulePrice;
@@ -1856,10 +1853,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $productPrices[] = $regularPrice;
             }
 
-            if ($product->getTypeId() == Configurable::TYPE_CODE && array_key_exists('compare_at_price', $priceRange)) {
-                $xmlAttributes['price_compare_at_price'] = $priceRange['compare_at_price'];
-            }
-
             $raw_msrp = $product->getMsrp();
             if (!$raw_msrp) {
                 $raw_msrp = $product->getgcm_msrp();
@@ -1870,9 +1863,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $productPrices[] = $msrp;
             }
 
-            $compare_at_price = max($productPrices);
-            if ($compare_at_price > $finalPrice) {
-                $xmlAttributes['price_compare_at_price'] = $compare_at_price;
+            if ($product->getTypeId() == Configurable::TYPE_CODE && array_key_exists('compare_at_price', $priceRange)) {
+                $xmlAttributes['price_compare_at_price'] = $priceRange['compare_at_price'];
+            } else {
+                $compare_at_price = max($productPrices);
+                if ($compare_at_price > $finalPrice) {
+                    $xmlAttributes['price_compare_at_price'] = $compare_at_price;
+                }
             }
 
             $productElem = $this->createChild('product', $xmlAttributes, false, $this->xmlGenerator->getSimpleXml());
