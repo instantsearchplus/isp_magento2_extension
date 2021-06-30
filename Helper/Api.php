@@ -258,4 +258,55 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
             $this->setApiUUID($responseData->uuid);
         }
     }
+
+    /**
+     * post_without_wait send http call and close the connection without waiting for response
+     *
+     * @param $url
+     * @param array  $params
+     * @param string $type
+     *
+     * @return void
+     */
+    public function post_without_wait($url, $params = [], $type = 'POST', $post_params = [])
+    {
+        foreach ($params as $key => &$val) {
+            if (is_array($val)) {
+                $val = implode(',', $val);
+            }
+            $post_params[] = $key.'='.urlencode($val);
+        }
+
+        $post_string = implode('&', $post_params);
+        $parts=parse_url($url);
+        $fp = fsockopen(
+            $parts['host'],
+            isset($parts['port'])? $parts['port'] : 80,
+            $errno,
+            $errstr,
+            30
+        );
+
+        // Data goes in the path for a GET request
+        if ('GET' == $type) {
+            $parts['path'] .= '?'.$post_string;
+        }
+
+        $out = "$type ".$parts['path']." HTTP/1.1\r\n";
+        $out.= "Host: ".$parts['host']."\r\n";
+
+        if ($type == 'POST') {
+            $out.= "Content-Type: application/x-www-form-urlencoded\r\n";
+            $out.= "Content-Length: ".strlen($post_string)."\r\n";
+        }
+
+        $out.= "Connection: Close\r\n\r\n";
+        // Data goes in the request body for a POST request
+        if ('POST' == $type && isset($post_string)) {
+            $out.= $post_string;
+        }
+
+        fwrite($fp, $out);
+        fclose($fp);
+    }
 }

@@ -50,18 +50,26 @@ class OrderCreate implements ObserverInterface
     protected $batchesHelper;
     protected $_storeManager;
     protected $logger;
+    protected $apiHelper;
+    protected $injector_helper;
+    protected $checkoutSession;
 
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         \Autocompleteplus\Autosuggest\Helper\Batches $batchesHelper,
         \Magento\Framework\Stdlib\DateTime\DateTime $dateTime,
-        \Magento\CatalogInventory\Model\Stock\Item $stockFactory
+        \Magento\CatalogInventory\Model\Stock\Item $stockFactory,
+        \Autocompleteplus\Autosuggest\Helper\Api $api,
+        \Magento\Checkout\Model\Session $checkoutSession,
+        \Autocompleteplus\Autosuggest\Helper\Html\Injector $injector_helper
     ) {
+        $this->injector_helper = $injector_helper;
+        $this->apiHelper = $api;
         $this->batchesHelper = $batchesHelper;
         $this->dateTime = $dateTime;
         $this->stockFactory = $stockFactory;
         $this->_storeManager = $context->getStoreManager();
-
+        $this->checkoutSession = $checkoutSession;
         $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_orders_debug.log');
         $this->logger = new \Zend\Log\Logger();
         $this->logger->addWriter($writer);
@@ -81,9 +89,90 @@ class OrderCreate implements ObserverInterface
             if (count($product_ids) > 0) {
                 $this->batchesHelper->writeMassProductsUpdate($product_ids, $store_id);
             }
+
+            $web_hook_url = $this->apiHelper->getApiEndpoint() . '/ma_webhook';
+            $params = $this->_getWebhookObjectUri($observer);
+            if ($params == null) {
+                return;
+            }
+            if (function_exists('fsockopen')) {
+                $this->apiHelper->post_without_wait(
+                    $web_hook_url,
+                    $params,
+                    'GET'
+                );
+            } else {
+                $this->apiHelper->setUrl($web_hook_url);
+                $this->apiHelper->setRequestType(\Zend_Http_Client::GET);
+                $response = $this->apiHelper->buildRequest($params);
+            }
+            $this->checkoutSession->setIspOrderSent(1);
         } catch (\Exception $e) {
             $this->logger->warn($e->getMessage());
         }
         return $this;
+    }
+
+    /**
+     * Create the webhook URI.
+     *
+     * @return array
+     */
+    protected function _getWebhookObjectUri($observer)
+    {
+        $store_id = $this->_storeManager->getStore()->getId();
+        $order = $observer->getEvent()->getOrder();
+        $cart_items = $this->_getVisibleItemsFromOrder($order);
+        $cart_token = $order->getQuoteID();
+        $cart_products_json = json_encode($cart_items);
+        $parameters = [
+            'event' => 'success',
+            'UUID' => $this->apiHelper->getApiUUID(),
+            'key' => $this->apiHelper->getApiAuthenticationKey(),
+            'store_id' => $store_id,
+            'st' => $this->injector_helper->getSessionId(),
+            'cart_token' => $cart_token,
+            'serp' => '',
+            'cart_product' => $cart_products_json,
+        ];
+
+        return $parameters;
+    }
+
+    protected function _getVisibleItemsFromOrder($order)
+    {
+        $orderItems = $order->getItems();
+        return $this->_buildCartArray($orderItems, $order);
+    }
+
+    /**
+     * Return a formatted array of quote or order items.
+     *
+     * @param array $cartItems
+     *
+     * @return array
+     */
+    protected function _buildCartArray($cartItems, $order)
+    {
+        $items = [];
+        foreach ($cartItems as $item) {
+            $quantity = $item->getQty();
+            if ($quantity == null) {
+                $quantity = $item->getqty_ordered();
+            }
+            if (is_object($item->getProduct())) {
+                $this->cartProduct = $item->getProduct();
+                $items[] = [
+                    'product_id' => $item->getProduct()->getId(),
+                    'price' => $item->getProduct()->getFinalPrice(),
+                    'quantity' => $quantity,
+                    'currency' => ($item->getQuote() == null)?
+                        $order->getorder_currency_code() :
+                        $order->getGlobalCurrencyCode()
+                ];
+            }
+        }
+
+        return $items;
     }
 }
