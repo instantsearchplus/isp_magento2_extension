@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.9.15] - 2021-07-13 10:09:00
+### Fixed
+- Getting customer cart token
+
 ## [4.9.14] - 2021-06-30 13:09:00
 ### Fixed
 - Conversions analytics

@@ -10,7 +10,9 @@ if (typeof requirejs !== 'undefined') {
             || $('body').hasClass('catalogsearch-result-index')) {
             var sections = ['isp_config'];//replace cart with your custom section name if you want to load your custom data
             try {
-                customerData.initStorage();
+                try {
+                    customerData.initStorage();
+                } catch (e) {}
                 customerData.reload(sections, true).done(
                     function (d) {
                         if (typeof window.checkout !== 'undefined') {
