@@ -1821,6 +1821,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $finalPrice = min($productPrices);
 
             $currency = $this->getCurrencyCode();
+            $stockitem = $this->stockRegistry
+                ->getStockItem(
+                    $product->getId(),
+                    $product->getStore()->getWebsiteId()
+                );
             $xmlAttributes = [
                 'action' => $action,
                 'id' => $product->getId(),
@@ -1833,7 +1838,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'type' => $product->getTypeId(),
                 'currency' => $currency,
                 'visibility' => $product->getVisibility(),
-                'selleable' => $product->isSalable()
+                'selleable' => $product->isSalable(),
+                'is_in_stock' => ($stockitem->getQty() < 1 && boolval($this->helper->getManageStock())) ? 0 : 1
             ];
 
             if ($lastModifiedDate != 0) {
