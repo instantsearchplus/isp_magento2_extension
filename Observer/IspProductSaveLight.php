@@ -52,11 +52,6 @@ class IspProductSaveLight implements ObserverInterface
     protected $helper;
 
     /**
-     * @var \Psr\Log\LoggerInterface
-     */
-    protected $logger;
-
-    /**
      * @var \Magento\Framework\Stdlib\DateTime\DateTime
      */
     protected $date;
@@ -71,7 +66,6 @@ class IspProductSaveLight implements ObserverInterface
      *
      * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
      * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable              $configurable
-     * @param \Psr\Log\LoggerInterface                                                  $logger
      * @param \Magento\Framework\Stdlib\DateTime\DateTime                               $date
      * @param \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory
      * @param \Magento\Catalog\Model\Product                                            $productModel
@@ -82,9 +76,6 @@ class IspProductSaveLight implements ObserverInterface
         \Magento\Framework\Stdlib\DateTime\DateTime $date
     ) {
         $this->helper = $helper;
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_ma_search_debug.log');
-        $this->logger = new \Zend\Log\Logger();
-        $this->logger->addWriter($writer);
         $this->date = $date;
     }
 
@@ -97,9 +88,6 @@ class IspProductSaveLight implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $productIds = $observer->getEvent()->getProductIds();
-        $this->logger->info('updating items:');
-        $this->logger->info(print_r($productIds, true));
-
         $storesProductsData = array();
         foreach ($productIds as $productId) {
             $productStores = $this->helper->getProductStoresById($productId);

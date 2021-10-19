@@ -279,8 +279,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $stockFactory;
 
-    protected $logger;
-
     protected $categoriesLocalList;
 
     protected $ruleModel;
@@ -411,10 +409,6 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\EntityManager\MetadataPool $metadataPool,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata
     ) {
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_import_debug.log');
-        $this->logger = new \Zend\Log\Logger();
-        $this->logger->addWriter($writer);
-
         $this->storeManager = $storeManagerInterface;
         $this->helper = $helper;
         $this->batchesHelper = $batchesHelper;
@@ -980,8 +974,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             }
         } catch (\Exception $e) {
-            $this->logger->warn(print_r($e->getTraceAsString(), true));
-            $this->logger->warn($e->getMessage());
+            $this->_logger->warn(print_r($e->getTraceAsString(), true));
+            $this->_logger->warn($e->getMessage());
         }
     }
 
@@ -2081,7 +2075,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             echo $e->getTraceAsString();
             echo '<br/>';
             echo $e->getMessage();
-            $this->logger->warn($e->getMessage());
+            $this->_logger->warn($e->getMessage());
         }
     }
 

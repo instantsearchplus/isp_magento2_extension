@@ -49,7 +49,6 @@ class OrderCreate implements ObserverInterface
     protected $dateTime;
     protected $batchesHelper;
     protected $_storeManager;
-    protected $logger;
     protected $apiHelper;
     protected $injector_helper;
     protected $checkoutSession;
@@ -70,9 +69,6 @@ class OrderCreate implements ObserverInterface
         $this->stockFactory = $stockFactory;
         $this->_storeManager = $context->getStoreManager();
         $this->checkoutSession = $checkoutSession;
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_orders_debug.log');
-        $this->logger = new \Zend\Log\Logger();
-        $this->logger->addWriter($writer);
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
@@ -108,7 +104,6 @@ class OrderCreate implements ObserverInterface
             }
             $this->checkoutSession->setIspOrderSent(1);
         } catch (\Exception $e) {
-            $this->logger->warn($e->getMessage());
         }
         return $this;
     }

@@ -46,7 +46,7 @@ class Webhook implements ObserverInterface
 {
     protected $apiHelper;
     protected $injector_helper;
-    protected $logger;
+
     /**
      * Store manager
      *
@@ -84,11 +84,6 @@ class Webhook implements ObserverInterface
     ) {
         $this->injector_helper = $injector_helper;
         $this->apiHelper = $api;
-
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_orders_debug.log');
-        $this->logger = new \Zend\Log\Logger();
-        $this->logger->addWriter($writer);
-
         $this->_storeManager = $context->getStoreManager();
         $this->_session = $session;
         $this->orderRepository = $orderRepository;
@@ -177,7 +172,6 @@ class Webhook implements ObserverInterface
             }
 
         } catch (\Exception $e) {
-            $this->logger->err($e->getMessage());
         }
     }
 

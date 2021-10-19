@@ -23,7 +23,6 @@ namespace Autocompleteplus\Autosuggest\Model\Plugin\Catalog\Index;
 class Price
 {
     protected $apiHelper;
-    protected $logger;
     protected $batchesHelper;
 
     public function __construct(
@@ -31,11 +30,6 @@ class Price
         \Autocompleteplus\Autosuggest\Helper\Api $apiHelper
     ) {
         $this->apiHelper = $apiHelper;
-
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_reindex_debug.log');
-        $this->logger = new \Zend\Log\Logger();
-        $this->logger->addWriter($writer);
-
         $this->batchesHelper = $batchesHelper;
     }
 
@@ -47,7 +41,6 @@ class Price
     public function afterExecuteFull($subject)
     {
         try {
-            $this->logger->info('pinging isp server after execute full reindex');
             $auth_key = $this->apiHelper->getApiAuthenticationKey();
             $uuid = $this->apiHelper->getApiUUID();
             $web_hook_url = $this->apiHelper->getApiEndpoint() . '/reindex_after_update_catalog';
@@ -61,7 +54,6 @@ class Price
 
             $response = $this->apiHelper->buildRequest($params);
         } catch (\Exception $e) {
-            $this->logger->err($e->getMessage());
         }
         return $subject;
     }
@@ -77,9 +69,7 @@ class Price
     public function afterExecuteList($subject, $result, ...$args)
     {
         try {
-            $this->logger->info('pinging isp server after execute partial reindex');
             if ($this->batchesHelper->getPluginDisabled()) {
-                $this->logger->info('exiting on plugin disabled flag');
                 return $result;
             }
 
@@ -106,7 +96,6 @@ class Price
                 $this->batchesHelper->writeMassProductsUpdate($product_ids, $store_id);
             }
         } catch (\Exception $e) {
-            $this->logger->err($e->getMessage());
         }
         return $result;
     }

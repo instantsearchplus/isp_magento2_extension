@@ -52,11 +52,6 @@ class CategorySave implements ObserverInterface
     protected $helper;
 
     /**
-     * @var \Psr\Log\LoggerInterface
-     */
-    protected $logger;
-
-    /**
      * @var \Magento\Framework\Stdlib\DateTime\DateTime
      */
     protected $date;
@@ -76,7 +71,6 @@ class CategorySave implements ObserverInterface
     /**
      * CategorySave constructor.
      * @param \Autocompleteplus\Autosuggest\Helper\Batches $helper
-     * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
      * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
      */
@@ -87,11 +81,6 @@ class CategorySave implements ObserverInterface
         \Autocompleteplus\Autosuggest\Helper\Api $apiHelper
     ) {
         $this->helper = $helper;
-
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_reindex_debug.log');
-        $this->logger = new \Zend\Log\Logger();
-        $this->logger->addWriter($writer);
-
         $this->date = $date;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->apiHelper = $apiHelper;
@@ -148,7 +137,6 @@ class CategorySave implements ObserverInterface
     protected function ping_isp_server_on_new_category()
     {
         try {
-            $this->logger->info('pinging isp server after execute full reindex');
             $auth_key = $this->apiHelper->getApiAuthenticationKey();
             $uuid = $this->apiHelper->getApiUUID();
             $web_hook_url = $this->apiHelper->getApiEndpoint() . '/reindex_after_update_catalog';
@@ -163,7 +151,6 @@ class CategorySave implements ObserverInterface
 
             $response = $this->apiHelper->buildRequest($params);
         } catch (\Exception $e) {
-            $this->logger->err($e->getMessage());
         }
     }
 }

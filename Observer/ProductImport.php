@@ -58,11 +58,6 @@ class ProductImport implements ObserverInterface
     protected $configurable;
 
     /**
-     * @var \Psr\Log\LoggerInterface
-     */
-    protected $logger;
-
-    /**
      * @var \Magento\Framework\Stdlib\DateTime\DateTime
      */
     protected $date;
@@ -118,11 +113,6 @@ class ProductImport implements ObserverInterface
     ) {
         $this->helper = $helper;
         $this->configurable = $configurable;
-
-        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/isp_import_debug.log');
-        $this->logger = new \Zend\Log\Logger();
-        $this->logger->addWriter($writer);
-
         $this->date = $date;
         $this->productModel = $productModel;
         $this->context = $context;
@@ -175,7 +165,6 @@ class ProductImport implements ObserverInterface
         $storeId = 0;
         $to_update = [];
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
-            $this->logger->info('enter into import observer with ' . count($bunch));
             foreach ($bunch as $itemArray) {
                 $sku = $itemArray['sku'];
                 $productId = $this->productModel->getIdBySku($sku);
@@ -200,8 +189,6 @@ class ProductImport implements ObserverInterface
                     }
 
                 } catch (\Exception $e) {
-
-                    $this->logger->err($e->getMessage());
                     $productStores = [$storeId];
                 }
                 $parentProducts = $this->configurable->getParentIdsByChild($productId);
@@ -226,7 +213,6 @@ class ProductImport implements ObserverInterface
                 }
             }
         }
-        $this->logger->info('in import placed updates into buffers');
         $connection = $this->_resourceConnection->getConnection();
         $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
         $counter = 0;
@@ -237,7 +223,6 @@ class ProductImport implements ObserverInterface
                 $connection->insertOnDuplicate($table_name, $to_update);
             }
         } catch (\Exception $e) {
-            $this->logger->err($e->getMessage());
         }
 
         return $this;
