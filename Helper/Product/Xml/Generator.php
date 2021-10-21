@@ -2072,10 +2072,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->renderGroupedChildrenSkus($product, $productElem);
             }
         } catch (\Exception $e) {
-            echo $e->getTraceAsString();
-            echo '<br/>';
-            echo $e->getMessage();
-            $this->_logger->warn($e->getMessage());
+            $errMsg = $e->getTraceAsString();
+            $errMsg .= '<br/>' . $e->getMessage();
+            $this->_logger->warn($errMsg);
         }
     }
 
