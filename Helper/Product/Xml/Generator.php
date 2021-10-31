@@ -1743,14 +1743,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
             }
 
-            $imagePath = $product->getSmallImage() ? $product->getSmallImage() : $product->getImage();
-            if ($imagePath && substr( $imagePath, 0, 1 ) !== "/") {
-                $imagePath = '/' . $imagePath;
-            }
-            $_baseImage = $this->storeManager
-                    ->getStore()
-                    ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
-                . 'catalog/product' . $imagePath;
+            $_baseImage = $this->image->init($product, 'product_page_image_medium')
+                ->setImageFile($product->getImage())
+                ->resize(500)
+                ->getUrl();
 
             $productPrices = array();
             $finalPrice = $this->priceCurrencyInterface->convertAndRound($product->getFinalPrice());
