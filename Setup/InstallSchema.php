@@ -51,20 +51,11 @@ class InstallSchema implements InstallSchemaInterface
 {
 
     protected $scopeConfig;
-    protected $api;
-    protected $helper;
-    protected $logger;
 
     public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Autocompleteplus\Autosuggest\Helper\Api $api,
-        \Psr\Log\LoggerInterface $logger,
-        \Autocompleteplus\Autosuggest\Helper\Data $helper
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     ) {
         $this->scopeConfig = $scopeConfig;
-        $this->helper = $helper;
-        $this->api = $api;
-        $this->logger = $logger;
     }
 
     public function install(
@@ -77,6 +68,13 @@ class InstallSchema implements InstallSchemaInterface
 
         $batchTable = $installer->getConnection()
             ->newTable($installer-> getTable('autosuggest_batch'))
+            ->addColumn(
+                'entity_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                'Batch ID'
+            )
             ->addColumn(
                 'product_id',
                 \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
@@ -115,7 +113,7 @@ class InstallSchema implements InstallSchemaInterface
             ->addIndex(
                 $setup->getIdxName('autosuggest_batch_index', ['product_id', 'store_id']),
                 ['product_id', 'store_id'],
-                ['type' => AdapterInterface::INDEX_TYPE_PRIMARY]
+                ['type' => AdapterInterface::INDEX_TYPE_UNIQUE]
             )
             ->addIndex(
                 $setup->getIdxName('autosuggest_batch_update_dt_index', ['update_date', 'store_id']),
@@ -244,40 +242,5 @@ class InstallSchema implements InstallSchemaInterface
         $installer->getConnection()->createTable($notificationsTable);
 
         $installer->endSetup();
-
-        $params = [
-            'site'       => $this->scopeConfig->getValue(
-                'web/unsecure/base_url',
-                ScopeInterface::SCOPE_STORE
-            ),
-            'email'      => $this->scopeConfig->getValue(
-                'trans_email/ident_support/email',
-                ScopeInterface::SCOPE_STORE
-            ),
-            'f'          => $this->helper->getVersion(),
-            'multistore' => json_encode($this->helper->getMultiStoreData())
-        ];
-
-        $uuid = $this->scopeConfig->getValue('autosuggest/api/uuid', ScopeInterface::SCOPE_STORE);
-
-        if ($uuid != null) {
-            $params['uuid'] = $uuid;
-        }
-
-        $this->api->setUrl($this->api->getApiEndpoint() . '/install');
-        $this->api->setRequestType(\Zend_Http_Client::POST);
-
-        try {
-            $response = $this->api->buildRequest($params);
-
-            $responseData = json_decode($response->getBody());
-            if ($responseData) {
-                $this->api->setApiUUID($responseData->uuid);
-                $this->api->setApiAuthenticationKey($responseData->authentication_key);
-            }
-
-        } catch (\Exception $e) {
-            $this->logger->critical($e);
-        }
     }
 }
