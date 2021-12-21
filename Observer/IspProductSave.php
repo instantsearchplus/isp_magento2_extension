@@ -106,13 +106,13 @@ class IspProductSave implements ObserverInterface
         ) {
             $oldSku = $origData['sku'];
             if ($sku != $oldSku) {
-                $this->helper->writeProductDeletion($oldSku, $productId, 0, $dt, $product);
+                $this->helper->writeProductDeletion($oldSku, $productId, $storeId, $dt, $product);
             }
         }
 
         //recording disabled item as deleted
         if ($product->getStatus() == '2') {
-            $this->helper->writeProductDeletion($sku, $productId, 0, $dt, $product);
+            $this->helper->writeProductDeletion($sku, $productId, $storeId, $dt, $product);
             return $this;
         }
 

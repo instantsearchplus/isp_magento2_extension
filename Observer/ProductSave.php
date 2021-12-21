@@ -102,7 +102,7 @@ class ProductSave implements ObserverInterface
         ) {
             $oldSku = $origData['sku'];
             if ($sku != $oldSku) {
-                $this->helper->writeProductDeletion($oldSku, $productId, 0, $dt, $product);
+                $this->helper->writeProductDeletion($oldSku, $productId, $storeId, $dt, $product);
             }
         }
 
