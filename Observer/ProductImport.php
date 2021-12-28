@@ -162,7 +162,7 @@ class ProductImport implements ObserverInterface
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $storeId = 0;
+        $storeId = $this->_storeManager->getStore()->getId();
         $to_update = [];
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
             foreach ($bunch as $itemArray) {

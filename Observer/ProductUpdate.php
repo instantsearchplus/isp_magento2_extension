@@ -79,6 +79,11 @@ class ProductUpdate implements ObserverInterface
     protected $_resourceConnection;
 
     /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
      * ProductSave constructor.
      *
      * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
@@ -95,7 +100,8 @@ class ProductUpdate implements ObserverInterface
         \Magento\Catalog\Api\ProductRepositoryInterface $productRepositoryInterface,
         \Magento\Framework\App\ResourceConnection $resourceConnection,
         \Magento\Framework\Model\Context $context,
-        \Magento\Framework\Registry $registry
+        \Magento\Framework\Registry $registry,
+        \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
     ) {
         $this->helper = $helper;
         $this->configurable = $configurable;
@@ -105,6 +111,7 @@ class ProductUpdate implements ObserverInterface
         $this->context = $context;
         $this->registry = $registry;
         $this->_resourceConnection = $resourceConnection;
+        $this->storeManager = $storeManagerInterface;
     }
 
     /**
@@ -117,7 +124,7 @@ class ProductUpdate implements ObserverInterface
     {
         $bunch = $observer->getEvent()->getProductIds();
         $attributes_data = $observer->getEvent()->getAttributesData();
-        $storeId = 0;
+        $storeId = $this->storeManager->getStore()->getId();
         $data = [];
         $counter = 0;
         try {

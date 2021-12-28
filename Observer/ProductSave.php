@@ -67,6 +67,11 @@ class ProductSave implements ObserverInterface
     protected $batchCollection;
 
     /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
      * ProductSave constructor.
      *
      * @param \Autocompleteplus\Autosuggest\Helper\Data   $helper
@@ -76,11 +81,13 @@ class ProductSave implements ObserverInterface
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\Stdlib\DateTime\DateTime $date
+        \Magento\Framework\Stdlib\DateTime\DateTime $date,
+        \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
     ) {
         $this->helper = $helper;
         $this->logger = $logger;
         $this->date = $date;
+        $this->storeManager = $storeManagerInterface;
     }
 
     /**
@@ -93,7 +100,7 @@ class ProductSave implements ObserverInterface
     {
         $product = $observer->getEvent()->getProduct();
         $origData = $product->getOrigData();
-        $storeId = $product->getStoreId();
+        $storeId = $this->storeManager->getStore()->getId();
         $productId = $product->getId();
         $sku = $product->getSku();
         $dt = $this->date->gmtTimestamp();
@@ -108,7 +115,7 @@ class ProductSave implements ObserverInterface
 
         //recording disabled item as deleted
         if ($product->getStatus() == '2') {
-            $this->helper->writeProductDeletion($sku, $productId, 0, $dt, $product);
+            $this->helper->writeProductDeletion($sku, $productId, $storeId, $dt, $product);
             return $this;
         }
 

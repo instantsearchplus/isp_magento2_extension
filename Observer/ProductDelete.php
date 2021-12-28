@@ -68,6 +68,11 @@ class ProductDelete implements ObserverInterface
     protected $batchCollection;
 
     /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
      * @var \Magento\Framework\Stdlib\DateTime\DateTime
      */
     protected $date;
@@ -81,12 +86,14 @@ class ProductDelete implements ObserverInterface
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Psr\Log\LoggerInterface $logger
+        \Psr\Log\LoggerInterface $logger,
+        \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
     ) {
         $this->helper = $helper;
         $this->configurable = $configurable;
         $this->date = $date;
         $this->logger = $logger;
+        $this->storeManager = $storeManagerInterface;
     }
 
     /**
@@ -98,7 +105,7 @@ class ProductDelete implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $product = $observer->getEvent()->getProduct();
-        $storeId = $product->getStoreId();
+        $storeId = $this->storeManager->getStore()->getId();
         $productId = $product->getId();
         $sku = $product->getSku();
         $dt = $this->date->gmtTimestamp();
