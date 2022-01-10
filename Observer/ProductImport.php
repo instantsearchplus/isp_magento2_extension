@@ -107,7 +107,7 @@ class ProductImport implements ObserverInterface
         \Magento\Catalog\Model\Product $productModel,
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Magento\Store\Model\StoreRepository $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\ResourceConnection $resourceConnection,
         \Magento\ImportExport\Model\ResourceModel\Import\Data $importData
     ) {
