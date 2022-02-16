@@ -152,9 +152,16 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getSrc()
     {
+        $storeId = $this->_storeManager->getStore()->getId();
         $parameters = $this->getParameters();
+        $usingDrV2 = $this->helper->getDropdownV2($storeId);
+        if (!$usingDrV2) {
+            $baseScript = self::AUTOCOMPLETE_JS_URL;
+        } else {
+           $baseScript = 'https://fastsimon.akamaized.net/fast-simon-autocomplete-init.umd.js';
+        }
 
-        return self::AUTOCOMPLETE_JS_URL.'?'.http_build_query($parameters, '', '&');
+        return $baseScript . '?' . http_build_query($parameters, '', '&');
     }
 
     /**

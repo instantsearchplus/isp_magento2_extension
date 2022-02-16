@@ -340,7 +340,7 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         try {
             $this->dbConnection->insertOnDuplicate($table_name, $data);
         } catch (\Exception $e) {
-            $this->logger->err($e->getMessage());
+            $this->logger->error($e->getMessage());
         }
         $this->logger->info('executed multiple insert of ' . count($data));
     }

@@ -115,6 +115,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_PATH_FLAT_CATALOG = 'catalog/frontend/flat_catalog_product';
     const XML_PATH_SINGLE_STORE = 'autosuggest/install/single_store';
     const XML_PATH_SINGLE_STORE_ID = 'autosuggest/install/single_store_id';
+    const XML_PATH_DROPDOWN_V2 = 'autosuggest/dropdown/v2';
     const SCOPE_CONFIG_STORES = 'stores';
 
     public function __construct(
@@ -295,6 +296,30 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->scopeConfig->getValue(
             self::XML_PATH_SHOW_OOS,
             self::SCOPE_CONFIG_STORES
+        );
+    }
+
+    public function getDropdownV2($storeId)
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_DROPDOWN_V2,
+            'stores',
+            $storeId
+        );
+    }
+
+    public function setDropdownV2($val, $storeId)
+    {
+        if ($val == 'false' || $val == '0') {
+            $val = 0;
+        } else {
+            $val = 1;
+        }
+        return $this->resourceConfig->saveConfig(
+            self::XML_PATH_DROPDOWN_V2,
+            $val,
+            'stores',
+            $storeId
         );
     }
 
