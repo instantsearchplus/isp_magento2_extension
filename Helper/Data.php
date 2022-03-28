@@ -116,6 +116,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_PATH_SINGLE_STORE = 'autosuggest/install/single_store';
     const XML_PATH_SINGLE_STORE_ID = 'autosuggest/install/single_store_id';
     const XML_PATH_DROPDOWN_V2 = 'autosuggest/dropdown/v2';
+    const XML_PATH_SERP_V2 = 'autocompleteplus/serp/v2';
+    const XML_PATH_SMN_V2 = 'autocompleteplus/smn/v2';
+    const XML_PATH_CUSTOM_VALUES = 'autocompleteplus/serp/custom_values';
     const SCOPE_CONFIG_STORES = 'stores';
 
     public function __construct(
@@ -317,6 +320,75 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
         return $this->resourceConfig->saveConfig(
             self::XML_PATH_DROPDOWN_V2,
+            $val,
+            'stores',
+            $storeId
+        );
+    }
+
+    public function getSerpV2($storeId)
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_SERP_V2,
+            'stores',
+            $storeId
+        );
+    }
+
+    public function setSerpV2($val, $storeId)
+    {
+        if ($val == 'false' || $val == '0') {
+            $val = 0;
+        } else {
+            $val = 1;
+        }
+        return $this->resourceConfig->saveConfig(
+            self::XML_PATH_SERP_V2,
+            $val,
+            'stores',
+            $storeId
+        );
+    }
+
+    public function getSmnV2($storeId)
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_SMN_V2,
+            'stores',
+            $storeId
+        );
+    }
+
+    public function setSmnV2($val, $storeId)
+    {
+        if ($val == 'false' || $val == '0') {
+            $val = 0;
+        } else {
+            $val = 1;
+        }
+        return $this->resourceConfig->saveConfig(
+            self::XML_PATH_SMN_V2,
+            $val,
+            'stores',
+            $storeId
+        );
+    }
+
+    public function getSerpCustomValues($storeId)
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_CUSTOM_VALUES,
+            'stores',
+            $storeId
+        );
+    }
+
+    public function setSerpCustomValues($storeId)
+    {
+        $uuid = $this->api->getApiUUID();
+        $val = $this->api->getSerpCustomValues($uuid, $storeId);
+        return $this->resourceConfig->saveConfig(
+            self::XML_PATH_CUSTOM_VALUES,
             $val,
             'stores',
             $storeId

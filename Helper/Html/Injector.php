@@ -158,7 +158,7 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
         if (!$usingDrV2) {
             $baseScript = self::AUTOCOMPLETE_JS_URL;
         } else {
-           $baseScript = 'https://fastsimon.akamaized.net/fast-simon-autocomplete-init.umd.js';
+           $baseScript = 'https://fastsimon.akamaized.net/fast-simon-autocomplete-init.iife.js';
         }
 
         return $baseScript . '?' . http_build_query($parameters, '', '&');

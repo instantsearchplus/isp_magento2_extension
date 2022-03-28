@@ -156,10 +156,8 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     public function buildRequest($requestData = [], $timeout = 2)
     {
         /**
-*
-         *
- * @var \Magento\Framework\HTTP\ZendClient $client
-*/
+         * @var \Magento\Framework\HTTP\ZendClient $client
+        */
         $client = $this->httpClientFactory->create();
         $responseBody = [];
 
@@ -185,6 +183,38 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         $client->setMethod($this->getRequestType());
 
         return $client->request();
+    }
+
+    public function getSerpCustomValues($uuid, $storeId) {
+        $response = $this->getCustomValuesFromFAstSimon($uuid, $storeId);
+        return $response;
+    }
+
+    private function getCustomValuesFromFAstSimon($uuid, $storeId) {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://dashboard.instantsearchplus.com/api/serving/magento_update_fields',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 6.1; rv:21.0) Gecko/20100101 Firefox/21.0',
+        ));
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+                'Store-ID: ' . $storeId,
+                'UUID: ' . $uuid,
+                'Content-Type: application/json',
+                'Content-Length: 0')
+        );
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        return $response;
     }
 
     public function sendError($message)

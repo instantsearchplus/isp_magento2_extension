@@ -6,7 +6,7 @@
                 <value id="acp-magento" type="host">*.acp-magento.appspot.com</value>
                 <value id="fastsimon-dropdown" type="host">*.akamaized.net</value>
                 <value id="instantsearchplus" type="host">*.instantsearchplus.com</value>
-                <value id="instantsearchplus" type="host">*.fastsimon.com</value>
+                <value id="fastsimon" type="host">*.fastsimon.com</value>
             </values>
         </policy>
     </policies>

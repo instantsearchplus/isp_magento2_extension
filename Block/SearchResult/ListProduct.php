@@ -48,6 +48,8 @@ class ListProduct extends Template
 {
     const SERP_PAGE_TEMPLATE_LIFETIME = 60;
 
+    protected $apiHelper;
+
     protected $helper;
 
     /**
@@ -72,7 +74,8 @@ class ListProduct extends Template
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         \Magento\Framework\App\Response\Http $response,
-        \Autocompleteplus\Autosuggest\Helper\Api $helper,
+        \Autocompleteplus\Autosuggest\Helper\Api $apiHelper,
+        \Autocompleteplus\Autosuggest\Helper\Data $helper,
         \Magento\Framework\App\Request\Http $request,
         \Magento\Framework\Data\Form\FormKey $formKey,
         array $data = []
@@ -80,6 +83,7 @@ class ListProduct extends Template
         $this->storeManager = $context->getStoreManager();
         $this->request = $request;
         $this->response = $response;
+        $this->apiHelper = $apiHelper;
         $this->helper = $helper;
         $this->formKey = $formKey;
         $this->cacheManager = $context->getCache();
@@ -94,7 +98,22 @@ class ListProduct extends Template
 
     public function getApiUUID()
     {
-        return $this->helper->getApiUUID();
+        return $this->apiHelper->getApiUUID();
+    }
+
+    public function getSerpV2($store_id)
+    {
+        return $this->helper->getSerpV2($store_id);
+    }
+
+    public function getSmnV2($store_id)
+    {
+        return $this->helper->getSmnV2($store_id);
+    }
+
+    public function getCustomValues($store_id)
+    {
+        return $this->helper->getSerpCustomValues($store_id);
     }
 
     public function getStoreId()
@@ -127,7 +146,7 @@ class ListProduct extends Template
             || !$template
         ) {
             try {
-                $template = $this->helper->fetchProductListingData();
+                $template = $this->apiHelper->fetchProductListingData();
 
                 $this->cacheManager->save(
                     $template,
