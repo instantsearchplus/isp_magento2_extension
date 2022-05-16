@@ -1811,6 +1811,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $finalPrice = min($productPrices);
 
             $currency = $this->getCurrencyCode();
+            $stockQty = $this->getProductQty($product->getId(), $product->getStore()->getWebsiteId());
             $xmlAttributes = [
                 'action' => $action,
                 'id' => $product->getId(),
@@ -1823,7 +1824,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'type' => $product->getTypeId(),
                 'currency' => $currency,
                 'visibility' => $product->getVisibility(),
-                'selleable' => $product->isSalable()
+                'selleable' => $product->isSalable(),
+                'is_in_stock' => ($stockQty < 1 && boolval($this->helper->getManageStock())) ? 0 : 1
             ];
 
             if ($lastModifiedDate != 0) {
@@ -2289,6 +2291,26 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             return json_decode($string, true);
         }
         return $result;
+    }
+
+    public function getProductQty($prouctId, $websiteId)
+    {
+        $qty = 1000;
+        try {
+            $connection = $this->resourceConnection->getConnection();
+            $tableName = $this->resourceConnection->getTableName('cataloginventory_stock_item');
+            $select = $connection->select()
+                ->from($tableName, ['is_in_stock', 'qty', 'website_id'])
+                ->where($tableName . '.product_id = ' . $prouctId);
+            $stockRow = $connection->fetchAll($select);
+            foreach ($stockRow as $sr){
+                if ($sr['website_id'] == 0 || $sr['website_id'] == $websiteId) {
+                    $qty = $sr['qty'];
+                }
+            }
+        } catch (\Exception $e) {
+        }
+        return $qty;
     }
 
     public function getNextProductScheduledUpdateDateById($id) {
