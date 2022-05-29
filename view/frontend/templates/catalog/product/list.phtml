@@ -2,6 +2,15 @@
 $uuid = $block->getApiUUID();
 $store_id = $block->getStoreId() ? $block->getStoreId() : 1;
 ?>
+<script>
+    var WISHLIST_DATA = <?php
+        try {
+            echo $this->helper("Magento\Wishlist\Helper\Data")->getAddParams(1);
+        } catch (\Exception $e) {
+
+        }
+        ?>;
+</script>
 <?php if(!$block->getSerpV2($store_id)): ?>
     <script>
         var __isp_fulltext_search_obj = {

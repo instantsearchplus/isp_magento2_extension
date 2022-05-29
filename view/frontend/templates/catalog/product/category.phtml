@@ -2,6 +2,15 @@
 $ispBlock = $this->getLayout()
     ->createBlock('Autocompleteplus\Autosuggest\Block\SearchResult\ListProduct');
 ?>
+<script>
+    var WISHLIST_DATA = <?php
+                            try {
+                                echo $this->helper("Magento\Wishlist\Helper\Data")->getAddParams(1);
+                            } catch (\Exception $e) {
+
+                            }
+                        ?>;
+</script>
 <?php if(!$ispBlock->getSmnV2($ispBlock->getStoreId())): ?>
     <div id="isp_search_result_page"></div>
     <script src="https://acp-magento.appspot.com/js/search_result_loading_page.js?smart_navigation=1&isp_platform=magento&UUID=<?= /* @noEscape */ $ispBlock->getApiUUID();?>&store_id=<?= /* @noEscape */ $ispBlock->getStoreId(); ?>"></script>
