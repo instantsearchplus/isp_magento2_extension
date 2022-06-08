@@ -6,6 +6,9 @@
  */
 -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="2columns-left" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <link src="Autocompleteplus_Autosuggest::js/preloader.js"/>
+    </head>
     <body>
         <referenceBlock name="catalogsearch.leftnav">
             <action method="setTemplate" ifconfig="autosuggest/search/layered">

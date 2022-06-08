@@ -7,6 +7,7 @@
                 <value id="fastsimon-dropdown" type="host">*.akamaized.net</value>
                 <value id="instantsearchplus" type="host">*.instantsearchplus.com</value>
                 <value id="fastsimon" type="host">*.fastsimon.com</value>
+                <value id="fastsimon-grid" type="host">fastsimon-grid.akamaized.net</value>
             </values>
         </policy>
     </policies>

@@ -1,4 +1,7 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <link src="Autocompleteplus_Autosuggest::js/preloader.js"/>
+    </head>
     <body>
         <referenceBlock name="category.products.list">
             <action method="setTemplate" ifconfig="autosuggest/search/smart_navigation">

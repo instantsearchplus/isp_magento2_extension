@@ -29,7 +29,7 @@ class SetSerpCustomValues extends \Autocompleteplus\Autosuggest\Controller\Layer
             return $result;
         }
 
-        $this->helper->setSerpCustomValues($drV2, $scopeId);
+        $this->helper->setSerpCustomValues($scopeId);
         $this->clearCache();
 
         $response = [

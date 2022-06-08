@@ -145,6 +145,20 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->customerSession->isLoggedIn();
     }
 
+    public function isDropdownV2Enabled()
+    {
+        $storeId = $this->_storeManager->getStore()->getId();
+        $usingDrV2 = $this->helper->getDropdownV2($storeId);
+        return $usingDrV2;
+    }
+
+    public function isSerpV2V2Enabled()
+    {
+        $storeId = $this->_storeManager->getStore()->getId();
+        $usingDrV2 = $this->helper->getSerpV2($storeId);
+        return $usingDrV2;
+    }
+
     /**
      * GetSrc return script url with params
      *
@@ -152,9 +166,8 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getSrc()
     {
-        $storeId = $this->_storeManager->getStore()->getId();
         $parameters = $this->getParameters();
-        $usingDrV2 = $this->helper->getDropdownV2($storeId);
+        $usingDrV2 = $this->isDropdownV2Enabled();
         if (!$usingDrV2) {
             $baseScript = self::AUTOCOMPLETE_JS_URL;
         } else {

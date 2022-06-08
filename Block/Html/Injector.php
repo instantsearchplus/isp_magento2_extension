@@ -73,4 +73,9 @@ class Injector extends \Magento\Framework\View\Element\Template
     {
         return $this->helper->getEnabled();
     }
+
+    public function isV2Enabled()
+    {
+        return $this->injectorHelper->isSerpV2V2Enabled();
+    }
 }
