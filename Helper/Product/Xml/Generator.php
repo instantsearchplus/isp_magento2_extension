@@ -1083,6 +1083,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             'price' => $variantFinalPrice,
                             'sku' => $child_product->getSku()
                         ];
+                        if ($child_product->getPrice() > $variantFinalPrice) {
+                            $variant_node_attributes['c_price'] = $child_product->getPrice();
+                        }
                         $matches = [];
                         preg_match('/.*\.(jpg|jpeg|png|gif)$/', $_baseImage, $matches);
                         if (count($matches) > 0) {
