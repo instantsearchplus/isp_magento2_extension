@@ -139,7 +139,9 @@ class Vers extends \Autocompleteplus\Autosuggest\Controller\Products
             'show_out_of_stock' => $this->helper->getDisplayOutOfStock(),
             'basic_enabled' => $this->helper->getBasicEnabled($storeId),
             'search_engine' => $this->helper->getSearchEngine($storeId),
-            'flat_products_enabled' => $this->helper->getFlatCatalogUsage($storeId)
+            'flat_products_enabled' => $this->helper->getFlatCatalogUsage($storeId),
+            'smn_v2_enabled' => $this->helper->getSmnV2($storeId),
+            'serp_v2_enabled' => $this->helper->getSerpV2($storeId),
         ];
 
         $singleStoreData = $this->helper->getSingleStoreEnabled();
