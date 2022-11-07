@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.9.391] - 2022-11-07 12:41:00
+### Fixed
+- deprecated log prints
+
 ## [4.9.39] - 2022-10-13 12:41:00
 ### Fixed
 - v-next frontend features support

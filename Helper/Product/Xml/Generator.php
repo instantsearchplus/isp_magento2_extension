@@ -974,8 +974,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             }
         } catch (\Exception $e) {
-            $this->_logger->warn(print_r($e->getTraceAsString(), true));
-            $this->_logger->warn($e->getMessage());
+            $this->_logger->warning(print_r($e->getTraceAsString(), true));
+            $this->_logger->warning($e->getMessage());
         }
     }
 
@@ -2069,7 +2069,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         } catch (\Exception $e) {
             $errMsg = $e->getTraceAsString();
             $errMsg .= '<br/>' . $e->getMessage();
-            $this->_logger->warn($errMsg);
+            $this->_logger->warning($errMsg);
         }
     }
 
@@ -2267,15 +2267,15 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         if (!array_key_exists($action, $this->attributesValuesCache)
             || !array_key_exists($attrValidKey, $this->attributesValuesCache[$action])
         ) {
-            $attrValueText = $product->getAttributeText($action);
-            if (is_array($attrValueText)) {
-                $attrValueText = implode(',', $attrValueText);
-            }
-            if (!array_key_exists($action, $this->attributesValuesCache)) {
-                $this->attributesValuesCache[$action] = [];
-            }
-            $this->attributesValuesCache[$action][$attrValidKey] = $attrValueText;
-            $attrValue = $attrValueText;
+                $attrValueText = $product->getAttributeText($action);
+                if (is_array($attrValueText)) {
+                    $attrValueText = implode(',', $attrValueText);
+                }
+                if (!array_key_exists($action, $this->attributesValuesCache)) {
+                    $this->attributesValuesCache[$action] = [];
+                }
+                $this->attributesValuesCache[$action][$attrValidKey] = $attrValueText;
+                $attrValue = $attrValueText;
         } else {
             $attrValueText = $this->attributesValuesCache[$action][$attrValidKey];
 

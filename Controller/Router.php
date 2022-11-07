@@ -91,7 +91,7 @@ class Router implements \Magento\Framework\App\RouterInterface
             $matches = [];
             preg_match('/^(?:[^\/]+)\/(?:[^\/]+)\/?([^\/]+)?$/', $identifier,$matches);
 
-            if ($matches !== false && count($matches) > 0) {
+            if ($matches !== false && count($matches) > 1) {
                 $request->setModuleName('instantsearchplus')
                     ->setControllerName('result')
                     ->setActionName('index')
