@@ -87,11 +87,15 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         if ($node->getImage()) {
             $image = sprintf('%scatalog/category/%s', $mediaUrl, $node->getImage());
         }
+        $desc = $node->getDescription();
+        if ($desc) {
+            $desc = strip_tags($node->getDescription());
+        }
         $result = [
             'category_id' => $node->getId(),
             'image' => $image,
             'thumbnail' => $thumbnail,
-            'description' => strip_tags($node->getDescription()),
+            'description' => $desc,
             'parent_id'   => $node->getParentId(),
             'name'        => $node->getName(),
             'url_path'    => $category->getUrl(),
