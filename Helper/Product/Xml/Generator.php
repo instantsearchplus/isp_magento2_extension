@@ -966,6 +966,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     $attrValue,
                     $attributeElem
                 );
+                if (!$attribute_label) {
+                    $attribute_label = '';
+                }
                 $this->createChild(
                     'attribute_label',
                     false,
