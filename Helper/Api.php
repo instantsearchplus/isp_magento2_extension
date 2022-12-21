@@ -289,6 +289,42 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
+    public function updateSiteGroup($newAuthKey, $newUuid)
+    {
+        $uuid = $this->getApiUUID();
+        $authKey = $this->getApiAuthenticationKey();
+        $storeId = $this->storeManager->getStore()->getId();
+        $siteUrl = $this->scopeConfig->getValue(
+            'web/unsecure/base_url',
+            ScopeInterface::SCOPE_STORE
+        );
+
+        if (empty($newAuthKey) or empty($newUuid)) {
+            $this->setUrl($this->getApiEndpoint() . '/update_site_group_credentials');
+            $response = $this->buildRequest(
+                [
+                    'store_id' => $storeId,
+                    'site_url' => $siteUrl,
+                    'uuid' => $uuid,
+                    'authKey' => $authKey
+                ]
+            );
+            $responseData = json_decode($response->getBody());
+            $newAuthKey = $responseData->authKey;
+            $newUuid = $responseData->uuid;
+        }
+
+        if (!empty($newAuthKey) and !empty($newUuid)) {
+            $this->setApiUUID($newUuid);
+            $this->setApiAuthenticationKey($newAuthKey);
+
+            return ['status' => 'success', 'new_uuid' => $newUuid];
+        }
+        else {
+            throw new \Magento\Framework\Exception('Tried setting invalid UUID or auth key value for InstantSearch+.');
+        }
+    }
+
     /**
      * post_without_wait send http call and close the connection without waiting for response
      *
