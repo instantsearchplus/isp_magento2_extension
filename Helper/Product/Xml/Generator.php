@@ -903,6 +903,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                              * we make it as string to avoid null to be a key
                              */
                             $attrValue = $this->getAttrValue($product, $attrValue, $action);
+                            $attrValue = str_replace(",", "ISP_COMMA_DELIMITER", $attrValue);
                         }
                         break;
                     case 'textarea':
@@ -940,6 +941,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     'is_filterable' => $is_filterable,
                     'name' => $attr->getAttributeCode()
                 ];
+
+                if (method_exists($attr, 'getFrontendInput')){
+                    $attrs['frontend_input'] = $attr->getFrontendInput();
+                }
 
                 if (in_array($attr->getAttributeCode(), [
                     'special_from_date',
