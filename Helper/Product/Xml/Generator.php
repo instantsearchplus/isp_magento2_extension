@@ -1736,7 +1736,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @param $product
+     * @param \Magento\Catalog\Model\Product $product
      */
     protected function renderProduct(
         $product,
@@ -1748,16 +1748,27 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $product->getTypeInstance()->setStoreFilter($this->storeManager->getStore(), $product);
             $this->configurableChildren = null;
 
-            if ($this->image->init($product, 'instant_search_product_thumbnail_image')->getWidth()) {
-                $_thumbs = $this->image->init($product, 'instant_search_product_thumbnail_image')->getUrl();
+            $isp_thumbnail = $this->image->init($product, 'instant_search_product_thumbnail_image');
+
+            if ($isp_thumbnail->getWidth()) {
+                $_thumbs = $isp_thumbnail->resize(500)->getUrl();
             } else {
-                $_thumbs = $this->image->init($product, 'product_thumbnail_image')->getUrl();
+                $thumbnail_image = $this->image->init($product, 'product_thumbnail_image')->setImageFile($product->getThumbnail());
+                $_thumbs = $thumbnail_image->resize(500)->getUrl();
+
+                if (strpos($_thumbs, 'placeholder') !== false) {
+                    $thumbnail_image = $this->image->init($product, 'product_page_image_medium')->setImageFile($product->getThumbnail());
+                    $_thumbs = $thumbnail_image->resize(500)->getUrl();
+                }
             }
 
-            $_baseImage = $this->image->init($product, 'product_page_image_medium')
-                ->setImageFile($product->getImage())
-                ->resize(500)
-                ->getUrl();
+            $medium_image = $this->image->init($product, 'product_page_image_medium')->setImageFile($product->getImage());
+            $_baseImage = $medium_image->resize(500)->getUrl();
+
+            if (strpos($_baseImage, 'placeholder') !== false) {
+                $medium_image = $this->image->init($product, 'product_thumbnail_image')->setImageFile($product->getImage());
+                $_baseImage = $medium_image->resize(500)->getUrl();
+            }
 
             $productPrices = array();
             $finalPrice = $this->priceCurrencyInterface->convertAndRound($product->getFinalPrice());
