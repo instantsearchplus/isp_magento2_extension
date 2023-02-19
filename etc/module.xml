@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/Module/etc/module.xs">
-    <module name="Autocompleteplus_Autosuggest" setup_version="4.9.42">
+    <module name="Autocompleteplus_Autosuggest" setup_version="4.91.03">
         <sequence/>
     </module>
 </config>
