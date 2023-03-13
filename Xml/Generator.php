@@ -121,6 +121,10 @@ class Generator implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
 
         if (is_array($childAttributes)) {
             foreach ($childAttributes as $key => $val) {
+                if (is_null($val)){
+                    $val = '';
+                }
+
                 $child->addAttribute($key, $val);
             }
         }
