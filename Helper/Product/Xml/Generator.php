@@ -289,6 +289,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $productMetadata;
 
+    /**
+     * @var \Magento\InventoryApi\Api\GetSourceItemsBySkuInterface
+     */
+    protected $getSourceItemsBySkuInterface;
+
     const ISPKEY = 'ISPKEY_';
 
     const ActiveRulesCount = 'ActiveRulesCount2';
@@ -407,7 +412,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\CatalogInventory\Model\Stock\Item $stockFactory,
         \Magento\CatalogRule\Model\ResourceModel\Rule $ruleModel,
         \Magento\Framework\EntityManager\MetadataPool $metadataPool,
-        \Magento\Framework\App\ProductMetadataInterface $productMetadata
+        \Magento\Framework\App\ProductMetadataInterface $productMetadata,
+        \Magento\InventoryApi\Api\GetSourceItemsBySkuInterface $getSourceItemsBySkuInterface
     ) {
         $this->storeManager = $storeManagerInterface;
         $this->helper = $helper;
@@ -465,6 +471,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->categoriesLocalList = array();
         $this->scheduledUpdatesBuffer = array();
         $this->productMetadata = $productMetadata;
+        $this->getSourceItemsBySkuInterface = $getSourceItemsBySkuInterface;
         parent::__construct($context);
     }
 
@@ -594,6 +601,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->batchCollection;
     }
 
+    /**
+     * @param integer $storeId
+     * @param integer $productId
+     * @return \Magento\Catalog\Model\Product
+     */
     public function loadProductById($productId, $storeId)
     {
         $product = $this->catalogProductFactory->create();
@@ -1833,7 +1845,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $finalPrice = min($productPrices);
 
             $currency = $this->getCurrencyCode();
-            $stockQty = $this->getProductQty($product->getId(), $product->getStore()->getWebsiteId());
+            $inventorySourceItems = $this->getProductInventorySourceItems($product);
+            $isSellable = $this->isProductSellable($product, $inventorySourceItems);
+            $isInStock = $this->isProductInStock($product, $inventorySourceItems);
+
             $xmlAttributes = [
                 'action' => $action,
                 'id' => $product->getId(),
@@ -1846,8 +1861,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'type' => $product->getTypeId(),
                 'currency' => $currency,
                 'visibility' => $product->getVisibility(),
-                'selleable' => $product->isSalable(),
-                'is_in_stock' => ($stockQty < 1 && boolval($this->helper->getManageStock())) ? 0 : 1
+                'selleable' => $isSellable ? 1 : 0,
+                'is_in_stock' => $isInStock ? 1 : 0
             ];
 
             if ($lastModifiedDate != 0) {
@@ -2085,6 +2100,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             if ($product->getTypeId() == Grouped::TYPE_CODE) {
                 $this->renderGroupedChildrenSkus($product, $productElem);
             }
+
+            if ($inventorySourceItems){
+                $this->renderInventorySourceItems($inventorySourceItems, $productElem);
+            }
+
         } catch (\Exception $e) {
             $errMsg = $e->getTraceAsString();
             $errMsg .= '<br/>' . $e->getMessage();
@@ -2130,6 +2150,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'configurable_simple_skus',
                 $attributeElem
             );
+        }
+    }
+
+    protected function renderInventorySourceItems(array $inventorySourceItems, \SimpleXMLElement $productElem)
+    {
+        foreach ($inventorySourceItems as $sourceItem){
+            $this->createChild("inventory_source_item", $sourceItem, false, $productElem);
         }
     }
 
@@ -2437,5 +2464,66 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
             $this->batchesHelper->upsertData($data);
         }
+    }
+
+    protected function getProductInventorySourceItems(\Magento\Catalog\Model\Product $product): array
+    {
+        $sourceItems = [];
+
+        try {
+            foreach ($this->getSourceItemsBySkuInterface->execute($product->getSku()) as $sourceItem) {
+                $status = $sourceItem->getStatus();
+                $sourceCode = $sourceItem->getSourceCode();
+                $quantity = $sourceItem->getQuantity();
+
+                $sourceItems[] = ["status" => $status, "source_code" => $sourceCode, "quantity" => $quantity];
+            }
+        } catch (\Exception $e) {
+            $this->_logger->warning($e->getTraceAsString());
+        }
+
+        return $sourceItems;
+    }
+
+    protected function isProductSellable(\Magento\Catalog\Model\Product $product, array $inventorySourceItems): bool
+    {
+        $isSellable = $product->isSalable();
+
+        if (!$isSellable and $inventorySourceItems) {
+            foreach ($inventorySourceItems as $sourceItem) {
+                $status = $sourceItem["status"];
+                $quantity = $sourceItem["quantity"];
+
+                if ($status and $quantity and $quantity > 0) {
+                    $isSellable = true;
+                    break;
+                }
+            }
+        }
+
+        return $isSellable;
+    }
+
+    protected function isProductInStock(\Magento\Catalog\Model\Product $product, array $inventorySourceItems): bool
+    {
+        $isInStock = true;
+
+        if ($this->helper->getManageStock()){
+            $stockQty = $this->getProductQty($product->getId(), $product->getStore()->getWebsiteId());
+            $isInStock = ($stockQty > 0);
+
+            if (!$isInStock and $inventorySourceItems){
+                foreach ($inventorySourceItems as $sourceItem) {
+                    $quantity = $sourceItem["quantity"];
+
+                    if ($quantity and $quantity > 0) {
+                        $isInStock = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $isInStock;
     }
 }
