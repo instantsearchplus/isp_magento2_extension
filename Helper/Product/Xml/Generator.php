@@ -903,7 +903,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                              * we make it as string to avoid null to be a key
                              */
                             $attrValue = $this->getAttrValue($product, $attrValue, $action);
-                            $attrValue = str_replace(",", "ISP_COMMA_DELIMITER", $attrValue);
+                            $attrValue = str_replace(",", "ISP_COMMA_DELIMITER", is_null($attrValue) ? '' : $attrValue);
                         }
                         break;
                     case 'textarea':
