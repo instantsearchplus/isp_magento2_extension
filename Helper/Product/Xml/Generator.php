@@ -594,6 +594,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->batchCollection;
     }
 
+    /**
+     * @param integer $storeId
+     * @param integer $productId
+     * @return \Magento\Catalog\Model\Product
+     */
     public function loadProductById($productId, $storeId)
     {
         $product = $this->catalogProductFactory->create();
@@ -1204,6 +1209,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->setRulesCount($this->getActiveRulesCount());
 
+        $this->productCollection->addOptionsToResult();
+
         foreach ($productCollection as $product) {
             $this->renderProduct($product, 'insert');
         }
@@ -1441,6 +1448,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->appendReviews();
 
         $this->setRulesCount($this->getActiveRulesCount());
+
+        $this->productCollection->addOptionsToResult();
 
         $visibleProductIds = [];
         foreach ($productCollection as $product) {
@@ -2085,6 +2094,10 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             if ($product->getTypeId() == Grouped::TYPE_CODE) {
                 $this->renderGroupedChildrenSkus($product, $productElem);
             }
+
+            if ($product->getOptions() and is_array($product->getOptions())) {
+                $this->renderCustomOptions($product, $productElem);
+            }
         } catch (\Exception $e) {
             $errMsg = $e->getTraceAsString();
             $errMsg .= '<br/>' . $e->getMessage();
@@ -2130,6 +2143,50 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'configurable_simple_skus',
                 $attributeElem
             );
+        }
+    }
+
+    /**
+     * @param \Magento\Catalog\Model\Product $product
+     * @param \SimpleXMLElement $productElem
+     * @return void
+     */
+    protected function renderCustomOptions($product, $productElem)
+    {
+        foreach ($product->getOptions() as $option) {
+            $optionElem = $this->createChild(
+                "custom_option",
+                ["title" => $option->getTitle(), "sku" => $option->getSku(), "type" => $option->getType(), "is_required" => $option->getIsRequire()],
+                false,
+                $productElem
+            );
+
+            $option_data = [];
+            foreach ($option->getData() as $k => $v) {
+                if (!is_null($v)) {
+                    $option_data[$k] = $v;
+                }
+            }
+
+            $this->createChild("option_data", false, json_encode($option_data), $optionElem);
+
+            if ($option->hasValues()) {
+                $values = [];
+
+                foreach ($option->getValues() as $value) {
+                    $value_data = [];
+
+                    foreach ($value->getData() as $k => $v) {
+                        if (!is_null($v)) {
+                            $value_data[$k] = $v;
+                        }
+                    }
+
+                    $values[] = $value_data;
+                }
+
+                $this->createChild("option_values", false, json_encode($values), $optionElem);
+            }
         }
     }
 
@@ -2207,6 +2264,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $productCollection->addTierPriceData();
 
         $this->appendReviews();
+
+        $this->productCollection->addOptionsToResult();
 
         $visibleProductIds = [];
         foreach ($productCollection as $product) {
