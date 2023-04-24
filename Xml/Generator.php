@@ -18,6 +18,7 @@
  * @license   Open Software License (OSL 3.0)*
  * @link      http://opensource.org/licenses/osl-3.0.php
  */
+
 namespace Autocompleteplus\Autosuggest\Xml;
 
 /**
@@ -108,24 +109,19 @@ class Generator implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
             $xml = $parent;
         }
 
-        if ($childValue !== false) {
-            $child = $xml->addChild($childName);
+        $child = $xml->addChild($childName);
+
+        if ($childValue !== false and !is_null($childValue)) {
             if ($child !== null) {
                 $node = dom_import_simplexml($child);
                 $doc = $node->ownerDocument;
                 $node->appendChild($doc->createCDATASection($childValue));
             }
-        } else {
-            $child = $xml->addChild($childName);
         }
 
         if (is_array($childAttributes)) {
             foreach ($childAttributes as $key => $val) {
-                if (is_null($val)){
-                    $val = '';
-                }
-
-                $child->addAttribute($key, $val);
+                $child->addAttribute($key, is_null($val) ? '' : $val);
             }
         }
 
