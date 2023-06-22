@@ -99,7 +99,7 @@ class OrderCreate implements ObserverInterface
                 );
             } else {
                 $this->apiHelper->setUrl($web_hook_url);
-                $this->apiHelper->setRequestType(\Zend_Http_Client::GET);
+                $this->apiHelper->setRequestType(\Laminas\Http\Request::METHOD_GET);
                 $response = $this->apiHelper->buildRequest($params);
             }
             $this->checkoutSession->setIspOrderSent(1);

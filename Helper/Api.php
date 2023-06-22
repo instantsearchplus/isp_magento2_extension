@@ -21,8 +21,12 @@
 
 namespace Autocompleteplus\Autosuggest\Helper;
 
-use Magento\Framework\HTTP\ZendClientFactory;
+use Laminas\Http\Client;
+use Magento\Config\Model\ResourceModel\Config;
+use Magento\Framework\App\Helper\Context;
+use Laminas\Http\Client\Adapter\Curl;
 use \Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Api
@@ -51,28 +55,22 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     const API_ENDPOINT_URL = 'https://acp-magento.appspot.com';
     const API_ENDPOINT_URL_UNSECURE = 'http://acp-magento.appspot.com';
 
-    protected $curlFactory;
     protected $curlUrl;
-    protected $requestType = \Zend_Http_Client::POST;
+    protected $requestType = \Laminas\Http\Request::METHOD_POST;
     protected $scopeConfig;
-    protected $httpClientFactory;
     protected $resourceConfig;
     protected $storeManager;
 
     /**
-     * @param \Magento\Framework\App\Helper\Context              $context
-     * @param \Magento\Config\Model\ResourceModel\Config         $resourceConfig
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param Context $context
+     * @param Config $resourceConfig
+     * @param StoreManagerInterface $storeManagerInterface
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
-        \Magento\Framework\HTTP\Adapter\CurlFactory $curlFactory,
-        ZendClientFactory $httpClientFactory,
         \Magento\Config\Model\ResourceModel\Config $resourceConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
     ) {
-        $this->curlFactory = $curlFactory;
-        $this->httpClientFactory = $httpClientFactory;
         $this->resourceConfig = $resourceConfig;
         $this->storeManager = $storeManagerInterface;
         parent::__construct($context);
@@ -153,28 +151,25 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->requestType = $type;
     }
 
-    public function buildRequest($requestData = [], $timeout = 2)
+    public function buildRequest($requestData = [], $timeout = 30)
     {
-        /**
-         * @var \Magento\Framework\HTTP\ZendClient $client
-        */
-        $client = $this->httpClientFactory->create();
-        $responseBody = [];
+        $client = new Client();
 
-        $client->setAdapter('\Zend_Http_Client_Adapter_Curl');
         $client->setUri($this->getUrl());
         /**
          * fix for localhost without ssl cert
          * 'verifypeer'    => false,
          * 'verifyhost'    => false
          */
-        $client->setConfig(
-            [
-                'timeout'   => $timeout
-            ]
-        );
+        $client->setOptions([
+            'useragent' => Client::class,
+            'adapter' => Curl::class,
+            'timeout' => $timeout
+        ]);
 
-        if ($this->getRequestType() == \Zend_Http_Client::POST) {
+        $client->setAdapter(Curl::class);
+
+        if ($this->getRequestType() == \Laminas\Http\Request::METHOD_POST) {
             $client->setParameterPost($requestData);
         } else {
             $client->setParameterGet($requestData);
@@ -182,7 +177,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
 
         $client->setMethod($this->getRequestType());
 
-        return $client->request();
+        return $client->send();
     }
 
     public function getSerpCustomValues($uuid, $storeId) {
@@ -310,8 +305,14 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
                 ]
             );
             $responseData = json_decode($response->getBody());
-            $newAuthKey = $responseData->authKey;
-            $newUuid = $responseData->uuid;
+
+            if ($responseData->status == 'success') {
+                $newAuthKey = $responseData->authKey;
+                $newUuid = $responseData->uuid;
+            }
+            else {
+                return ['status' => 'error', 'message' => $responseData->message];
+            }
         }
 
         if (!empty($newAuthKey) and !empty($newUuid)) {
@@ -321,7 +322,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
             return ['status' => 'success', 'new_uuid' => $newUuid];
         }
         else {
-            throw new \Magento\Framework\Exception('Tried setting invalid UUID or auth key value for InstantSearch+.');
+            return ['status' => 'error', 'message' =>  'Tried setting invalid UUID or auth key value for InstantSearch+.'];
         }
     }
 

@@ -265,7 +265,7 @@ class InstallSchema implements InstallSchemaInterface
         }
 
         $this->api->setUrl($this->api->getApiEndpoint() . '/install');
-        $this->api->setRequestType(\Zend_Http_Client::POST);
+        $this->api->setRequestType(\Laminas\Http\Request::METHOD_POST);
 
         try {
             $response = $this->api->buildRequest($params);

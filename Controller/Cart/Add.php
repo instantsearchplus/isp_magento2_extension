@@ -109,7 +109,7 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
         $productUrl = '';
         try {
             if (isset($params['qty'])) {
-                $filter = new \Zend_Filter_LocalizedToNormalized(
+                $filter = new \Magento\Framework\Filter\LocalizedToNormalized(
                     [
                         'locale' => $this->_objectManager
                             ->get('Magento\Framework\Locale\ResolverInterface')
@@ -121,7 +121,6 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
 
             $product = $this->_initProduct();
             $related = $this->getRequest()->getParam('related_product');
-            $productUrl = $product->getProductUrl(true);
             /**
              * Check product availability
              */
@@ -133,6 +132,8 @@ class Add extends \Magento\Checkout\Controller\Cart\Add
                 $this->messageManager->addErrorMessage('Product is not valid!');
                 return $result->setData($responseData);
             }
+
+            $productUrl = $product->getProductUrl(true);
 
             if ($product->getTypeId() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) {
                 $responseData = [

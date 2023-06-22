@@ -418,7 +418,7 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
             ->where(sprintf('%s.value IN (?)', $entity_int_table_name), [3, 4])
             ->where(sprintf('%s.customer_group_id = ?', $price_index_table_name), $customer_group)
             ->where(sprintf('%s.website_id = ?', $price_index_table_name), $website_id)
-            ->where(new \Zend_Db_Expr(
+            ->where(
                 sprintf("((%s.qty > 0) OR (%s.stock_status = 1 AND %s.product_id NOT IN (SELECT %s FROM %s WHERE attribute_id = %d AND value = 2)))",
                     $cataloginventory_stock_item,
                     $cataloginventory_stock_status_table_name,
@@ -427,7 +427,7 @@ class Report extends \Magento\Framework\App\Helper\AbstractHelper
                     $entity_int_table_name,
                     $status_attribute_id
                 )
-            ));
+            );
 
         if ($product_id > 0) {
             $sql->where(sprintf("`%s`.`entity_id` = ?", $price_index_table_name), $product_id);

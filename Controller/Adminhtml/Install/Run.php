@@ -36,7 +36,7 @@ class Run extends \Autocompleteplus\Autosuggest\Controller\Adminhtml\Install
 
         $apiRequest = $this->api;
         $apiRequest->setUrl($apiRequest->getApiEndpoint() . '/install');
-        $apiRequest->setRequestType(\Zend_Http_Client::POST);
+        $apiRequest->setRequestType(\Laminas\Http\Request::METHOD_POST);
         $response = $apiRequest->buildRequest($params);
 
         if ($responseData = json_decode($response->getBody())) {

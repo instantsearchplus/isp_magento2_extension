@@ -164,7 +164,7 @@ class ListProduct extends Template
                  */
                 return $template;
 
-            } catch (\Zend_Http_Client_Exception $e) {
+            } catch (\Laminas\Http\Exception\ExceptionInterface $e) {
                 $this->logger->critical($e);
                 if (!$template) {
                     if ($trials < 4) {

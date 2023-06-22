@@ -126,7 +126,7 @@ class Pushbulk extends \Autocompleteplus\Autosuggest\Controller\Products
 
         $apiRequest = $this->apiHelper;
         $apiRequest->setUrl($apiRequest->getApiEndpoint() . '/magento_fetch_products');
-        $apiRequest->setRequestType(\Zend_Http_Client::POST);
+        $apiRequest->setRequestType(\Laminas\Http\Request::METHOD_POST);
         $response = $apiRequest->buildRequest($data);
         unset($data['products']);
         
