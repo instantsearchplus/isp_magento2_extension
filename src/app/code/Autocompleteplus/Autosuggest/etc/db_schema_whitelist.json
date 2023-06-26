@@ -1,0 +1,67 @@
+{
+  "autosuggest_batch": {
+    "column": {
+      "product_id": true,
+      "store_id": true,
+      "update_date": true,
+      "action": true,
+      "sku": true
+    },
+    "index": {
+      "AUTOSUGGEST_BATCH_UPDATE_DATE_STORE_ID": true,
+      "AUTOSUGGEST_BATCH_UPDATE_DT_INDEX_UPDATE_DATE_STORE_ID": true
+    },
+    "constraint": {
+      "PRIMARY": true
+    }
+  },
+  "autosuggest_pusher": {
+    "column": {
+      "entity_id": true,
+      "store_id": true,
+      "to_send": true,
+      "offset": true,
+      "total_batches": true,
+      "batch_number": true,
+      "sent": true
+    },
+    "index": {
+      "AUTOSUGGEST_PUSHER_ENTITY_ID_STORE_ID": true,
+      "INSTANTSEARCH_PUSHER_INDEX_ENTITY_ID_STORE_ID": true
+    },
+    "constraint": {
+      "PRIMARY": true
+    }
+  },
+  "instantsearch_notification": {
+    "column": {
+      "entity_id": true,
+      "type": true,
+      "subject": true,
+      "message": true,
+      "timestamp": true,
+      "is_active": true
+    },
+    "index": {
+      "INSTANTSEARCH_NOTIFICATION_TYPE": true,
+      "INSTANTSEARCH_NOTIFICATION_IS_ACTIVE": true,
+      "IDX_IS_ACTIVE_IS_ACTIVE": true,
+      "AUTOCOMPLETEPLUS_NOTIFICATIONS_TYPE": true
+    },
+    "constraint": {
+      "PRIMARY": true
+    }
+  },
+  "autosuggest_price": {
+    "column": {
+      "product_id": true,
+      "website_id": true,
+      "final_price": true,
+      "update_date": true,
+      "is_updated": true
+    },
+    "constraint": {
+      "PRIMARY": true
+    }
+  }
+}

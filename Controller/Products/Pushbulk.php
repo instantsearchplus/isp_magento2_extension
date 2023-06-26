@@ -169,7 +169,7 @@ class Pushbulk extends \Autocompleteplus\Autosuggest\Controller\Products
                 'updatedSuccessStatus'  =>  $updatedSuccessStatus
             ];
 
-            $responseArr = array_replace($initialResponse, $nextPushValues);
+            $responseArr = array_replace($responseArr, $nextPushValues);
         }
 
         $result = $this->resultJsonFactory->create();

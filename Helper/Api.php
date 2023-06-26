@@ -57,7 +57,6 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $curlUrl;
     protected $requestType = \Laminas\Http\Request::METHOD_POST;
-    protected $scopeConfig;
     protected $resourceConfig;
     protected $storeManager;
 
@@ -67,10 +66,11 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
      * @param StoreManagerInterface $storeManagerInterface
      */
     public function __construct(
-        \Magento\Framework\App\Helper\Context $context,
-        \Magento\Config\Model\ResourceModel\Config $resourceConfig,
-        \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
-    ) {
+        Context               $context,
+        Config                $resourceConfig,
+        StoreManagerInterface $storeManagerInterface
+    )
+    {
         $this->resourceConfig = $resourceConfig;
         $this->storeManager = $storeManagerInterface;
         parent::__construct($context);

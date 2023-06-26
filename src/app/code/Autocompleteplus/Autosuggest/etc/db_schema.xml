@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="autosuggest_batch" resource="default" engine="innodb" comment="InstantSearch+ Batches">
+        <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Product ID"/>
+        <column xsi:type="int" name="store_id" padding="11" unsigned="false" nullable="false" identity="false" comment="Store ID"/>
+        <column xsi:type="int" name="update_date" padding="11" unsigned="false" nullable="false" identity="false" comment="Update Time"/>
+        <column xsi:type="varchar" name="action" nullable="false" length="250" comment="Batch Action"/>
+        <column xsi:type="varchar" name="sku" nullable="false" length="250" comment="Product SKU"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="product_id"/>
+            <column name="store_id"/>
+        </constraint>
+        <index referenceId="AUTOSUGGEST_BATCH_UPDATE_DATE_STORE_ID" indexType="btree">
+            <column name="update_date"/>
+            <column name="store_id"/>
+        </index>
+    </table>
+
+    <table name="autosuggest_pusher" resource="default" engine="innodb" comment="InstantSearch+ Pusher">
+        <column xsi:type="int" name="entity_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Push ID"/>
+        <column xsi:type="int" name="store_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Store ID"/>
+        <column xsi:type="int" name="to_send" padding="10" unsigned="true" nullable="false" identity="false" comment="Amount to send"/>
+        <column xsi:type="int" name="offset" padding="10" unsigned="true" nullable="false" identity="false" comment="Collection Offset"/>
+        <column xsi:type="int" name="total_batches" padding="10" unsigned="true" nullable="false" identity="false" comment="Total Batches"/>
+        <column xsi:type="int" name="batch_number" padding="10" unsigned="true" nullable="false" identity="false" comment="Batch Number"/>
+        <column xsi:type="int" name="sent" padding="10" unsigned="true" nullable="false" identity="false" comment="Total Sent"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <index referenceId="AUTOSUGGEST_PUSHER_ENTITY_ID_STORE_ID" indexType="btree">
+            <column name="entity_id"/>
+            <column name="store_id"/>
+        </index>
+    </table>
+
+    <table name="instantsearch_notification" resource="default" engine="innodb" comment="InstantSearch+ Notifications">
+        <column xsi:type="int" name="entity_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Push ID"/>
+        <column xsi:type="text" name="type" nullable="false" comment="Notification type"/>
+        <column xsi:type="text" name="subject" nullable="false" comment="Notification Subject"/>
+        <column xsi:type="text" name="message" nullable="false" comment="Notification Message"/>
+        <column xsi:type="timestamp" name="timestamp" on_update="true" nullable="true" default="CURRENT_TIMESTAMP" comment="Total Batches"/>
+        <column xsi:type="int" name="is_active" padding="10" unsigned="true" nullable="false" identity="false" comment="Is Notification Active"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <index referenceId="INSTANTSEARCH_NOTIFICATION_TYPE" indexType="fulltext">
+            <column name="type"/>
+        </index>
+        <index referenceId="INSTANTSEARCH_NOTIFICATION_IS_ACTIVE" indexType="btree">
+            <column name="is_active"/>
+        </index>
+    </table>
+</schema>
