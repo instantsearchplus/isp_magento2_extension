@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.91.21] - 2023-06-27 14:00:00
+### Fixed
+- PHP 8.2 fix
+
 ## [4.91.20] - 2023-06-26 16:00:00
 ### Changed
 - Migrated to the declarative schema format

@@ -65,6 +65,7 @@ class Injector extends \Magento\Framework\App\Helper\AbstractHelper
      * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
+    protected $_isScopePrivate;
 
     /**
      * Injector constructor.
