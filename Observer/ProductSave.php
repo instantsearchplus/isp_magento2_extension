@@ -103,6 +103,11 @@ class ProductSave implements ObserverInterface
         $storeId = $this->storeManager->getStore()->getId();
         $productId = $product->getId();
         $sku = $product->getSku();
+
+        if (!empty($sku) and strpos($sku, "template_sku_simple") !== false) {
+            return $this;
+        }
+
         $dt = $this->date->gmtTimestamp();
         if (is_array($origData) 
             && array_key_exists('sku', $origData)
