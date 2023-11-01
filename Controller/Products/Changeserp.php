@@ -56,7 +56,6 @@ class Changeserp extends \Autocompleteplus\Autosuggest\Controller\Products
         case 'status':
             $status = $this->helper->getSearchLayered($storeId);
             return $result->setData([ 'current_status' => $status ]);
-                break;
         default:
             $this->helper->setSearchLayered(boolval($serpReq), 'stores', $storeId);
             $status = $this->helper->getSearchLayered($storeId);

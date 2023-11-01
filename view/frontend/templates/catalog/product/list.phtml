@@ -5,7 +5,7 @@ $store_id = $block->getStoreId() ? $block->getStoreId() : 1;
 <script>
     var WISHLIST_DATA = <?php
         try {
-            echo $this->helper("Magento\Wishlist\Helper\Data")->getAddParams(1);
+            $block->escapeHtml($this->helper("Magento\Wishlist\Helper\Data")->getAddParams(1));
         } catch (\Exception $e) {
 
         }
@@ -41,11 +41,11 @@ $store_id = $block->getStoreId() ? $block->getStoreId() : 1;
     DO NOT EDIT this as this file can be re-written at any time.
     --->
 
-    <div id="fast-config" style="display: none"><?php echo $cv_j['config']; ?></div>
-    <style id="fast-serp-css"><?php echo $cv_j['serp_css']; ?></style>
+    <div id="fast-config" style="display: none"><?= /* @noEscape */ $cv_j['config']; ?></div>
+    <style id="fast-serp-css"><?= /* @noEscape */ $cv_j['serp_css']; ?></style>
     <script class="fast-simon-script">
-        var STORE_UUID = "<?php echo $uuid;?>";
-        var STORE_ID = Number("<?php echo $store_id;?>");
+        var STORE_UUID = "<?= /* @noEscape */ $uuid;?>";
+        var STORE_ID = Number("<?= /* @noEscape */ $store_id;?>");
         var FAST_SEARCH_HANDLE = "instantsearchplus/result";
     </script>
     <div id="fast-simon-serp-app" style="display:block;color: initial;background: initial"></div>

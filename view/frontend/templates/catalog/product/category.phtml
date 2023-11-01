@@ -5,7 +5,7 @@ $ispBlock = $this->getLayout()
 <script>
     var WISHLIST_DATA = <?php
                             try {
-                                echo $this->helper("Magento\Wishlist\Helper\Data")->getAddParams(1);
+                                $block->escapeHtml($this->helper("Magento\Wishlist\Helper\Data")->getAddParams(1));
                             } catch (\Exception $e) {
 
                             }
@@ -36,13 +36,13 @@ $ispBlock = $this->getLayout()
     DO NOT EDIT this as this file can be re-written at any time.
     --->
 
-    <div id="fast-config" style="display: none"><?= $cv_j['config']; ?></div>
-    <style id="fast-serp-css"><?= $cv_j['serp_css']; ?></style>
+    <div id="fast-config" style="display: none"><?= /* @noEscape */ $cv_j['config']; ?></div>
+    <style id="fast-serp-css"><?= /* @noEscape */ $cv_j['serp_css']; ?></style>
     <script class="fast-simon-script">
-        var STORE_UUID = "<?= $ispBlock->getApiUUID();?>";
-        var STORE_ID = Number("<?= $ispBlock->getStoreId();?>");
+        var STORE_UUID = "<?= /* @noEscape */ $ispBlock->getApiUUID();?>";
+        var STORE_ID = Number("<?= /* @noEscape */ $ispBlock->getStoreId();?>");
         var FAST_SEARCH_HANDLE = "instantsearchplus/result";
-        var CATEGORY_ID = "<?= $categoryId; ?>";
+        var CATEGORY_ID = "<?= /* @noEscape */ $categoryId; ?>";
     </script>
     <div id="fast-simon-serp-app" style="display:block;color: initial;background: initial"></div>
     <script>
