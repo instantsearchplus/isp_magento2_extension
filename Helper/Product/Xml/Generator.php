@@ -289,6 +289,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $productMetadata;
 
+    protected $eAValues;
+
     const ISPKEY = 'ISPKEY_';
 
     const ActiveRulesCount = 'ActiveRulesCount2';

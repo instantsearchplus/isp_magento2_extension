@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.91.24] - 2023-11-14 20:00:00
+### Fixed
+- PHP 8.2 deprecated functionality fix
+
+
 ## [4.91.23] - 2023-11-01 21:00:00
 ### Fixed
 - Magento coding standard security fixes
