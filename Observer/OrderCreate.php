@@ -52,6 +52,7 @@ class OrderCreate implements ObserverInterface
     protected $apiHelper;
     protected $injector_helper;
     protected $checkoutSession;
+    protected $cartProduct;
 
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,

@@ -43,6 +43,8 @@ class Updatesitemap extends \Autocompleteplus\Autosuggest\Controller\Products
 
     protected $_file;
 
+    protected $_fileFullPath;
+
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
@@ -66,8 +68,8 @@ class Updatesitemap extends \Autocompleteplus\Autosuggest\Controller\Products
         $result = $this->resultJsonFactory->create();
 
         $storeId = $this->getRequest()->getParam('store_id', 1);
-        $uuid = $this->getRequest()->getParam('u', null);
-        $key = $this->getRequest()->getParam('authentication_key', null);
+        $uuid = $this->getRequest()->getParam('uuid');
+        $key = $this->getRequest()->getParam('authentication_key');
         $state = $this->getRequest()->getParam('state', 'on');
 
         $siteUrl = $this->helper->getStoreUrl();

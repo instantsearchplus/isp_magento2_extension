@@ -1,15 +1,14 @@
 <?php
-$ispBlock = $this->getLayout()
-    ->createBlock('Autocompleteplus\Autosuggest\Block\SearchResult\ListProduct');
+$ispBlock = $this->getLayout()->createBlock('Autocompleteplus\Autosuggest\Block\SearchResult\ListProduct');
+
+try {
+    $wishlistData = $block->escapeHtml($this->helper("Magento\Wishlist\Helper\Data")->getAddParams(1));
+} catch (Exception $e) {
+    $wishlistData = '';
+}
 ?>
 <script>
-    var WISHLIST_DATA = <?php
-                            try {
-                                $block->escapeHtml($this->helper("Magento\Wishlist\Helper\Data")->getAddParams(1));
-                            } catch (\Exception $e) {
-
-                            }
-                        ?>;
+    var WISHLIST_DATA = "<?= /* @noEscape */ $wishlistData; ?>";
 </script>
 <?php if(!$ispBlock->getSmnV2($ispBlock->getStoreId())): ?>
     <div id="isp_search_result_page"></div>

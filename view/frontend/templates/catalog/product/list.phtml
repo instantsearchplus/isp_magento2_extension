@@ -1,15 +1,15 @@
 <?php
 $uuid = $block->getApiUUID();
 $store_id = $block->getStoreId() ? $block->getStoreId() : 1;
+
+try {
+    $wishlistData = $block->escapeHtml($this->helper("Magento\Wishlist\Helper\Data")->getAddParams(1));
+} catch (Exception $e) {
+    $wishlistData = '';
+}
 ?>
 <script>
-    var WISHLIST_DATA = <?php
-        try {
-            $block->escapeHtml($this->helper("Magento\Wishlist\Helper\Data")->getAddParams(1));
-        } catch (\Exception $e) {
-
-        }
-        ?>;
+    var WISHLIST_DATA = "<?= /* @noEscape */ $wishlistData; ?>";
 </script>
 <?php if(!$block->getSerpV2($store_id)): ?>
     <script>
