@@ -7,12 +7,12 @@
                 <store_email></store_email>
             </general>
             <api>
-                <endpoint>https://acp-magento.appspot.com</endpoint>
+                <endpoint>https://sync.fastsimon.com</endpoint>
                 <uuid></uuid>
                 <authentication_key></authentication_key>
             </api>
             <dashboard>
-                <endpoint>https://acp-magento.appspot.com</endpoint>
+                <endpoint>https://dashboard.instantsearchplus.com</endpoint>
                 <params><![CDATA[ma_dashboard?site_id=%s&authentication_key=%s]]></params>
             </dashboard>
             <product>

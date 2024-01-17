@@ -52,8 +52,8 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
     const API_AUTHENTICATION_KEY = 'autosuggest/api/authentication_key';
     const API_UUID = 'autosuggest/api/uuid';
     const API_ENDPOINT = 'autosuggest/api/endpoint';
-    const API_ENDPOINT_URL = 'https://acp-magento.appspot.com';
-    const API_ENDPOINT_URL_UNSECURE = 'http://acp-magento.appspot.com';
+    const API_ENDPOINT_URL = 'https://sync.fastsimon.com';
+    const API_ENDPOINT_URL_UNSECURE = 'http://sync.fastsimon.com';
 
     protected $curlUrl;
     protected $requestType = \Laminas\Http\Request::METHOD_POST;

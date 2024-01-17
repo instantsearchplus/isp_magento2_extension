@@ -75,7 +75,7 @@ class Updatesitemap extends \Autocompleteplus\Autosuggest\Controller\Products
         $siteUrl = $this->helper->getStoreUrl();
 
         if ($this->isValid($uuid, $key)) {
-            $sitemapUrl = 'Sitemap:http://magento.instantsearchplus.com/ext_sitemap?u=' . $uuid . '&store_id=' . $storeId;
+            $sitemapUrl = 'Sitemap:http://sync.fastsimon.com/ext_sitemap?u=' . $uuid . '&store_id=' . $storeId;
             if ($state == 'on') {
                 $response = $this->insertSiteMap($sitemapUrl);
             } else {
