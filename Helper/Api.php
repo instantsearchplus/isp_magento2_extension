@@ -116,7 +116,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
                 0
             );
         } else {
-            throw new \Magento\Framework\Exception('Tried setting invalid UUID value for InstantSearch+.');
+            throw new \Magento\Framework\Exception('Tried setting invalid UUID value for Fast Simon. UUID=' . json_encode($UUID));
         }
     }
 
@@ -189,7 +189,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
-            CURLOPT_URL => 'https://dashboard.instantsearchplus.com/api/serving/magento_update_fields',
+            CURLOPT_URL => 'https://dashboard.fastsimon.com/api/serving/magento_update_fields',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -222,16 +222,16 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
             'trans_email/ident_support/email',
             ScopeInterface::SCOPE_STORE
         );
-        $this->setUrl($this->getApiEndpoint() . '/install_error');
+
+        $this->setUrl($this->getApiEndpoint() . '/magento_error');
         $response = $this->buildRequest(
             [
-            'site'  => $siteUrl,
-            'msg'   => $message,
-            'email' => $email,
-            'multistore'    => $this->helper->getMultiStoreJson(),
-            'f' => $this->helper->getVersion()
+                'site' => $siteUrl,
+                'msg' => $message,
+                'email' => $email
             ]
         );
+
         return $response;
     }
 
@@ -322,7 +322,7 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
             return ['status' => 'success', 'new_uuid' => $newUuid];
         }
         else {
-            return ['status' => 'error', 'message' =>  'Tried setting invalid UUID or auth key value for InstantSearch+.'];
+            return ['status' => 'error', 'message' =>  'Tried setting invalid UUID or auth key value for Fast Simon.'];
         }
     }
 

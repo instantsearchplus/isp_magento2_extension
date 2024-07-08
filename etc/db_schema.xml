@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
-    <table name="autosuggest_batch" resource="default" engine="innodb" comment="InstantSearch+ Batches">
+    <table name="autosuggest_batch" resource="default" engine="innodb" comment="Fast Simon Batches">
         <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Product ID"/>
         <column xsi:type="int" name="store_id" padding="11" unsigned="false" nullable="false" identity="false" comment="Store ID"/>
         <column xsi:type="int" name="update_date" padding="11" unsigned="false" nullable="false" identity="false" comment="Update Time"/>
@@ -16,7 +16,7 @@
         </index>
     </table>
 
-    <table name="autosuggest_pusher" resource="default" engine="innodb" comment="InstantSearch+ Pusher">
+    <table name="autosuggest_pusher" resource="default" engine="innodb" comment="Fast Simon Pusher">
         <column xsi:type="int" name="entity_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Push ID"/>
         <column xsi:type="int" name="store_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Store ID"/>
         <column xsi:type="int" name="to_send" padding="10" unsigned="true" nullable="false" identity="false" comment="Amount to send"/>
@@ -33,7 +33,7 @@
         </index>
     </table>
 
-    <table name="instantsearch_notification" resource="default" engine="innodb" comment="InstantSearch+ Notifications">
+    <table name="instantsearch_notification" resource="default" engine="innodb" comment="Fast Simon Notifications">
         <column xsi:type="int" name="entity_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Push ID"/>
         <column xsi:type="text" name="type" nullable="false" comment="Notification type"/>
         <column xsi:type="text" name="subject" nullable="false" comment="Notification Subject"/>

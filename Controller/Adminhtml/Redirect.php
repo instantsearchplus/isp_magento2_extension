@@ -36,7 +36,7 @@ abstract class Redirect extends \Magento\Backend\App\Action
         $this->_setActiveMenu(
             'Autocompleteplus_Autosuggest::instantsearch'
         )->_addBreadcrumb(
-            __('InstantSearch'),
+            __('Fast Simon'),
             __('Redirect')
         );
         return $this;

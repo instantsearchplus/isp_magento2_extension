@@ -2,7 +2,7 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
         <tab id="autosuggest" translate="label" sortOrder="200">
-            <label>InstantSearch+</label>
+            <label>Fast Simon</label>
         </tab>
         <section id="autosuggest" translate="label" type="text" sortOrder="500" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>Configuration</label>
@@ -27,7 +27,7 @@
                 <label>Product Settings</label>
                 <field id="attributes" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Use Product Attributes</label>
-                    <comment>Will provide more content for InstantSearch+ to provide relevant results to your customers.</comment>
+                    <comment>Will provide more content for Fast Simon to provide relevant results to your customers.</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="stock_source" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">

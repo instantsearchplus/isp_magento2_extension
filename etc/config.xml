@@ -12,7 +12,7 @@
                 <authentication_key></authentication_key>
             </api>
             <dashboard>
-                <endpoint>https://dashboard.instantsearchplus.com</endpoint>
+                <endpoint>https://dashboard.fastsimon.com</endpoint>
                 <params><![CDATA[ma_dashboard?site_id=%s&authentication_key=%s]]></params>
             </dashboard>
             <product>

@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
 <menu>
-    <add id="Autocompleteplus_Autosuggest::instantsearch_configuration" title="InstantSearch+ Config" module="Autocompleteplus_Autosuggest"
+    <add id="Autocompleteplus_Autosuggest::instantsearch_configuration" title="Fast Simon Config" module="Autocompleteplus_Autosuggest"
      sortOrder="50" parent="Magento_Integration::system_extensions" resource="Autocompleteplus_Autosuggest::instantsearch_configuration" action="adminhtml/system_config/edit/section/autosuggest/"/>
      
-    <add id="Autocompleteplus_Autosuggest::instantsearch_dashboard" title="Instant Search+" module="Autocompleteplus_Autosuggest"
+    <add id="Autocompleteplus_Autosuggest::instantsearch_dashboard" title="Fast Simon" module="Autocompleteplus_Autosuggest"
      sortOrder="70" resource="Autocompleteplus_Autosuggest::instantsearch_dashboard" action="autosuggest/redirect/index"/>
 </menu>
 </config>

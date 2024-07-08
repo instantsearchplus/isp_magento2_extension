@@ -41,18 +41,20 @@ class Run extends \Autocompleteplus\Autosuggest\Controller\Adminhtml\Install
 
         if ($responseData = json_decode($response->getBody())) {
             if (!$responseData->uuid || strlen($responseData->uuid) > 50) {
-                $this->api->sendError('Could not get license string.');
-                $this->messageManager->addError(__('Something went wrong when trying to install InstantSearch+'));
+                $this->api->sendError('Adminhtml/Install/Run | Could not get license string. responseData=' . json_encode($responseData));
+                $this->messageManager->addError(__('Something went wrong when trying to install Fast Simon'));
                 $result->setPath('adminhtml/dashboard/index');
                 return $result;
             }
 
             $this->api->setApiUUID($responseData->uuid);
             $this->api->setApiAuthenticationKey($responseData->authentication_key);
-            $this->messageManager->addSuccess(__('InstantSearch+ successfully installed!'));
+            $this->messageManager->addSuccess(__('Fast Simon successfully installed!'));
         } else {
-            $this->messageManager->addError(__('Something went wrong when trying to install InstantSearch+'));
+            $this->api->sendError('Adminhtml/Install/Run | Invalid response. responseBody=' . json_encode($response->getBody()));
+            $this->messageManager->addError(__('Something went wrong when trying to install Fast Simon'));
         }
+
         $result->setPath('adminhtml/dashboard/index');
 
         return $result;

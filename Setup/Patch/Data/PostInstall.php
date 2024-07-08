@@ -98,12 +98,18 @@ class PostInstall implements DataPatchInterface
             $response = $this->api->buildRequest($params);
 
             $responseData = json_decode($response->getBody());
+
             if ($responseData) {
                 $this->api->setApiUUID($responseData->uuid);
                 $this->api->setApiAuthenticationKey($responseData->authentication_key);
+            } else {
+                $this->api->sendError('Patch/Data/PostInstall | Invalid response. responseData=' . json_encode($responseData) . ' | StatusCode=' . $response->getStatusCode()
+                    . ' | ReasonPhrase=' . $response->getReasonPhrase() . ' | params=' . json_encode($params));
             }
 
         } catch (\Exception $e) {
+            $this->api->sendError('Patch/Data/PostInstall | Exception: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+
             $this->logger->critical($e);
         }
 

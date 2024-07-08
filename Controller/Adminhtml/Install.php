@@ -45,7 +45,7 @@ abstract class Install extends \Magento\Backend\App\Action
         $this->_setActiveMenu(
             'Autocompleteplus_Autosuggest::instantsearch_configuration'
         )->_addBreadcrumb(
-            __('InstantSearch'),
+            __('Fast Simon'),
             __('Configuration')
         );
         return $this;

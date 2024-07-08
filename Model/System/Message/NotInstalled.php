@@ -94,8 +94,7 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
 
     public function checkEndpoint()
     {
-        return $this->helper->getApiEndpoint() === null ||
-            (strlen($this->helper->getApiEndpoint()) < 30);
+        return $this->helper->getApiEndpoint() === null;
     }
 
     public function checkUUID()
@@ -152,7 +151,7 @@ class NotInstalled implements \Magento\Framework\Notification\MessageInterface
     {
         $messageDetails = '';
         $messageDetails .= '<strong>';
-        $messageDetails .= __('There appears to be an issue with your InstantSearch+ configuration! ');
+        $messageDetails .= __('There appears to be an issue with your Fast Simon configuration! ');
         $messageDetails .= '</strong><p>';
         $messageDetails .= __(
             'Please make sure your settings are correct <a href="%1">here</a>',
