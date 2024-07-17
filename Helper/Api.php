@@ -341,14 +341,22 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
             if (is_array($val)) {
                 $val = implode(',', $val);
             }
-            $post_params[] = $key.'='.urlencode($val);
+            $post_params[] = $key . '=' . urlencode($val);
         }
 
         $post_string = implode('&', $post_params);
-        $parts=parse_url($url);
+        $parts = parse_url($url);
+        $host = $parts['host'];
+        $port = 80;
+
+        if ($parts["scheme"] == "https") {
+            $host = "ssl://" . $host;
+            $port = 443;
+        }
+
         $fp = fsockopen(
-            $parts['host'],
-            isset($parts['port'])? $parts['port'] : 80,
+            $host,
+            isset($parts['port']) ? $parts['port'] : $port,
             $errno,
             $errstr,
             30
@@ -356,21 +364,21 @@ class Api extends \Magento\Framework\App\Helper\AbstractHelper
 
         // Data goes in the path for a GET request
         if ('GET' == $type) {
-            $parts['path'] .= '?'.$post_string;
+            $parts['path'] .= '?' . $post_string;
         }
 
-        $out = "$type ".$parts['path']." HTTP/1.1\r\n";
-        $out.= "Host: ".$parts['host']."\r\n";
+        $out = "$type " . $parts['path'] . " HTTP/1.1\r\n";
+        $out .= "Host: " . $parts['host'] . "\r\n";
 
         if ($type == 'POST') {
-            $out.= "Content-Type: application/x-www-form-urlencoded\r\n";
-            $out.= "Content-Length: ".strlen($post_string)."\r\n";
+            $out .= "Content-Type: application/x-www-form-urlencoded\r\n";
+            $out .= "Content-Length: " . strlen($post_string) . "\r\n";
         }
 
-        $out.= "Connection: Close\r\n\r\n";
+        $out .= "Connection: Close\r\n\r\n";
         // Data goes in the request body for a POST request
         if ('POST' == $type && isset($post_string)) {
-            $out.= $post_string;
+            $out .= $post_string;
         }
 
         fwrite($fp, $out);

@@ -21,8 +21,15 @@
 
 namespace Autocompleteplus\Autosuggest\Observer;
 
+use Autocompleteplus\Autosuggest\Helper\Api;
+use Autocompleteplus\Autosuggest\Helper\Batches;
+use Autocompleteplus\Autosuggest\Helper\Html\Injector;
+use Magento\CatalogInventory\Model\Stock\Item;
+use Magento\Checkout\Model\Session;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Setup\Exception;
+use Magento\Framework\Stdlib\DateTime\DateTime;
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Class OrderCreate
@@ -45,24 +52,55 @@ use Magento\Setup\Exception;
  */
 class OrderCreate implements ObserverInterface
 {
+    /**
+     * @var Item
+     */
     protected $stockFactory;
+    /**
+     * @var DateTime
+     */
     protected $dateTime;
+    /**
+     * @var Batches
+     */
     protected $batchesHelper;
+    /**
+     * @var StoreManagerInterface
+     */
     protected $_storeManager;
+    /**
+     * @var Api
+     */
     protected $apiHelper;
+    /**
+     * @var Injector
+     */
     protected $injector_helper;
+    /**
+     * @var Session
+     */
     protected $checkoutSession;
     protected $cartProduct;
 
+    /**
+     * @param Context $context
+     * @param Batches $batchesHelper
+     * @param DateTime $dateTime
+     * @param Item $stockFactory
+     * @param Api $api
+     * @param Session $checkoutSession
+     * @param Injector $injector_helper
+     */
     public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
-        \Autocompleteplus\Autosuggest\Helper\Batches $batchesHelper,
-        \Magento\Framework\Stdlib\DateTime\DateTime $dateTime,
-        \Magento\CatalogInventory\Model\Stock\Item $stockFactory,
-        \Autocompleteplus\Autosuggest\Helper\Api $api,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Autocompleteplus\Autosuggest\Helper\Html\Injector $injector_helper
-    ) {
+        Context  $context,
+        Batches  $batchesHelper,
+        DateTime $dateTime,
+        Item     $stockFactory,
+        Api      $api,
+        Session  $checkoutSession,
+        Injector $injector_helper
+    )
+    {
         $this->injector_helper = $injector_helper;
         $this->apiHelper = $api;
         $this->batchesHelper = $batchesHelper;
@@ -79,6 +117,7 @@ class OrderCreate implements ObserverInterface
             $order = $observer->getEvent()->getOrder();
             $orderItems = $order->getItems();
             $store_id = $this->_storeManager->getStore()->getId();
+
             foreach ($orderItems as $orderItem) {
                 $productId = $orderItem->getProductId();
                 $product_ids[] = $productId;
@@ -89,23 +128,28 @@ class OrderCreate implements ObserverInterface
 
             $web_hook_url = $this->apiHelper->getApiEndpoint() . '/ma_webhook';
             $params = $this->_getWebhookObjectUri($observer);
+
             if ($params == null) {
                 return;
             }
+
             if (function_exists('fsockopen')) {
                 $this->apiHelper->post_without_wait(
                     $web_hook_url,
                     $params,
-                    'GET'
+                    'POST'
                 );
             } else {
                 $this->apiHelper->setUrl($web_hook_url);
-                $this->apiHelper->setRequestType(\Laminas\Http\Request::METHOD_GET);
+                $this->apiHelper->setRequestType(\Laminas\Http\Request::METHOD_POST);
                 $response = $this->apiHelper->buildRequest($params);
             }
+
             $this->checkoutSession->setIspOrderSent(1);
         } catch (\Exception $e) {
+            $this->apiHelper->sendError('Observer/OrderCreate | Exception: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
         }
+
         return $this;
     }
 
@@ -162,7 +206,7 @@ class OrderCreate implements ObserverInterface
                     'product_id' => $item->getProduct()->getId(),
                     'price' => $item->getProduct()->getFinalPrice(),
                     'quantity' => $quantity,
-                    'currency' => ($item->getQuote() == null)?
+                    'currency' => ($item->getQuote() == null) ?
                         $order->getorder_currency_code() :
                         $order->getGlobalCurrencyCode()
                 ];

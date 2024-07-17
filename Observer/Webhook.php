@@ -21,7 +21,16 @@
 
 namespace Autocompleteplus\Autosuggest\Observer;
 
+use Autocompleteplus\Autosuggest\Helper\Api;
+use Autocompleteplus\Autosuggest\Helper\Batches;
+use Autocompleteplus\Autosuggest\Helper\Html\Injector;
+use Magento\Checkout\Model\Session;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Stdlib\DateTime\DateTime;
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Webhook
@@ -44,44 +53,69 @@ use Magento\Framework\Event\ObserverInterface;
  */
 class Webhook implements ObserverInterface
 {
+    /**
+     * @var Api
+     */
     protected $apiHelper;
+
+    /**
+     * @var Injector
+     */
     protected $injector_helper;
 
     /**
-     * Store manager
-     *
-     * @var \Magento\Store\Model\StoreManagerInterface
+     * @var StoreManagerInterface
      */
     protected $_storeManager;
 
+    /**
+     * @var Session
+     */
     protected $_session;
 
+    /**
+     * @var OrderRepositoryInterface
+     */
     protected $orderRepository;
 
+    /**
+     * @var CollectionFactory
+     */
     protected $orderCollectionFactory;
 
     protected $cartProduct;
 
     /**
-     * @var \Autocompleteplus\Autosuggest\Helper\Batches
+     * @var Batches
      */
     protected $batchesHelper;
 
     /**
-     * @var \Magento\Framework\Stdlib\DateTime\DateTime
+     * @var DateTime
      */
     protected $date;
 
+    /**
+     * @param Context $context
+     * @param Api $api
+     * @param Injector $injector_helper
+     * @param Session $session
+     * @param OrderRepositoryInterface $orderRepository
+     * @param CollectionFactory $orderCollectionFactory
+     * @param Batches $batchesHelper
+     * @param DateTime $date
+     */
     public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
-        \Autocompleteplus\Autosuggest\Helper\Api $api,
-        \Autocompleteplus\Autosuggest\Helper\Html\Injector $injector_helper,
-        \Magento\Checkout\Model\Session $session,
-        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
-        \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
-        \Autocompleteplus\Autosuggest\Helper\Batches $batchesHelper,
-        \Magento\Framework\Stdlib\DateTime\DateTime $date
-    ) {
+        Context                  $context,
+        Api                      $api,
+        Injector                 $injector_helper,
+        Session                  $session,
+        OrderRepositoryInterface $orderRepository,
+        CollectionFactory        $orderCollectionFactory,
+        Batches                  $batchesHelper,
+        DateTime                 $date
+    )
+    {
         $this->injector_helper = $injector_helper;
         $this->apiHelper = $api;
         $this->_storeManager = $context->getStoreManager();
@@ -130,7 +164,7 @@ class Webhook implements ObserverInterface
                     'product_id' => $item->getProduct()->getId(),
                     'price' => $item->getProduct()->getFinalPrice(),
                     'quantity' => $quantity,
-                    'currency' => ($item->getQuote() == null)?
+                    'currency' => ($item->getQuote() == null) ?
                         $item->getOrder()->getorder_currency_code() :
                         $item->getQuote()->getGlobalCurrencyCode()
                 ];
@@ -143,7 +177,7 @@ class Webhook implements ObserverInterface
     public function getOrder($id)
     {
         $tempOrdCollection = $this->orderCollectionFactory->create();
-        $tempOrdCollection->addAttributeToFilter('entity_id', ['in'  =>  [$id]]);
+        $tempOrdCollection->addAttributeToFilter('entity_id', ['in' => [$id]]);
         $order = $tempOrdCollection->getFirstItem();
         return $order;
     }
@@ -163,15 +197,16 @@ class Webhook implements ObserverInterface
                 $this->apiHelper->post_without_wait(
                     $web_hook_url,
                     $params,
-                    'GET'
+                    'POST'
                 );
             } else {
                 $this->apiHelper->setUrl($web_hook_url);
-                $this->apiHelper->setRequestType(\Laminas\Http\Request::METHOD_GET);
+                $this->apiHelper->setRequestType(\Laminas\Http\Request::METHOD_POST);
                 $response = $this->apiHelper->buildRequest($params);
             }
 
         } catch (\Exception $e) {
+            $this->apiHelper->sendError('Observer/Webhook | Exception: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
         }
     }
 
@@ -240,14 +275,14 @@ class Webhook implements ObserverInterface
     public function getWebhookEventLabel($event_name)
     {
         switch ($event_name) {
-        case 'checkout_cart_add_product_complete':
-            return 'cart';
-        case 'controller_action_postdispatch_checkout_onepage_index':
-            return 'checkout';
-        case 'checkout_onepage_controller_success_action':
-            return 'success';
-        default:
-            return null;
+            case 'checkout_cart_add_product_complete':
+                return 'cart';
+            case 'controller_action_postdispatch_checkout_onepage_index':
+                return 'checkout';
+            case 'checkout_onepage_controller_success_action':
+                return 'success';
+            default:
+                return null;
         }
     }
 }

@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.91.32] - 2024-07-17 14:00:00
+### Changed
+- Added error logging in shopping events observers
+- Added support for HTTPS requests in Api helper function
+
 ## [4.91.31] - 2024-07-08 20:00:00
 ### Changed
 - Update labels naming from 'InstantSearch+' to 'Fast Simon'
