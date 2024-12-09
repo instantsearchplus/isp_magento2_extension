@@ -1,11 +1,18 @@
-<script>
-    <?php if (!filter_var($block->getis_serp(), FILTER_VALIDATE_BOOLEAN)) : ?>
-    var lp_slug = "<?php if ($block->getData('slug')) { /* @noEscape */echo $block->getData('slug'); } ?>";
-    <?php endif; ?>
-    var __isp_fulltext_search_obj = {
-        uuid: "<?= /* @noEscape */ $block->getApiUUID();?>",
-        store_id: <?= /* @noEscape */ $block->getStoreId();?>
-    };
-</script>
-<?php $results = $block->getSearchResults(); ?>
-<?= /* @noEscape */ $results; ?>
+<?php
+$uuid = $block->getApiUUID();
+$store_id = $block->getStoreId() ? $block->getStoreId() : 1;
+?>
+
+<?php if(!$block->getSerpV2($store_id)): ?>
+    <script>
+        <?php if (!filter_var($block->getis_serp(), FILTER_VALIDATE_BOOLEAN)) : ?>
+        var lp_slug = "<?php if ($block->getData('slug')) { /* @noEscape */echo $block->getData('slug'); } ?>";
+        <?php endif; ?>
+        var __isp_fulltext_search_obj = {
+            uuid: "<?= /* @noEscape */ $uuid;?>",
+            store_id: <?= /* @noEscape */ $store_id;?>
+        };
+    </script>
+    <?php $results = $block->getSearchResults(); ?>
+    <?= /* @noEscape */ $results; ?>
+<?php endif; ?>

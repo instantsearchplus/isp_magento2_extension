@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.91.33] - 2024-12-09 19:00:00
+### Changed
+- Optimized landing pages script
+
 ## [4.91.32] - 2024-07-17 14:00:00
 ### Changed
 - Added error logging in shopping events observers
