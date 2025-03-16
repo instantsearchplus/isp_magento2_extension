@@ -115,6 +115,14 @@ class Generator implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
             if ($child !== null) {
                 $node = dom_import_simplexml($child);
                 $doc = $node->ownerDocument;
+
+                // Detect if $childValue is already escaped
+                $decodedValue = html_entity_decode($childValue);
+                if ($decodedValue !== $childValue and $decodedValue) {
+                    // $childValue was escaped, so use the decoded version
+                    $childValue = $decodedValue;
+                }
+
                 $node->appendChild($doc->createCDATASection($childValue));
             }
         }
