@@ -865,17 +865,18 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         return [array_filter($paths), $category_names];
     }
 
-    public function createChild($childName, $childAttributes, $childValue, $childParent)
+    public function createChild($childName, $childAttributes, $childValue, $childParent, $stripTags = false)
     {
         return $this->xmlGenerator->createChild(
             $childName,
             $childAttributes,
             $childValue,
-            $childParent
+            $childParent,
+            $stripTags
         );
     }
 
-    public function renderAttributeXml($attr, $product, $productElem)
+    public function renderAttributeXml($attr, $product, $productElem, $stripTags = false)
     {
         try {
             $action = $attr->getAttributeCode();
@@ -971,7 +972,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     'attribute_values',
                     false,
                     $attrValue,
-                    $attributeElem
+                    $attributeElem,
+                    $stripTags
                 );
                 if (!$attribute_label) {
                     $attribute_label = '';
@@ -989,7 +991,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function renderProductVariantXml($product, $productElem)
+    public function renderProductVariantXml($product, $productElem, $stripTags = false)
     {
         if ($this->helper->canUseProductAttributes()) {
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
@@ -1145,7 +1147,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                                     'value_code' => $child_product->getData($attribute->getAttributeCode())
                                 ],
                                 $attrValue,
-                                $productVariation
+                                $productVariation,
+                                $stripTags
                             );
                         }
 
@@ -1182,7 +1185,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $count,
         $storeId,
         $orders,
-        $interval
+        $interval,
+        $stripTags = false
     ) {
         $this->setOffset($offset);
         $this->setCount($count);
@@ -1207,7 +1211,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->setRulesCount($this->getActiveRulesCount());
 
         foreach ($productCollection as $product) {
-            $this->renderProduct($product, 'insert');
+            $this->renderProduct($product, 'insert', 0, null, $stripTags);
         }
 
         $dateTs = $this->_localeDate->scopeTimeStamp($storeId);
@@ -1362,7 +1366,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $from,
         $to,
         $page,
-        $send_oos
+        $send_oos,
+        $stripTags = false
     ) {
         /**
          * Load and filter the batches
@@ -1451,7 +1456,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $product,
                 'update',
                 $batch->getUpdateDate(),
-                $batch->getStoreId()
+                $batch->getStoreId(),
+                $stripTags
             );
             $visibleProductIds[] = $product->getId();
         }
@@ -1508,7 +1514,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->xmlGenerator->generateXml();
     }
 
-    public function renderCatalogByIds($ids, $storeId = 0)
+    public function renderCatalogByIds($ids, $storeId = 0, $stripTags = false)
     {
         /**
          * We need to reset the root attributes on <catalog />
@@ -1520,7 +1526,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             ]
         );
 
-        $this->loopOverProductCollectionByIds($ids, $storeId, 'getbyid');
+        $this->loopOverProductCollectionByIds($ids, $storeId, 'getbyid', $stripTags);
 
         return $this->xmlGenerator->generateXml();
     }
@@ -1744,7 +1750,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $product,
         $action = 'update',
         $updatedate = 0,
-        $storeId = null
+        $storeId = null,
+        $stripTags = false
     ) {
         try {
             $product->getTypeInstance()->setStoreFilter($this->storeManager->getStore(), $product);
@@ -1894,14 +1901,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'description',
                 false,
                 strval($product->getDescription()),
-                $productElem
+                $productElem,
+                $stripTags
             );
 
             $this->createChild(
                 'short',
                 false,
                 strval($product->getShortDescription()),
-                $productElem
+                $productElem,
+                $stripTags
             );
 
             $this->createChild(
@@ -2021,7 +2030,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 }
 
                 foreach ($this->getProductAttributes() as $attr) {
-                    $this->renderAttributeXml($attr, $product, $productElem);
+                    $this->renderAttributeXml($attr, $product, $productElem, $stripTags);
                 }
             }
 
@@ -2033,7 +2042,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     $productElem
                 );
 
-                $this->renderProductVariantXml($product, $productElem);
+                $this->renderProductVariantXml($product, $productElem, $stripTags);
             }
 
             $cats_data = $this->getCategoryPathsByProduct($product);
@@ -2073,7 +2082,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'meta_description',
                 false,
                 strval($product->getMetaDescription()),
-                $productElem
+                $productElem,
+                $stripTags
             );
             $this->createChild(
                 'meta_keywords',
@@ -2188,7 +2198,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      * @param  $storeId
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function loopOverProductCollectionByIds($ids, $storeId, $action)
+    private function loopOverProductCollectionByIds($ids, $storeId, $action, $stripTags = false)
     {
         $productCollection = $this->getProductCollection(false);
         $this->setStoreId($storeId);
@@ -2212,7 +2222,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $visibleProductIds = [];
         foreach ($productCollection as $product) {
-            $this->renderProduct($product, $action);
+            $this->renderProduct($product, $action, 0, null, $stripTags);
             $visibleProductIds[] = $product->getId();
         }
 

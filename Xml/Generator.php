@@ -101,7 +101,7 @@ class Generator implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
         return $output;
     }
 
-    public function createChild($childName, $childAttributes, $childValue = false, $parent = false)
+    public function createChild($childName, $childAttributes, $childValue = false, $parent = false, $stripTags = false)
     {
         $xml = $this->getSimpleXml();
 
@@ -121,6 +121,17 @@ class Generator implements \Autocompleteplus\Autosuggest\Xml\GeneratorInterface
                 if ($decodedValue !== $childValue and $decodedValue) {
                     // $childValue was escaped, so use the decoded version
                     $childValue = $decodedValue;
+                }
+
+                if ($stripTags) {
+                    // Remove script tags and their content
+                    $childValue = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $childValue);
+
+                    // Remove all HTML tags
+                    $childValue = strip_tags($childValue);
+
+                    // Decode HTML entities and trim whitespace
+                    $childValue = trim(html_entity_decode($childValue));
                 }
 
                 $node->appendChild($doc->createCDATASection($childValue));
