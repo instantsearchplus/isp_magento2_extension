@@ -206,7 +206,11 @@ class Webhook implements ObserverInterface
             }
 
         } catch (\Exception $e) {
-            $this->apiHelper->sendError('Observer/Webhook | Exception: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+            try {
+                $this->apiHelper->sendError('Observer/Webhook | Exception: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+            } catch (\Exception $sendErrorException) {
+                // Do nothing
+            }
         }
     }
 
