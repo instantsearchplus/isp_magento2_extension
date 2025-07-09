@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.91.36] - 2025-07-09 18:00:00
+### Fixed
+- Potential error in Webhook observer
+
 ## [4.91.35] - 2025-03-19 19:00:00
 ### Added
 - Add `strip_tags` parameter to sanitize XML output
