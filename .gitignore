@@ -3,3 +3,4 @@
 .DS_Store
 .wakatime-project
 .vscode
+composer.lock
