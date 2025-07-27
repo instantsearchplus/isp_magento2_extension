@@ -2,10 +2,10 @@
   "name": "instantsearch/instantsearchplus",
   "description": "Search That Boosts Conversion: Fastest Semantic Search, Search Filters, and Search Autocomplete",
   "type": "magento2-module",
-  "version": "4.91.41",
+  "version": "4.91.42",
   "license": ["OSL-3.0"],
   "require": {
-    "php": ">=7.0",
+    "php": ">=7.1",
     "laminas/laminas-filter": ">=2.12.0",
     "laminas/laminas-http": ">=2.14.3"
   },
