@@ -58,10 +58,11 @@ class Send extends \Autocompleteplus\Autosuggest\Controller\Products
         $orders = $this->getRequest()->getParam('orders', false);
         $interval = $this->getRequest()->getParam('month_interval', 12);
         $stripTags = boolval($this->getRequest()->getParam('strip_tags', 0));
+        $includeImages = boolval($this->getRequest()->getParam('include_images', 0));
 
         $this->xmlGenerator->checkCachedAttrValues($storeId);
         $catalogXml = $this->xmlGenerator
-            ->renderCatalogXml($offset, $count, $storeId, $orders, $interval, $stripTags);
+            ->renderCatalogXml($offset, $count, $storeId, $orders, $interval, $stripTags, $includeImages);
 
         $this->response->setHeader('Content-type', 'text/xml');
         $this->response->setBody($catalogXml);

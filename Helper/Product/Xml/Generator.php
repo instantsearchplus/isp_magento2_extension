@@ -535,10 +535,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     }
                 }
             }
-            $productCollection->addAttributeToSelect($attributesToSelect);//'*'
+            $productCollection->addAttributeToSelect($attributesToSelect);
 
             $productCollection->addStoreFilter($this->getStoreId());
             $productCollection->setStoreId($this->getStoreId());
+
             if ($skipNotVisible) {
                 $productCollection->setVisibility($this->productVisibility->getVisibleInSiteIds());
             }
@@ -546,6 +547,251 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $this->productCollection;
+    }
+
+    
+
+    /**
+     * Get all media gallery images for a product with streamlined approach
+     * 
+     * This method now works reliably with collection-loaded products thanks to
+     * the explicit database joins in getProductCollection(). The force-reload
+     * fallback is no longer required.
+     *
+     * @param \Magento\Catalog\Model\Product $product
+     * @return array
+     */
+    public function getProductMediaGalleryImages($product)
+    {
+        $mediaGalleryImages = [];
+
+        try {
+            // Primary approach: Use collection-loaded product with getMediaGalleryEntries
+            if (method_exists($product, 'getMediaGalleryEntries')) {
+                $mediaGalleryEntries = $product->getMediaGalleryEntries();
+                
+                if ($mediaGalleryEntries && count($mediaGalleryEntries) > 0) {
+                    $mediaGalleryImages = $this->processMediaGalleryEntries(
+                        $mediaGalleryEntries, 
+                        $product
+                    );
+                }
+            }
+
+            // Fallback: Try legacy media gallery data access
+            if (empty($mediaGalleryImages)) {
+                $mediaGallery = $product->getMediaGallery();
+                
+                if (isset($mediaGallery['images']) && is_array($mediaGallery['images'])) {
+                    $mediaGalleryImages = $this->processLegacyMediaGallery(
+                        $mediaGallery['images'], 
+                        $product
+                    );
+                }
+            }
+
+            // Final fallback: Create synthetic entries from direct product images
+            if (empty($mediaGalleryImages)) {
+                $mediaGalleryImages = $this->createSyntheticMediaGalleryEntries($product);
+            }
+
+            // Sort by position
+            if (!empty($mediaGalleryImages)) {
+                usort($mediaGalleryImages, function($a, $b) {
+                    return $a['position'] <=> $b['position'];
+                });
+            }
+
+        } catch (\Exception $e) {
+            // Silent fallback - return empty array if all methods fail
+        }
+
+        return $mediaGalleryImages;
+    }
+
+    /**
+     * Process media gallery entries into standardized format
+     *
+     * @param array $entries
+     * @param \Magento\Catalog\Model\Product $product
+     * @return array
+     */
+    protected function processMediaGalleryEntries($entries, $product)
+    {
+        $mediaGalleryImages = [];
+        
+        // Determine primary image file for main image detection
+        $primaryImageFile = null;
+        $priorityOrder = [$product->getImage(), $product->getSmallImage(), $product->getThumbnail()];
+        foreach ($priorityOrder as $imageFile) {
+            if ($imageFile && $imageFile !== 'no_selection') {
+                $primaryImageFile = $imageFile;
+                break;
+            }
+        }
+        
+        foreach ($entries as $entry) {
+            if ($entry->isDisabled()) {
+                continue;
+            }
+            
+            $imageFile = $entry->getFile();
+            if ($imageFile) {
+                try {
+                    $resizedImage = $this->image->init($product, 'product_page_image_medium')
+                        ->setImageFile($imageFile)
+                        ->resize(500);
+                    $imageUrl = $resizedImage->getUrl();
+                } catch (\Exception $e) {
+                    $imageUrl = $imageFile;
+                }
+                
+                $isMainImage = ($imageFile === $primaryImageFile);
+                
+                $mediaGalleryImages[] = [
+                    'id' => $entry->getId() ?: md5($imageUrl),
+                    'file' => $imageFile,
+                    'url' => $imageUrl,
+                    'label' => $entry->getLabel(),
+                    'position' => $entry->getPosition(),
+                    'types' => $entry->getTypes() ?: [],
+                    'is_main_image' => $isMainImage
+                ];
+            }
+        }
+        
+        return $mediaGalleryImages;
+    }
+
+    /**
+     * Process legacy media gallery data into standardized format
+     *
+     * @param array $images
+     * @param \Magento\Catalog\Model\Product $product
+     * @return array
+     */
+    protected function processLegacyMediaGallery($images, $product)
+    {
+        $mediaGalleryImages = [];
+        
+        // Determine primary image file
+        $primaryImageFile = null;
+        $priorityOrder = [$product->getImage(), $product->getSmallImage(), $product->getThumbnail()];
+        foreach ($priorityOrder as $imageFile) {
+            if ($imageFile && $imageFile !== 'no_selection') {
+                $primaryImageFile = $imageFile;
+                break;
+            }
+        }
+        
+        foreach ($images as $image) {
+            if (isset($image['disabled']) && $image['disabled']) {
+                continue;
+            }
+            
+            $imageFile = $image['file'];
+            if ($imageFile) {
+                try {
+                    $resizedImage = $this->image->init($product, 'product_page_image_medium')
+                        ->setImageFile($imageFile)
+                        ->resize(500);
+                    $imageUrl = $resizedImage->getUrl();
+                } catch (\Exception $e) {
+                    $imageUrl = $imageFile;
+                }
+                
+                $isMainImage = ($imageFile === $primaryImageFile);
+                
+                $mediaGalleryImages[] = [
+                    'id' => $image['value_id'] ?? md5($imageUrl),
+                    'file' => $imageFile,
+                    'url' => $imageUrl,
+                    'label' => $image['label'] ?? '',
+                    'position' => $image['position'] ?? 0,
+                    'types' => [],
+                    'is_main_image' => $isMainImage
+                ];
+            }
+        }
+        
+        return $mediaGalleryImages;
+    }
+
+    /**
+     * Create synthetic media gallery entries from direct product images
+     *
+     * @param \Magento\Catalog\Model\Product $product
+     * @return array
+     */
+    protected function createSyntheticMediaGalleryEntries($product)
+    {
+        // Get main image file paths
+        $mainImageFiles = [
+            $product->getImage(),
+            $product->getSmallImage(), 
+            $product->getThumbnail()
+        ];
+        // Remove duplicates and null values
+        $mainImageFiles = array_filter(array_unique($mainImageFiles), function($file) {
+            return $file && $file !== 'no_selection';
+        });
+        
+        // Return empty if no images found
+        if (empty($mainImageFiles)) {
+            return [];
+        }
+        
+        $mediaGalleryImages = [];
+        $position = 1;
+        $imageTypeMapping = [
+            $product->getImage() => ['base'],
+            $product->getSmallImage() => ['small_image'], 
+            $product->getThumbnail() => ['thumbnail']
+        ];
+        
+        // Determine priority order: base image first, then small_image, then thumbnail
+        $priorityOrder = [$product->getImage(), $product->getSmallImage(), $product->getThumbnail()];
+        $primaryImageFile = null;
+        foreach ($priorityOrder as $imageFile) {
+            if ($imageFile && $imageFile !== 'no_selection' && in_array($imageFile, $mainImageFiles)) {
+                $primaryImageFile = $imageFile;
+                break;
+            }
+        }
+        
+        foreach ($mainImageFiles as $imageFile) {
+            try {
+                $resizedImage = $this->image->init($product, 'product_page_image_medium')
+                    ->setImageFile($imageFile)
+                    ->resize(500);
+                $imageUrl = $resizedImage->getUrl();
+            } catch (\Exception $e) {
+                $imageUrl = $imageFile;
+            }
+            
+            // Determine image types for this file
+            $types = [];
+            foreach ($imageTypeMapping as $attrFile => $attrTypes) {
+                if ($attrFile === $imageFile) {
+                    $types = array_merge($types, $attrTypes);
+                }
+            }
+            
+            // Only the primary image (highest priority) is marked as main
+            $isMainImage = ($imageFile === $primaryImageFile);
+            
+            $mediaGalleryImages[] = [
+                'id' => md5($imageUrl),
+                'file' => $imageFile,
+                'url' => $imageUrl,
+                'label' => '',
+                'position' => $position++,
+                'types' => $types,
+                'is_main_image' => $isMainImage
+            ];
+        }
+        
+        return $mediaGalleryImages;
     }
 
     public function getCategoryCollection()
@@ -1186,7 +1432,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $storeId,
         $orders,
         $interval,
-        $stripTags = false
+        $stripTags = false,
+        $includeImages = false
     ) {
         $this->setOffset($offset);
         $this->setCount($count);
@@ -1208,10 +1455,23 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->appendReviews();
 
+        // Apply late-stage media gallery loading (after all price operations)
+        // Only load media gallery data if images are requested
+        if ($includeImages) {
+            try {
+                $productCollection->addAttributeToSelect('media_gallery');
+                if (method_exists($productCollection, 'addMediaGalleryData')) {
+                    $productCollection->addMediaGalleryData();
+                }
+            } catch (\Exception $e) {
+                // Continue silently if media gallery loading fails
+            }
+        }
+
         $this->setRulesCount($this->getActiveRulesCount());
 
         foreach ($productCollection as $product) {
-            $this->renderProduct($product, 'insert', 0, null, $stripTags);
+            $this->renderProduct($product, 'insert', 0, null, $stripTags, $includeImages);
         }
 
         $dateTs = $this->_localeDate->scopeTimeStamp($storeId);
@@ -1367,7 +1627,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $to,
         $page,
         $send_oos,
-        $stripTags = false
+        $stripTags = false,
+        $includeImages = false
     ) {
         /**
          * Load and filter the batches
@@ -1447,6 +1708,19 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->appendReviews();
 
+        // Apply late-stage media gallery loading (after all price operations)
+        // Only load media gallery data if images are requested
+        if ($includeImages) {
+            try {
+                $productCollection->addAttributeToSelect('media_gallery');
+                if (method_exists($productCollection, 'addMediaGalleryData')) {
+                    $productCollection->addMediaGalleryData();
+                }
+            } catch (\Exception $e) {
+                // Continue silently if media gallery loading fails
+            }
+        }
+
         $this->setRulesCount($this->getActiveRulesCount());
 
         $visibleProductIds = [];
@@ -1457,7 +1731,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'update',
                 $batch->getUpdateDate(),
                 $batch->getStoreId(),
-                $stripTags
+                $stripTags,
+                $includeImages
             );
             $visibleProductIds[] = $product->getId();
         }
@@ -1514,7 +1789,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->xmlGenerator->generateXml();
     }
 
-    public function renderCatalogByIds($ids, $storeId = 0, $stripTags = false)
+    public function renderCatalogByIds($ids, $storeId = 0, $stripTags = false, $includeImages = false)
     {
         /**
          * We need to reset the root attributes on <catalog />
@@ -1526,7 +1801,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             ]
         );
 
-        $this->loopOverProductCollectionByIds($ids, $storeId, 'getbyid', $stripTags);
+        $this->loopOverProductCollectionByIds($ids, $storeId, 'getbyid', $stripTags, $includeImages);
 
         return $this->xmlGenerator->generateXml();
     }
@@ -1751,7 +2026,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $action = 'update',
         $updatedate = 0,
         $storeId = null,
-        $stripTags = false
+        $stripTags = false,
+        $includeImages = false
     ) {
         try {
             $product->getTypeInstance()->setStoreFilter($this->storeManager->getStore(), $product);
@@ -1896,6 +2172,37 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $productElem = $this->createChild('product', $xmlAttributes, false, $this->xmlGenerator->getSimpleXml());
+
+            // Add media gallery images as child elements (only if requested)
+            if ($includeImages) {
+                $mediaGalleryImages = $this->getProductMediaGalleryImages($product);
+                if (!empty($mediaGalleryImages)) {
+                    $imagesElem = $this->createChild('images', false, false, $productElem);
+                    
+                    foreach ($mediaGalleryImages as $imageData) {
+                        $imageAttributes = [
+                            'id' => $imageData['id'],
+                            'position' => $imageData['position'],
+                            'file' => $imageData['file'],
+                            'label' => $imageData['label'] ?: '',
+                            'is_main_image' => $imageData['is_main_image'] ? '1' : '0',
+                            'url' => $imageData['url']
+                        ];
+                        
+                        // Add image types if available (for Magento 2.4.0+)
+                        if (!empty($imageData['types'])) {
+                            $imageAttributes['types'] = implode(',', $imageData['types']);
+                        }
+                        
+                        $this->createChild(
+                            'image',
+                            $imageAttributes,
+                            false,
+                            $imagesElem
+                        );
+                    }
+                }
+            }
 
             $this->createChild(
                 'description',
@@ -2198,7 +2505,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      * @param  $storeId
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function loopOverProductCollectionByIds($ids, $storeId, $action, $stripTags = false)
+    private function loopOverProductCollectionByIds($ids, $storeId, $action, $stripTags = false, $includeImages = false)
     {
         $productCollection = $this->getProductCollection(false);
         $this->setStoreId($storeId);
@@ -2220,9 +2527,22 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->appendReviews();
 
+        // Apply late-stage media gallery loading (after all price operations)
+        // Only load media gallery data if images are requested
+        if ($includeImages) {
+            try {
+                $productCollection->addAttributeToSelect('media_gallery');
+                if (method_exists($productCollection, 'addMediaGalleryData')) {
+                    $productCollection->addMediaGalleryData();
+                }
+            } catch (\Exception $e) {
+                // Continue silently if media gallery loading fails
+            }
+        }
+
         $visibleProductIds = [];
         foreach ($productCollection as $product) {
-            $this->renderProduct($product, $action, 0, null, $stripTags);
+            $this->renderProduct($product, $action, 0, null, $stripTags, $includeImages);
             $visibleProductIds[] = $product->getId();
         }
 

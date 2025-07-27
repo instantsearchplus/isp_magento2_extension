@@ -36,6 +36,7 @@ class Getbyid extends \Autocompleteplus\Autosuggest\Controller\Productsbyid
         $storeId = $request->getParam('store', 1);
         $id = $request->getParam('id', 1);
         $stripTags = boolval($request->getParam('strip_tags', 0));
+        $includeImages = boolval($request->getParam('include_images', 0));
 
         if (!$id) {
             $returnArr = [
@@ -48,7 +49,7 @@ class Getbyid extends \Autocompleteplus\Autosuggest\Controller\Productsbyid
         }
 
         $productIds = explode(',', $id);
-        $xml = $this->xmlGenerator->renderCatalogByIds($productIds, $storeId, $stripTags);
+        $xml = $this->xmlGenerator->renderCatalogByIds($productIds, $storeId, $stripTags, $includeImages);
         $this->responseInterface->setHeader('Content-type', 'text/xml');
         $this->responseInterface->setBody($xml);
     }
