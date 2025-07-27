@@ -649,7 +649,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $isMainImage = ($imageFile === $primaryImageFile);
                 
                 $mediaGalleryImages[] = [
-                    'id' => $entry->getId() ?: md5($imageUrl),
+                    'id' => $entry->getId() ?: hash('sha256', $imageUrl),
                     'file' => $imageFile,
                     'url' => $imageUrl,
                     'label' => $entry->getLabel(),
@@ -703,7 +703,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $isMainImage = ($imageFile === $primaryImageFile);
                 
                 $mediaGalleryImages[] = [
-                    'id' => $image['value_id'] ?? md5($imageUrl),
+                    'id' => $image['value_id'] ?? hash('sha256', $imageUrl),
                     'file' => $imageFile,
                     'url' => $imageUrl,
                     'label' => $image['label'] ?? '',
@@ -781,7 +781,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $isMainImage = ($imageFile === $primaryImageFile);
             
             $mediaGalleryImages[] = [
-                'id' => md5($imageUrl),
+                'id' => hash('sha256', $imageUrl),
                 'file' => $imageFile,
                 'url' => $imageUrl,
                 'label' => '',

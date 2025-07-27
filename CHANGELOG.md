@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.91.41] - 2025-07-27 19:00:00
+### Fixed
+- Adhere to Magento 2 security standards by updating image ID generation fallback to use SHA-256 hash instead of md5.
+
 ## [4.91.40] - 2025-07-27 18:00:00
 ### Added
 - Enhance Product XML generation to include optional media gallery images
