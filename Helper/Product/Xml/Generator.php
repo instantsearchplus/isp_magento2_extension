@@ -291,6 +291,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected $eAValues;
 
+    /**
+     * @var \Magento\Swatches\Helper\Data
+     */
+    protected $swatchHelper;
+
     const ISPKEY = 'ISPKEY_';
 
     const ActiveRulesCount = 'ActiveRulesCount2';
@@ -409,7 +414,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\CatalogInventory\Model\Stock\Item $stockFactory,
         \Magento\CatalogRule\Model\ResourceModel\Rule $ruleModel,
         \Magento\Framework\EntityManager\MetadataPool $metadataPool,
-        \Magento\Framework\App\ProductMetadataInterface $productMetadata
+        \Magento\Framework\App\ProductMetadataInterface $productMetadata,
+        \Magento\Swatches\Helper\Data $swatchHelper
     ) {
         $this->storeManager = $storeManagerInterface;
         $this->helper = $helper;
@@ -467,6 +473,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->categoriesLocalList = array();
         $this->scheduledUpdatesBuffer = array();
         $this->productMetadata = $productMetadata;
+        $this->swatchHelper = $swatchHelper;
         parent::__construct($context);
     }
 
@@ -497,6 +504,100 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             );
         }
         return (int)$activeRulesCount;
+    }
+
+    /**
+     * Get swatch data for an attribute and option value
+     *
+     * @param \Magento\Eav\Model\Entity\Attribute $attribute
+     * @param mixed $optionValue
+     * @return array|false
+     */
+    protected function getSwatchDataForAttribute($attribute, $optionValue)
+    {
+        try {
+            // Check if the attribute is a swatch attribute
+            if (!$this->swatchHelper->isSwatchAttribute($attribute)) {
+                return false;
+            }
+
+            // Get swatch data for the specific option value
+            $swatchData = $this->swatchHelper->getSwatchesByOptionsId([$optionValue]);
+
+            if (empty($swatchData) || !isset($swatchData[$optionValue])) {
+                return false;
+            }
+
+            $swatch = $swatchData[$optionValue];
+            $swatchInfo = [];
+
+            // Add swatch type
+            if (isset($swatch['type'])) {
+                $swatchInfo['swatch_type'] = $swatch['type'];
+            }
+
+            // Add swatch value based on type (with version compatibility)
+            if (isset($swatch['value'])) {
+                $swatchType = isset($swatch['type']) ? (int)$swatch['type'] : 0;
+                
+                // Define constants with fallback values for version compatibility
+                // Magento constants: TEXTUAL=0, VISUAL_COLOR=1, VISUAL_IMAGE=2, EMPTY=3
+                $textualType = defined('\Magento\Swatches\Model\Swatch::SWATCH_TYPE_TEXTUAL') ? 
+                    \Magento\Swatches\Model\Swatch::SWATCH_TYPE_TEXTUAL : 0;
+                $visualColorType = defined('\Magento\Swatches\Model\Swatch::SWATCH_TYPE_VISUAL_COLOR') ? 
+                    \Magento\Swatches\Model\Swatch::SWATCH_TYPE_VISUAL_COLOR : 1;
+                $visualImageType = defined('\Magento\Swatches\Model\Swatch::SWATCH_TYPE_VISUAL_IMAGE') ? 
+                    \Magento\Swatches\Model\Swatch::SWATCH_TYPE_VISUAL_IMAGE : 2;
+                
+                switch ($swatchType) {
+                    case $textualType:
+                        // Text swatch - text value
+                        $swatchInfo['swatch_text'] = $swatch['value'];
+                        break;
+                    case $visualColorType:
+                        // Visual color swatch - hex color code
+                        $swatchInfo['swatch_color'] = $swatch['value'];
+                        break;
+                    case $visualImageType:
+                        // Visual image swatch - image file path
+                        $swatchInfo['swatch_image'] = $swatch['value'];
+                        // Convert to full URL if needed
+                        if (!empty($swatch['value']) && strpos($swatch['value'], 'http') !== 0) {
+                            try {
+                                $swatchInfo['swatch_image_url'] = $this->storeManager
+                                    ->getStore()
+                                    ->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA)
+                                    . 'attribute/swatch' . $swatch['value'];
+                            } catch (\Exception $e) {
+                                // Fallback to just the image path if URL generation fails
+                                $swatchInfo['swatch_image_url'] = $swatch['value'];
+                            }
+                        }
+                        break;
+                    default:
+                        // Fallback for unknown types or older versions
+                        // Try to determine type by value format
+                        $value = $swatch['value'];
+                        if (preg_match('/^#[0-9a-fA-F]{6}$/', $value)) {
+                            // Looks like a hex color
+                            $swatchInfo['swatch_color'] = $value;
+                        } elseif (preg_match('/\.(jpg|jpeg|png|gif)$/i', $value)) {
+                            // Looks like an image file
+                            $swatchInfo['swatch_image'] = $value;
+                        } else {
+                            // Default to text
+                            $swatchInfo['swatch_text'] = $value;
+                        }
+                        break;
+                }
+            }
+
+            return $swatchInfo;
+
+        } catch (\Exception $e) {
+            // Log error if needed but don't break the XML generation
+            return false;
+        }
     }
 
     public function getProductCollection($skipNotVisible = true)
@@ -1195,6 +1296,12 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     $attrs['frontend_input'] = $attr->getFrontendInput();
                 }
 
+                // Add swatch data if attribute is a swatch
+                $swatchData = $this->getSwatchDataForAttribute($attr, $product->getData($action));
+                if ($swatchData) {
+                    $attrs = array_merge($attrs, $swatchData);
+                }
+
                 if (in_array($attr->getAttributeCode(), [
                     'special_from_date',
                     'special_to_date',
@@ -1237,7 +1344,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function renderProductVariantXml($product, $productElem, $stripTags = false)
+    public function renderProductVariantXml($product, $productElem, $stripTags = false, $includeImages = false)
     {
         if ($this->helper->canUseProductAttributes()) {
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
@@ -1275,8 +1382,25 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         'qty',
                         'sku'
                     );
+                    
+                    // Add media gallery attributes when images are requested
+                    if ($includeImages) {
+                        $child_attributes_to_select[] = 'media_gallery';
+                    }
+                    
                     $child_attributes_to_select = array_merge($child_attributes_to_select, $variant_codes);
                     $configChildren = $this->getConfigurableChildren($product, $child_attributes_to_select, true);
+                    
+                    // Load media gallery data for child products when images are requested
+                    if ($includeImages) {
+                        try {
+                            if (method_exists($configChildren, 'addMediaGalleryData')) {
+                                $configChildren->addMediaGalleryData();
+                            }
+                        } catch (\Exception $e) {
+                            // Continue silently if media gallery loading fails
+                        }
+                    }
                     foreach ($configChildren as $child_product) {
 
                         /**
@@ -1304,14 +1428,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             $is_variant_in_stock = ($stockitem->getQty() > 0) ? 1 : 0;
                         }
 
-                        $imagePath = $child_product->getImage() ? $child_product->getImage() : $child_product->getSmallImage();
-                        $_baseImage = $this->storeManager
-                                ->getStore()
-                                ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
-                            . 'catalog/product' . $imagePath;
+                        // Use the same image helper approach as main products for consistency
+                        $medium_image = $this->image->init($child_product, 'product_page_image_medium')->setImageFile($child_product->getImage());
+                        $_baseImage = $medium_image->resize(500)->getUrl();
 
-                        if (strpos($_baseImage, 'no_selection') !== false) {
-                            $_baseImage = $this->image->init($child_product, 'product_thumbnail_image')->getUrl();
+                        if (strpos($_baseImage, 'placeholder') !== false) {
+                            $thumbnail_image = $this->image->init($child_product, 'product_thumbnail_image')->setImageFile($child_product->getImage());
+                            $_baseImage = $thumbnail_image->resize(500)->getUrl();
                         }
 
                         $is_variant_sellable = '';
@@ -1364,6 +1487,37 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             $productVariation
                         );
 
+                        // Add media gallery images for variant (similar to simple products)
+                        if ($includeImages) {
+                            $variantMediaGalleryImages = $this->getProductMediaGalleryImages($child_product);
+                            if (!empty($variantMediaGalleryImages)) {
+                                $variantImagesElem = $this->createChild('images', false, false, $productVariation);
+                                
+                                foreach ($variantMediaGalleryImages as $imageData) {
+                                    $imageAttributes = [
+                                        'id' => $imageData['id'],
+                                        'position' => $imageData['position'],
+                                        'file' => $imageData['file'],
+                                        'label' => $imageData['label'] ?: '',
+                                        'is_main_image' => $imageData['is_main_image'] ? '1' : '0',
+                                        'url' => $imageData['url']
+                                    ];
+                                    
+                                    // Add image types if available (for Magento 2.4.0+)
+                                    if (!empty($imageData['types'])) {
+                                        $imageAttributes['types'] = implode(',', $imageData['types']);
+                                    }
+                                    
+                                    $this->createChild(
+                                        'image',
+                                        $imageAttributes,
+                                        false,
+                                        $variantImagesElem
+                                    );
+                                }
+                            }
+                        }
+
                         foreach ($variant_codes as $attribute_code) {
                             try {
                                 $attribute = $this->productAttributeRepository->get(strtolower($attribute_code));
@@ -1383,15 +1537,23 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                                 //echo $e->getMessage();
                             }
 
+                            $variantAttributeData = [
+                                'is_configurable' => 1,
+                                'is_filterable' => $attribute->getIsFilterable(),
+                                'name' => $variant_name,
+                                'name_code' => $attribute->getId(),
+                                'value_code' => $child_product->getData($attribute->getAttributeCode())
+                            ];
+
+                            // Add swatch data if attribute is a swatch
+                            $swatchData = $this->getSwatchDataForAttribute($attribute, $child_product->getData($attribute->getAttributeCode()));
+                            if ($swatchData) {
+                                $variantAttributeData = array_merge($variantAttributeData, $swatchData);
+                            }
+
                             $this->createChild(
                                 'variant_attribute',
-                                [
-                                    'is_configurable' => 1,
-                                    'is_filterable' => $attribute->getIsFilterable(),
-                                    'name' => $variant_name,
-                                    'name_code' => $attribute->getId(),
-                                    'value_code' => $child_product->getData($attribute->getAttributeCode())
-                                ],
+                                $variantAttributeData,
                                 $attrValue,
                                 $productVariation,
                                 $stripTags
@@ -2349,7 +2511,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     $productElem
                 );
 
-                $this->renderProductVariantXml($product, $productElem, $stripTags);
+                $this->renderProductVariantXml($product, $productElem, $stripTags, $includeImages);
             }
 
             $cats_data = $this->getCategoryPathsByProduct($product);
