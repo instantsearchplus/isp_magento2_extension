@@ -1372,6 +1372,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
                     $child_attributes_to_select = array(
                         'special_price',
+                        'special_from_date',
+                        'special_to_date',
                         'image',
                         'small_image',
                         'product_thumbnail_image',
@@ -2089,7 +2091,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $max_price = $this->priceCurrencyInterface->convertAndRound((float)$product->getMaxPrice());
         }
 
-        foreach ($this->getConfigurableChildren($product, array('id', 'sku', 'type_id', 'special_price'), false) as $child) {
+        foreach ($this->getConfigurableChildren($product, array('id', 'sku', 'type_id', 'special_price', 'special_from_date', 'special_to_date'), false) as $child) {
             if ($child->getPrice() && $compare_at_price < $child->getPrice() && $child->getFinalPrice() < $child->getPrice()) {
                 $compare_at_price = $this->priceCurrencyInterface->convertAndRound((float)$child->getPrice());
             }
