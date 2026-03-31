@@ -1,9 +1,9 @@
-# Fast Simon for Adobe Magento 2  [![Latest Stable Version](https://poser.pugx.org/instantsearch/instantsearchplus/v/stable)](https://packagist.org/packages/instantsearch/instantsearchplus)
+# [Fast Simon](https://www.fastsimon.com/magento-commerce/) for Adobe Magento 2  [![Latest Stable Version](https://poser.pugx.org/instantsearch/instantsearchplus/v/stable)](https://packagist.org/packages/instantsearch/instantsearchplus)
 
 Magento AI‑Based Search & Merchandising To Maximize Conversion Rate.   
-The best and fastest growing brands use Fast Simon to improve and optimize their entire shopping experience.
+The best and fastest growing brands use [Fast Simon](https://www.fastsimon.com/) to improve and optimize their entire shopping experience.
 
-Fast Simon is helping merchants maximize the value of their online traffic to spark, sustain, and boost their growth. Current Fast Simon merchants report growth of up to 40% year-over-year after adopting the powerful search platform. 
+[Fast Simon](https://www.fastsimon.com/) is helping merchants maximize the value of their online traffic to spark, sustain, and boost their growth. Current Fast Simon merchants report growth of up to 40% year-over-year after adopting the powerful search platform. 
 
 Boost Conversion with Search, Merchandising  & Personalization
 
@@ -15,7 +15,7 @@ Boost Conversion with Search, Merchandising  & Personalization
 
 Installation
 ------------
-1.	Visit and purchase the free Fast Simon Extension at [Magento Marketplace](https://marketplace.magento.com/instantsearch-instantsearchplus.html)
+1.	Visit and purchase the free [Fast Simon](https://www.fastsimon.com/magento-commerce/) Extension at [Magento Marketplace](https://marketplace.magento.com/instantsearch-instantsearchplus.html)
 2.  Connect to your server through SSH terminal (e.g. PUTTY.exe)
 3.	Navigate to your Magento root (where app folder is)
 4.	Make sure **php** is in your environment path (run ```php --help```  - see that you get list of possible commands) if  not - contact your server provider to find path to ftp executable.
