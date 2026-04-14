@@ -100,6 +100,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             'name'        => $node->getName(),
             'url_path'    => $category->getUrl(),
             'is_active'   => $node->getIsActive(),
+            'include_in_menu' => (bool) $node->getIncludeInMenu(),
             'children'    => [],
         ];
 

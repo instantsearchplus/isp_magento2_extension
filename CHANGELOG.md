@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.91.45] - 2026-04-14 19:00:00
+### Added
+- Include `include_in_menu` flag in category feed payload
+
 ## [4.91.44] - 2025-10-14 19:00:00
 ### Fixed
 - Fix configurable product price calculation to exclude expired special prices
