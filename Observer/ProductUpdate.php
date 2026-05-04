@@ -45,16 +45,9 @@ use Magento\Framework\Event\ObserverInterface;
 class ProductUpdate implements ObserverInterface
 {
     /**
-     * Catalog helper
-     *
-     * @var \Magento\Catalog\Helper\Catalog
+     * @var \Autocompleteplus\Autosuggest\Helper\Batches
      */
     protected $helper;
-
-    /**
-     * @var \Magento\ConfigurableProduct\Model\Product\Type\Configurable
-     */
-    protected $configurable;
 
     /**
      * @var \Psr\Log\LoggerInterface
@@ -66,52 +59,35 @@ class ProductUpdate implements ObserverInterface
      */
     protected $date;
 
-    protected $productRepositoryInterface;
-
-    protected $context;
-
-    protected $registry;
-    /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
-     */
-    protected $batchCollection;
-
-    protected $_resourceConnection;
-
     /**
      * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $storeManager;
 
     /**
-     * ProductSave constructor.
-     *
-     * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
-     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable              $configurable
-     * @param \Magento\Framework\Stdlib\DateTime\DateTime                               $date
-     * @param \Magento\Catalog\Api\ProductRepositoryInterface                           $productRepositoryInterface
-     * @param \Magento\Framework\Model\Context                                          $context
-     * @param \Magento\Framework\Registry                                               $registry
+     * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
+     */
+    protected $productCollectionFactory;
+
+    /**
+     * @param \Autocompleteplus\Autosuggest\Helper\Batches $helper
+     * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
+     * @param \Magento\Framework\Model\Context $context
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
+     * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
      */
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
-        \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Magento\Catalog\Api\ProductRepositoryInterface $productRepositoryInterface,
-        \Magento\Framework\App\ResourceConnection $resourceConnection,
         \Magento\Framework\Model\Context $context,
-        \Magento\Framework\Registry $registry,
-        \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
+        \Magento\Store\Model\StoreManagerInterface $storeManagerInterface,
+        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
     ) {
         $this->helper = $helper;
-        $this->configurable = $configurable;
         $this->logger = $context->getLogger();
         $this->date = $date;
-        $this->productRepositoryInterface = $productRepositoryInterface;
-        $this->context = $context;
-        $this->registry = $registry;
-        $this->_resourceConnection = $resourceConnection;
         $this->storeManager = $storeManagerInterface;
+        $this->productCollectionFactory = $productCollectionFactory;
     }
 
     /**
@@ -122,67 +98,78 @@ class ProductUpdate implements ObserverInterface
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $bunch = $observer->getEvent()->getProductIds();
-        $attributes_data = $observer->getEvent()->getAttributesData();
-        $storeId = $this->storeManager->getStore()->getId();
-        $data = [];
-        $counter = 0;
         try {
-            foreach ($bunch as $productIdStr) {
-                $productId = (int)$productIdStr;
-                $dt = $this->date->gmtTimestamp();
-                try {
-                    try {
-                        $product = $this->productRepositoryInterface->getById($productId);
-                        $sku = $product->getSku();
-                        //recording disabled item as deleted
-                        if (($product->getStatus() == '2' && !array_key_exists('status', $attributes_data))
-                            || (array_key_exists('status', $attributes_data) && $attributes_data['status'] == 2)
-                        ) {
-                            $this->helper->writeProductDeletion($sku, $productId, 0, $dt, $product);
-                            continue;
-                        }
-                        $productStores = ($storeId == 0 && method_exists($product, 'getStoreIds'))
-                            ? $product->getStoreIds() : [$storeId];
-                    } catch (\Exception $e) {
-                        $this->logger->critical($e);
-                        $productStores = [$storeId];
-                    }
+            $bunch = $observer->getEvent()->getProductIds();
+            if (empty($bunch)) {
+                return $this;
+            }
+            $productIds = array_map('intval', (array)$bunch);
+            $attributes_data = $observer->getEvent()->getAttributesData() ?: [];
+            $storeId = (int)$this->storeManager->getStore()->getId();
 
-                    $simpleProducts = [];
-                    if ($product->getTypeId() == \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE) {
-                        $simpleProducts = $this->configurable->getParentIdsByChild($product->getId());
-                    }
+            $this->helper->setPluginDisabled(true);
 
+            $productStoresMap = ($storeId == 0)
+                ? $this->helper->getProductStoresByIds($productIds)
+                : [];
+            $parentIdsMap = $this->helper->getParentIdsByChildren($productIds);
+
+            $collection = $this->productCollectionFactory->create();
+            $collection->addFieldToFilter('entity_id', ['in' => $productIds]);
+            $collection->addAttributeToSelect('status');
+
+            $dt = $this->date->gmtTimestamp();
+            $data = [];
+            $counter = 0;
+            $massDisabling = array_key_exists('status', $attributes_data) && $attributes_data['status'] == 2;
+
+            foreach ($collection as $product) {
+                $productId = (int)$product->getId();
+                $isDisabled = $massDisabling
+                    || ($product->getStatus() == 2 && !array_key_exists('status', $attributes_data));
+
+                $productStores = ($storeId == 0)
+                    ? ($productStoresMap[$productId] ?? [$storeId])
+                    : [$storeId];
+
+                if ($isDisabled) {
                     foreach ($productStores as $productStore) {
+                        $data[] = [
+                            'store_id'   => (int)$productStore,
+                            'product_id' => $productId,
+                            'update_date'=> $dt,
+                            'action'     => 'remove',
+                            'sku'        => 'ISP_NO_SKU',
+                        ];
+                    }
+                    continue;
+                }
+
+                $parentIds = $parentIdsMap[$productId] ?? [];
+                foreach ($productStores as $productStore) {
+                    $counter++;
+                    $data[] = [
+                        'store_id'   => (int)$productStore,
+                        'product_id' => $productId,
+                        'update_date'=> $dt + $counter,
+                        'action'     => 'update',
+                        'sku'        => 'ISP_NO_SKU',
+                    ];
+                    foreach ($parentIds as $parentId) {
                         $counter++;
                         $data[] = [
-                            'store_id' => (int)$productStore,
-                            'product_id' => (int)$productId,
-                            'update_date' => (int)$this->date->gmtTimestamp() + $counter,
-                            'action' => 'update'
+                            'store_id'   => (int)$productStore,
+                            'product_id' => (int)$parentId,
+                            'update_date'=> $dt + $counter,
+                            'action'     => 'update',
+                            'sku'        => 'ISP_NO_SKU',
                         ];
-
-                        if (is_array($simpleProducts) && count($simpleProducts) > 0) {
-                            foreach ($simpleProducts as $configurableProduct) {
-                                $counter++;
-                                $data[] = [
-                                    'store_id' => (int)$productStore,
-                                    'product_id' => (int)$configurableProduct,
-                                    'update_date' => (int)$this->date->gmtTimestamp() + $counter,
-                                    'action' => 'update'
-                                ];
-                            }
-                        }
                     }
-                } catch (\Exception $e) {
-                    $this->logger->critical($e);
                 }
             }
-            $connection = $this->_resourceConnection->getConnection();
-            $table_name = $this->_resourceConnection->getTableName('autosuggest_batch');
+
             if (count($data) > 0) {
-                $connection->insertOnDuplicate($table_name, $data);
+                $this->helper->upsertData($data);
             }
         } catch (\Exception $e) {
             $this->logger->critical($e);

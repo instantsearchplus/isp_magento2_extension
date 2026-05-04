@@ -45,93 +45,75 @@ use Magento\Framework\Event\ObserverInterface;
 class CategorySave implements ObserverInterface
 {
     /**
-     * Catalog helper
-     *
      * @var \Autocompleteplus\Autosuggest\Helper\Batches
      */
     protected $helper;
-
-    /**
-     * @var \Magento\Framework\Stdlib\DateTime\DateTime
-     */
-    protected $date;
-
-    /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
-     */
-    protected $batchCollection;
 
     /**
      * @var \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory
      */
     protected $productCollectionFactory;
 
+    /**
+     * @var \Autocompleteplus\Autosuggest\Helper\Api
+     */
     protected $apiHelper;
 
     /**
-     * CategorySave constructor.
+     * @var \Magento\Catalog\Model\Product\Visibility
+     */
+    protected $productVisibility;
+
+    /**
      * @param \Autocompleteplus\Autosuggest\Helper\Batches $helper
-     * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
      * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
+     * @param \Autocompleteplus\Autosuggest\Helper\Api $apiHelper
+     * @param \Magento\Catalog\Model\Product\Visibility $productVisibility
      */
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
-        \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory  $productCollectionFactory,
-        \Autocompleteplus\Autosuggest\Helper\Api $apiHelper
+        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory,
+        \Autocompleteplus\Autosuggest\Helper\Api $apiHelper,
+        \Magento\Catalog\Model\Product\Visibility $productVisibility
     ) {
         $this->helper = $helper;
-        $this->date = $date;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->apiHelper = $apiHelper;
+        $this->productVisibility = $productVisibility;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         $category = $observer->getEvent()->getCategory();
 
-        if ($observer->getEvent()->getName() == 'catalog_category_delete_after_done') {
-            $category = $observer->getProduct();
-        }
-
-        if (($category->isObjectNew() && $observer->getEvent()->getName() == 'catalog_category_save_before')
-            || $category->isDeleted()
-        ) {
+        if ($category->isObjectNew() && $observer->getEvent()->getName() == 'catalog_category_save_before') {
             $this->ping_isp_server_on_new_category();
         }
 
         $products = $this->createProductsCollection($category);
-        $store_products = [];
-
-        foreach ($products as $product_id) {
-            $store_ids = $this->helper->getProductStoresById($product_id);
-            foreach ($store_ids as $store_id) {
-                if (!array_key_exists($store_id, $store_products)) {
-                    $store_products[$store_id] = [];
-                }
-                $store_products[$store_id][] = $product_id;
-            }
+        if (empty($products)) {
+            return;
         }
 
-        foreach ($store_products as $store_id => $products) {
-            if (count($products) > 1000) {
-                $chunks = array_chunk($products, 1000);
-                foreach ($chunks as $chunk) {
-                    $this->helper->writeMassProductsUpdate($chunks, $store_id);
+        $store_products = $this->helper->groupProductIdsByStore($products);
+
+        foreach ($store_products as $store_id => $ids) {
+            if (count($ids) > 1000) {
+                foreach (array_chunk($ids, 1000) as $chunk) {
+                    $this->helper->writeMassProductsUpdate($chunk, $store_id);
                 }
             } else {
-                $this->helper->writeMassProductsUpdate($products, $store_id);
+                $this->helper->writeMassProductsUpdate($ids, $store_id);
             }
         }
     }
 
-    /**
-     * @param $category
-     */
-    protected function createProductsCollection($category)
+    protected function createProductsCollection($category): array
     {
-        $collection = $this->helper->getCategoryProducts($category->getId());
-        return $collection;
+        $collection = $this->productCollectionFactory->create();
+        $collection->addCategoryFilter($category);
+        $collection->setVisibility($this->productVisibility->getVisibleInSearchIds());
+        return array_map('intval', $collection->getAllIds());
     }
 
     protected function ping_isp_server_on_new_category()

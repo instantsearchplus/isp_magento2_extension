@@ -24,10 +24,8 @@ namespace Autocompleteplus\Autosuggest\Observer;
 use Autocompleteplus\Autosuggest\Helper\Api;
 use Autocompleteplus\Autosuggest\Helper\Batches;
 use Autocompleteplus\Autosuggest\Helper\Html\Injector;
-use Magento\CatalogInventory\Model\Stock\Item;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -53,14 +51,6 @@ use Magento\Store\Model\StoreManagerInterface;
 class OrderCreate implements ObserverInterface
 {
     /**
-     * @var Item
-     */
-    protected $stockFactory;
-    /**
-     * @var DateTime
-     */
-    protected $dateTime;
-    /**
      * @var Batches
      */
     protected $batchesHelper;
@@ -80,13 +70,10 @@ class OrderCreate implements ObserverInterface
      * @var Session
      */
     protected $checkoutSession;
-    protected $cartProduct;
 
     /**
      * @param Context $context
      * @param Batches $batchesHelper
-     * @param DateTime $dateTime
-     * @param Item $stockFactory
      * @param Api $api
      * @param Session $checkoutSession
      * @param Injector $injector_helper
@@ -94,8 +81,6 @@ class OrderCreate implements ObserverInterface
     public function __construct(
         Context  $context,
         Batches  $batchesHelper,
-        DateTime $dateTime,
-        Item     $stockFactory,
         Api      $api,
         Session  $checkoutSession,
         Injector $injector_helper
@@ -104,8 +89,6 @@ class OrderCreate implements ObserverInterface
         $this->injector_helper = $injector_helper;
         $this->apiHelper = $api;
         $this->batchesHelper = $batchesHelper;
-        $this->dateTime = $dateTime;
-        $this->stockFactory = $stockFactory;
         $this->_storeManager = $context->getStoreManager();
         $this->checkoutSession = $checkoutSession;
     }
@@ -201,7 +184,6 @@ class OrderCreate implements ObserverInterface
                 $quantity = $item->getqty_ordered();
             }
             if (is_object($item->getProduct())) {
-                $this->cartProduct = $item->getProduct();
                 $items[] = [
                     'product_id' => $item->getProduct()->getId(),
                     'price' => $item->getProduct()->getFinalPrice(),

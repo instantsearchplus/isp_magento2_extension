@@ -45,27 +45,9 @@ use Magento\Framework\Event\ObserverInterface;
 class ProductDelete implements ObserverInterface
 {
     /**
-     * Autocompleteplus helper
-     *
-     * @var \Autocompleteplus\Autosuggest\Helper\Data
+     * @var \Autocompleteplus\Autosuggest\Helper\Batches
      */
     protected $helper;
-
-    /**
-     * Magento configurable product type model
-     *
-     * @var \Magento\ConfigurableProduct\Model\Product\Type\Configurable
-     */
-    protected $configurable;
-
-    /**
-     * Logging interface
-     *
-     * @var \Psr\Logger\LoggerInterface
-     */
-    protected $logger;
-
-    protected $batchCollection;
 
     /**
      * @var \Magento\Store\Model\StoreManagerInterface
@@ -78,21 +60,17 @@ class ProductDelete implements ObserverInterface
     protected $date;
 
     /**
-     * @param \Autocompleteplus\Autosuggest\Helper\Data                    $helper
-     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable
-     * @param \Psr\Logger\LoggerInterface                                  $logger
+     * @param \Autocompleteplus\Autosuggest\Helper\Batches $helper
+     * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
      */
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
-        \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurable,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Psr\Log\LoggerInterface $logger,
         \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
     ) {
         $this->helper = $helper;
-        $this->configurable = $configurable;
         $this->date = $date;
-        $this->logger = $logger;
         $this->storeManager = $storeManagerInterface;
     }
 

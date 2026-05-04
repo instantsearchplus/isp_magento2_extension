@@ -45,46 +45,17 @@ use Magento\Framework\Event\ObserverInterface;
 class UrapidAfterProductSave implements ObserverInterface
 {
     /**
-     * Catalog helper
-     *
      * @var \Autocompleteplus\Autosuggest\Helper\Batches
      */
     protected $helper;
 
     /**
-     * @var \Psr\Log\LoggerInterface
-     */
-    protected $logger;
-
-    /**
-     * @var \Magento\Framework\Stdlib\DateTime\DateTime
-     */
-    protected $date;
-
-    /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
-     */
-    protected $batchCollection;
-
-    /**
-     * ProductSave constructor.
-     *
-     * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
-     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable              $configurable
-     * @param \Psr\Log\LoggerInterface                                                  $logger
-     * @param \Magento\Framework\Stdlib\DateTime\DateTime                               $date
-     * @param \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory
-     * @param \Magento\Catalog\Model\Product                                            $productModel
-     * @param \Autocompleteplus\Autosuggest\Model\Batch                                 $batchModel
+     * @param \Autocompleteplus\Autosuggest\Helper\Batches $helper
      */
     public function __construct(
-        \Autocompleteplus\Autosuggest\Helper\Batches $helper,
-        \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\Stdlib\DateTime\DateTime $date
+        \Autocompleteplus\Autosuggest\Helper\Batches $helper
     ) {
         $this->helper = $helper;
-        $this->logger = $logger;
-        $this->date = $date;
     }
 
 
@@ -99,13 +70,24 @@ class UrapidAfterProductSave implements ObserverInterface
         $vars = $observer->getEvent()->getVars();
         $skus = $vars['skus'];
         $profile = $vars['profile'];
-        $store_id = $profile->getStoreId();
+        $store_id = (int)$profile->getStoreId();
         $product_ids = [];
         foreach ($skus as $sku => $productId) {
             $product_ids[] = (int)$productId;
         }
 
-        $this->helper->writeMassProductsUpdate($product_ids, $store_id);
+        if (empty($product_ids)) {
+            return $this;
+        }
+
+        if ($store_id === 0) {
+            foreach ($this->helper->groupProductIdsByStore($product_ids) as $storeId => $ids) {
+                $this->helper->writeMassProductsUpdate($ids, $storeId);
+            }
+        } else {
+            $this->helper->writeMassProductsUpdate($product_ids, $store_id);
+        }
+
         return $this;
     }
 }

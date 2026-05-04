@@ -45,38 +45,17 @@ use Magento\Framework\Event\ObserverInterface;
 class IspProductSaveLight implements ObserverInterface
 {
     /**
-     * Catalog helper
-     *
      * @var \Autocompleteplus\Autosuggest\Helper\Batches
      */
     protected $helper;
 
     /**
-     * @var \Magento\Framework\Stdlib\DateTime\DateTime
-     */
-    protected $date;
-
-    /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
-     */
-    protected $batchCollection;
-
-    /**
-     * ProductSave constructor.
-     *
-     * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
-     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable              $configurable
-     * @param \Magento\Framework\Stdlib\DateTime\DateTime                               $date
-     * @param \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory
-     * @param \Magento\Catalog\Model\Product                                            $productModel
-     * @param \Autocompleteplus\Autosuggest\Model\Batch                                 $batchModel
+     * @param \Autocompleteplus\Autosuggest\Helper\Batches $helper
      */
     public function __construct(
-        \Autocompleteplus\Autosuggest\Helper\Batches $helper,
-        \Magento\Framework\Stdlib\DateTime\DateTime $date
+        \Autocompleteplus\Autosuggest\Helper\Batches $helper
     ) {
         $this->helper = $helper;
-        $this->date = $date;
     }
 
     /**
@@ -87,17 +66,12 @@ class IspProductSaveLight implements ObserverInterface
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $productIds = $observer->getEvent()->getProductIds();
-        $storesProductsData = array();
-        foreach ($productIds as $productId) {
-            $productStores = $this->helper->getProductStoresById($productId);
-            foreach ($productStores as $storeId) {
-               if (!array_key_exists($storeId, $storesProductsData)) {
-                   $storesProductsData[$storeId] = array();
-               }
-               $storesProductsData[$storeId][] = $productId;
-            }
+        $productIds = array_map('intval', (array)$observer->getEvent()->getProductIds());
+        if (empty($productIds)) {
+            return $this;
         }
+
+        $storesProductsData = $this->helper->groupProductIdsByStore($productIds);
 
         foreach ($storesProductsData as $storeId => $productIdByStore) {
             $this->helper->writeMassProductsUpdate($productIdByStore, $storeId);

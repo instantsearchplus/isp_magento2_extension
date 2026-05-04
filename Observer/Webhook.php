@@ -28,7 +28,6 @@ use Magento\Checkout\Model\Session;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -74,11 +73,6 @@ class Webhook implements ObserverInterface
     protected $_session;
 
     /**
-     * @var OrderRepositoryInterface
-     */
-    protected $orderRepository;
-
-    /**
      * @var CollectionFactory
      */
     protected $orderCollectionFactory;
@@ -100,27 +94,24 @@ class Webhook implements ObserverInterface
      * @param Api $api
      * @param Injector $injector_helper
      * @param Session $session
-     * @param OrderRepositoryInterface $orderRepository
      * @param CollectionFactory $orderCollectionFactory
      * @param Batches $batchesHelper
      * @param DateTime $date
      */
     public function __construct(
-        Context                  $context,
-        Api                      $api,
-        Injector                 $injector_helper,
-        Session                  $session,
-        OrderRepositoryInterface $orderRepository,
-        CollectionFactory        $orderCollectionFactory,
-        Batches                  $batchesHelper,
-        DateTime                 $date
+        Context           $context,
+        Api               $api,
+        Injector          $injector_helper,
+        Session           $session,
+        CollectionFactory $orderCollectionFactory,
+        Batches           $batchesHelper,
+        DateTime          $date
     )
     {
         $this->injector_helper = $injector_helper;
         $this->apiHelper = $api;
         $this->_storeManager = $context->getStoreManager();
         $this->_session = $session;
-        $this->orderRepository = $orderRepository;
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->batchesHelper = $batchesHelper;
         $this->date = $date;
@@ -222,6 +213,8 @@ class Webhook implements ObserverInterface
     protected function _getWebhookObjectUri($event_name, $observer)
     {
         $store_id = $this->_storeManager->getStore()->getId();
+        $cart_items = null;
+        $cart_token = null;
         if ($event_name == 'checkout_cart_add_product_complete') {
             $cart_items = $this->_getVisibleItems();
             $cart_token = $this->_session->getQuote()->getID();

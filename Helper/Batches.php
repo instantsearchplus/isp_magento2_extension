@@ -65,16 +65,9 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
     protected $_resourceConnection;
 
     /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
-     */
-    protected $batchCollection;
-
-    /**
      * @var \Magento\Framework\Stdlib\DateTime\DateTime
      */
     protected $date;
-
-    protected $objectManager;
 
     protected $_storeManager;
 
@@ -103,15 +96,6 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_resourceConnection = $resourceConnection;
         $this->_storeManager = $storeManager;
         $this->dbConnection = $this->_resourceConnection->getConnection();
-        $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-    }
-
-    public function getBatchCollection()
-    {
-        $batchCollection = $this->batchCollectionFactory->create();
-        $this->batchCollection = $batchCollection;
-
-        return $this->batchCollection;
     }
 
     public function setPluginDisabled($disabled)
@@ -270,7 +254,8 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
                 'store_id' => (int)$store_id,
                 'product_id' => (int)$p_id,
                 'update_date' => (int)$this->date->gmtTimestamp() + $counter,
-                'action' => 'update'
+                'action' => 'update',
+                'sku' => 'ISP_NO_SKU'
             ];
             if ($counter == self::MULTIPLE_INSERT_SIZE) {
                 $this->logger->info('executed multiple insert of ' . count($data));
@@ -287,44 +272,107 @@ class Batches extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function getProductStoresById($product_ids)
+    /**
+     * Batch product -> store resolution via catalog_product_website joined with
+     * the StoreManager website map. Products with no catalog_product_website row
+     * are omitted from the result.
+     *
+     * @return array<int, int[]>  [product_id => store_ids[]]
+     */
+    public function getProductStoresByIds(array $product_ids): array
     {
-        if (!is_array($product_ids)) {
-            $products_id = array($product_ids);
+        if (empty($product_ids)) {
+            return [];
         }
+
         $table_name = $this->_resourceConnection->getTableName('catalog_product_website');
+        $select = $this->dbConnection->select()
+            ->from($table_name, ['product_id', 'website_id'])
+            ->where('product_id IN (?)', $product_ids);
+        $rows = $this->dbConnection->fetchAll($select);
 
-        $sql = $this->dbConnection->select()
-            ->from($table_name)
-            ->where(sprintf('%s.product_id IN (?)', $table_name), $product_ids);
-
-        $results = $this->dbConnection->fetchAll($sql);
-        $storeIds = array();
-
-        foreach ($results as $row) {
-            $websiteStores = $this->_storeManager->getWebsite($row['website_id'])->getStoreIds();
-            $storeIds = array_merge($storeIds, $websiteStores);
+        $websiteStoreMap = [];
+        foreach ($this->_storeManager->getWebsites() as $website) {
+            $websiteStoreMap[(int)$website->getId()] = $website->getStoreIds();
         }
 
-        return $storeIds;
+        $result = [];
+        foreach ($rows as $row) {
+            $pid = (int)$row['product_id'];
+            $wid = (int)$row['website_id'];
+            if (!isset($websiteStoreMap[$wid])) {
+                continue;
+            }
+            foreach ($websiteStoreMap[$wid] as $sid) {
+                $result[$pid][(int)$sid] = (int)$sid;
+            }
+        }
+
+        foreach ($result as $pid => $stores) {
+            $result[$pid] = array_values($stores);
+        }
+        return $result;
     }
 
-    public function getCategoryProducts($category_id)
+    /**
+     * Given a list of product IDs, returns a map grouping those product IDs by
+     * each store they're assigned to (via catalog_product_website).
+     *
+     * @return array<int, int[]>  [store_id => product_ids[]]
+     */
+    public function groupProductIdsByStore(array $product_ids): array
     {
-        $table_name = $this->_resourceConnection->getTableName('catalog_category_product');
-
-        $sql = $this->dbConnection->select()
-            ->from($table_name)
-            ->where(sprintf('%s.category_id=?', $table_name), $category_id);
-
-        $results = $this->dbConnection->fetchAll($sql);
-        $productIds = array();
-
-        foreach ($results as $row) {
-            $productIds[] = (int)$row['product_id'];
+        $map = $this->getProductStoresByIds($product_ids);
+        $result = [];
+        foreach ($map as $product_id => $store_ids) {
+            foreach ($store_ids as $store_id) {
+                $result[$store_id][] = $product_id;
+            }
         }
+        return $result;
+    }
 
-        return $productIds;
+    /**
+     * Batch SKU -> entity_id lookup. Missing SKUs are omitted from the result.
+     *
+     * @return array<string, int>  [sku => product_id]
+     */
+    public function getProductIdsBySkus(array $skus): array
+    {
+        if (empty($skus)) {
+            return [];
+        }
+        $table = $this->_resourceConnection->getTableName('catalog_product_entity');
+        $select = $this->dbConnection->select()
+            ->from($table, ['sku', 'entity_id'])
+            ->where('sku IN (?)', $skus);
+        $result = [];
+        foreach ($this->dbConnection->fetchAll($select) as $row) {
+            $result[$row['sku']] = (int)$row['entity_id'];
+        }
+        return $result;
+    }
+
+    /**
+     * Batch child -> parent lookup for configurable products via catalog_product_super_link.
+     * Children with no configurable parent are omitted.
+     *
+     * @return array<int, int[]>  [child_id => parent_ids[]]
+     */
+    public function getParentIdsByChildren(array $childIds): array
+    {
+        if (empty($childIds)) {
+            return [];
+        }
+        $table = $this->_resourceConnection->getTableName('catalog_product_super_link');
+        $select = $this->dbConnection->select()
+            ->from($table, ['product_id', 'parent_id'])
+            ->where('product_id IN (?)', $childIds);
+        $result = [];
+        foreach ($this->dbConnection->fetchAll($select) as $row) {
+            $result[(int)$row['product_id']][] = (int)$row['parent_id'];
+        }
+        return $result;
     }
 
     /**

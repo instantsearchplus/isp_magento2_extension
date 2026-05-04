@@ -59,38 +59,28 @@ class Price
     }
 
     /**
-     * afterExecuteList reccords product updates into batches table
-     * to support third party plugins
+     * afterExecuteList records product updates into the batches table.
+     * Magento calls executeList(array $ids), so the plugin receives that array
+     * directly here.
      *
-     * @param $subject
-     * @param $result
-     * @param mixed ...$args
+     * @param mixed $subject
+     * @param mixed $result
+     * @param array $ids
+     * @return mixed
      */
-    public function afterExecuteList($subject, $result, ...$args)
+    public function afterExecuteList($subject, $result, $ids = [])
     {
         try {
             if ($this->batchesHelper->getPluginDisabled()) {
                 return $result;
             }
 
-            if (!$args || !count($args)) {
+            if (!is_array($ids) || empty($ids)) {
                 return $result;
             }
 
-            $int_ids = [];
-            $store_products = [];
-            foreach ($args as $id) {
-                $product_id = (int)$id;
-                $int_ids[] = $product_id;
-                $store_ids = $this->batchesHelper->getProductStoresById($product_id);
-                foreach ($store_ids as $store_id) {
-                    if (!array_key_exists($store_id, $store_products)) {
-                        $store_products[$store_id] = [$product_id];
-                    } else {
-                        $store_products[$store_id][] = $product_id;
-                    }
-                }
-            }
+            $productIds = array_map('intval', $ids);
+            $store_products = $this->batchesHelper->groupProductIdsByStore($productIds);
 
             foreach ($store_products as $store_id => $product_ids) {
                 $this->batchesHelper->writeMassProductsUpdate($product_ids, $store_id);

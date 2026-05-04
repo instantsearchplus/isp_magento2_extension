@@ -45,16 +45,9 @@ use Magento\Framework\Event\ObserverInterface;
 class IspProductSave implements ObserverInterface
 {
     /**
-     * Catalog helper
-     *
      * @var \Autocompleteplus\Autosuggest\Helper\Batches
      */
     protected $helper;
-
-    /**
-     * @var \Psr\Log\LoggerInterface
-     */
-    protected $logger;
 
     /**
      * @var \Magento\Framework\Stdlib\DateTime\DateTime
@@ -62,34 +55,21 @@ class IspProductSave implements ObserverInterface
     protected $date;
 
     /**
-     * @var \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\Collection
-     */
-    protected $batchCollection;
-
-    /**
      * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $storeManager;
 
     /**
-     * ProductSave constructor.
-     *
-     * @param \Autocompleteplus\Autosuggest\Helper\Data                                 $helper
-     * @param \Magento\ConfigurableProduct\Model\Product\Type\Configurable              $configurable
-     * @param \Psr\Log\LoggerInterface                                                  $logger
-     * @param \Magento\Framework\Stdlib\DateTime\DateTime                               $date
-     * @param \Autocompleteplus\Autosuggest\Model\ResourceModel\Batch\CollectionFactory $batchCollectionFactory
-     * @param \Magento\Catalog\Model\Product                                            $productModel
-     * @param \Autocompleteplus\Autosuggest\Model\Batch                                 $batchModel
+     * @param \Autocompleteplus\Autosuggest\Helper\Batches $helper
+     * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
      */
     public function __construct(
         \Autocompleteplus\Autosuggest\Helper\Batches $helper,
-        \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
         \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
     ) {
         $this->helper = $helper;
-        $this->logger = $logger;
         $this->date = $date;
         $this->storeManager = $storeManagerInterface;
     }
