@@ -49,6 +49,10 @@ use Magento\Framework\App\ObjectManager;
  */
 class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    const DEFAULT_IMAGES_WIDTH = 500;
+    // Upper bound for a resize request; full source resolution is reachable via images_width=0.
+    const MAX_IMAGES_WIDTH = 3000;
+
     //<editor-fold desc="Properties">
     /**
      * @var \Magento\Catalog\Model\ProductFactory
@@ -662,7 +666,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      * @param \Magento\Catalog\Model\Product $product
      * @return array
      */
-    public function getProductMediaGalleryImages($product)
+    public function getProductMediaGalleryImages($product, $imagesWidth = self::DEFAULT_IMAGES_WIDTH)
     {
         $mediaGalleryImages = [];
 
@@ -673,8 +677,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 
                 if ($mediaGalleryEntries && count($mediaGalleryEntries) > 0) {
                     $mediaGalleryImages = $this->processMediaGalleryEntries(
-                        $mediaGalleryEntries, 
-                        $product
+                        $mediaGalleryEntries,
+                        $product,
+                        $imagesWidth
                     );
                 }
             }
@@ -685,15 +690,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 
                 if (isset($mediaGallery['images']) && is_array($mediaGallery['images'])) {
                     $mediaGalleryImages = $this->processLegacyMediaGallery(
-                        $mediaGallery['images'], 
-                        $product
+                        $mediaGallery['images'],
+                        $product,
+                        $imagesWidth
                     );
                 }
             }
 
             // Final fallback: Create synthetic entries from direct product images
             if (empty($mediaGalleryImages)) {
-                $mediaGalleryImages = $this->createSyntheticMediaGalleryEntries($product);
+                $mediaGalleryImages = $this->createSyntheticMediaGalleryEntries($product, $imagesWidth);
             }
 
             // Sort by position
@@ -717,7 +723,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      * @param \Magento\Catalog\Model\Product $product
      * @return array
      */
-    protected function processMediaGalleryEntries($entries, $product)
+    protected function processMediaGalleryEntries($entries, $product, $imagesWidth = self::DEFAULT_IMAGES_WIDTH)
     {
         $mediaGalleryImages = [];
         
@@ -738,19 +744,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             
             $imageFile = $entry->getFile();
             if ($imageFile) {
-                try {
-                    $resizedImage = $this->image->init($product, 'product_page_image_medium')
-                        ->setImageFile($imageFile)
-                        ->resize(500);
-                    $imageUrl = $resizedImage->getUrl();
-                } catch (\Exception $e) {
-                    $imageUrl = $imageFile;
-                }
+                $imageUrl = $this->buildImageUrl($product, $imageFile, $imagesWidth);
                 
                 $isMainImage = ($imageFile === $primaryImageFile);
                 
                 $mediaGalleryImages[] = [
-                    'id' => $entry->getId() ?: hash('sha256', $imageUrl),
+                    // Hash the file path, not the URL: the URL varies with images_width and would make ids unstable.
+                    'id' => $entry->getId() ?: hash('sha256', $imageFile),
                     'file' => $imageFile,
                     'url' => $imageUrl,
                     'label' => $entry->getLabel(),
@@ -771,7 +771,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      * @param \Magento\Catalog\Model\Product $product
      * @return array
      */
-    protected function processLegacyMediaGallery($images, $product)
+    protected function processLegacyMediaGallery($images, $product, $imagesWidth = self::DEFAULT_IMAGES_WIDTH)
     {
         $mediaGalleryImages = [];
         
@@ -792,19 +792,13 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             
             $imageFile = $image['file'];
             if ($imageFile) {
-                try {
-                    $resizedImage = $this->image->init($product, 'product_page_image_medium')
-                        ->setImageFile($imageFile)
-                        ->resize(500);
-                    $imageUrl = $resizedImage->getUrl();
-                } catch (\Exception $e) {
-                    $imageUrl = $imageFile;
-                }
+                $imageUrl = $this->buildImageUrl($product, $imageFile, $imagesWidth);
                 
                 $isMainImage = ($imageFile === $primaryImageFile);
                 
                 $mediaGalleryImages[] = [
-                    'id' => $image['value_id'] ?? hash('sha256', $imageUrl),
+                    // Hash the file path, not the URL: the URL varies with images_width and would make ids unstable.
+                    'id' => ($image['value_id'] ?? false) ?: hash('sha256', $imageFile),
                     'file' => $imageFile,
                     'url' => $imageUrl,
                     'label' => $image['label'] ?? '',
@@ -824,7 +818,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      * @param \Magento\Catalog\Model\Product $product
      * @return array
      */
-    protected function createSyntheticMediaGalleryEntries($product)
+    protected function createSyntheticMediaGalleryEntries($product, $imagesWidth = self::DEFAULT_IMAGES_WIDTH)
     {
         // Get main image file paths
         $mainImageFiles = [
@@ -861,14 +855,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
         
         foreach ($mainImageFiles as $imageFile) {
-            try {
-                $resizedImage = $this->image->init($product, 'product_page_image_medium')
-                    ->setImageFile($imageFile)
-                    ->resize(500);
-                $imageUrl = $resizedImage->getUrl();
-            } catch (\Exception $e) {
-                $imageUrl = $imageFile;
-            }
+            $imageUrl = $this->buildImageUrl($product, $imageFile, $imagesWidth);
             
             // Determine image types for this file
             $types = [];
@@ -882,7 +869,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $isMainImage = ($imageFile === $primaryImageFile);
             
             $mediaGalleryImages[] = [
-                'id' => hash('sha256', $imageUrl),
+                // Hash the file path, not the URL: the URL varies with images_width and would make ids unstable.
+                'id' => hash('sha256', $imageFile),
                 'file' => $imageFile,
                 'url' => $imageUrl,
                 'label' => '',
@@ -893,6 +881,54 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
         
         return $mediaGalleryImages;
+    }
+
+    /**
+     * Build the URL for a product image file: original media URL when $imagesWidth <= 0,
+     * otherwise a resized derivative. Falls back to the raw file path on failure.
+     *
+     * When $imagesWidth <= 0, returns the original uploaded media file URL directly — this bypasses
+     * the product_page_image_medium view (no view-level transforms/watermarks) and performs no
+     * file-existence check.
+     *
+     * @param \Magento\Catalog\Model\Product $product
+     * @param string $imageFile
+     * @param int $imagesWidth
+     * @return string
+     */
+    protected function buildImageUrl($product, $imageFile, $imagesWidth)
+    {
+        try {
+            if ($imagesWidth <= 0) {
+                return $this->storeManager->getStore()
+                    ->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
+                    . 'catalog/product/' . ltrim($imageFile, '/');
+            }
+            return $this->image->init($product, 'product_page_image_medium')
+                ->setImageFile($imageFile)
+                ->resize($imagesWidth)
+                ->getUrl();
+        } catch (\Exception $e) {
+            $this->_logger->warning(sprintf(
+                'Fast Simon: image URL build failed (product %s, file "%s", width %d): %s',
+                $product->getId(), $imageFile, $imagesWidth, $e->getMessage()
+            ));
+            return $imageFile;
+        }
+    }
+
+    /**
+     * Sanitize a raw images_width request value: clamp to [0, MAX_IMAGES_WIDTH], or fall back to
+     * the default for a missing/non-numeric value. 0 (or negative) means "keep source resolution".
+     *
+     * @param mixed $raw
+     * @return int
+     */
+    public static function sanitizeImagesWidth($raw)
+    {
+        return is_numeric($raw)
+            ? max(0, min((int)$raw, self::MAX_IMAGES_WIDTH))
+            : self::DEFAULT_IMAGES_WIDTH;
     }
 
     public function getCategoryCollection()
@@ -1344,7 +1380,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function renderProductVariantXml($product, $productElem, $stripTags = false, $includeImages = false)
+    public function renderProductVariantXml($product, $productElem, $stripTags = false, $includeImages = false, $imagesWidth = self::DEFAULT_IMAGES_WIDTH)
     {
         if ($this->helper->canUseProductAttributes()) {
             if ($product->getTypeId() == Configurable::TYPE_CODE) {
@@ -1491,7 +1527,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
                         // Add media gallery images for variant (similar to simple products)
                         if ($includeImages) {
-                            $variantMediaGalleryImages = $this->getProductMediaGalleryImages($child_product);
+                            $variantMediaGalleryImages = $this->getProductMediaGalleryImages($child_product, $imagesWidth);
                             if (!empty($variantMediaGalleryImages)) {
                                 $variantImagesElem = $this->createChild('images', false, false, $productVariation);
                                 
@@ -1597,7 +1633,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $orders,
         $interval,
         $stripTags = false,
-        $includeImages = false
+        $includeImages = false,
+        $imagesWidth = self::DEFAULT_IMAGES_WIDTH
     ) {
         $this->setOffset($offset);
         $this->setCount($count);
@@ -1635,7 +1672,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $this->setRulesCount($this->getActiveRulesCount());
 
         foreach ($productCollection as $product) {
-            $this->renderProduct($product, 'insert', 0, null, $stripTags, $includeImages);
+            $this->renderProduct($product, 'insert', 0, null, $stripTags, $includeImages, $imagesWidth);
         }
 
         $dateTs = $this->_localeDate->scopeTimeStamp($storeId);
@@ -1792,7 +1829,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $page,
         $send_oos,
         $stripTags = false,
-        $includeImages = false
+        $includeImages = false,
+        $imagesWidth = self::DEFAULT_IMAGES_WIDTH
     ) {
         /**
          * Load and filter the batches
@@ -1896,7 +1934,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 $batch->getUpdateDate(),
                 $batch->getStoreId(),
                 $stripTags,
-                $includeImages
+                $includeImages,
+                $imagesWidth
             );
             $visibleProductIds[] = $product->getId();
         }
@@ -1953,7 +1992,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->xmlGenerator->generateXml();
     }
 
-    public function renderCatalogByIds($ids, $storeId = 0, $stripTags = false, $includeImages = false)
+    public function renderCatalogByIds($ids, $storeId = 0, $stripTags = false, $includeImages = false, $imagesWidth = self::DEFAULT_IMAGES_WIDTH)
     {
         /**
          * We need to reset the root attributes on <catalog />
@@ -1965,7 +2004,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             ]
         );
 
-        $this->loopOverProductCollectionByIds($ids, $storeId, 'getbyid', $stripTags, $includeImages);
+        $this->loopOverProductCollectionByIds($ids, $storeId, 'getbyid', $stripTags, $includeImages, $imagesWidth);
 
         return $this->xmlGenerator->generateXml();
     }
@@ -2191,7 +2230,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $updatedate = 0,
         $storeId = null,
         $stripTags = false,
-        $includeImages = false
+        $includeImages = false,
+        $imagesWidth = self::DEFAULT_IMAGES_WIDTH
     ) {
         try {
             $product->getTypeInstance()->setStoreFilter($this->storeManager->getStore(), $product);
@@ -2339,7 +2379,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
             // Add media gallery images as child elements (only if requested)
             if ($includeImages) {
-                $mediaGalleryImages = $this->getProductMediaGalleryImages($product);
+                $mediaGalleryImages = $this->getProductMediaGalleryImages($product, $imagesWidth);
                 if (!empty($mediaGalleryImages)) {
                     $imagesElem = $this->createChild('images', false, false, $productElem);
                     
@@ -2513,7 +2553,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                     $productElem
                 );
 
-                $this->renderProductVariantXml($product, $productElem, $stripTags, $includeImages);
+                $this->renderProductVariantXml($product, $productElem, $stripTags, $includeImages, $imagesWidth);
             }
 
             $cats_data = $this->getCategoryPathsByProduct($product);
@@ -2669,7 +2709,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      * @param  $storeId
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function loopOverProductCollectionByIds($ids, $storeId, $action, $stripTags = false, $includeImages = false)
+    private function loopOverProductCollectionByIds($ids, $storeId, $action, $stripTags = false, $includeImages = false, $imagesWidth = self::DEFAULT_IMAGES_WIDTH)
     {
         $productCollection = $this->getProductCollection(false);
         $this->setStoreId($storeId);
@@ -2706,7 +2746,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
 
         $visibleProductIds = [];
         foreach ($productCollection as $product) {
-            $this->renderProduct($product, $action, 0, null, $stripTags, $includeImages);
+            $this->renderProduct($product, $action, 0, null, $stripTags, $includeImages, $imagesWidth);
             $visibleProductIds[] = $product->getId();
         }
 

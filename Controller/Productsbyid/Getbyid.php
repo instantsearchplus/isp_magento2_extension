@@ -2,6 +2,8 @@
 
 namespace Autocompleteplus\Autosuggest\Controller\Productsbyid;
 
+use Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator;
+
 class Getbyid extends \Autocompleteplus\Autosuggest\Controller\Productsbyid
 {
     /**
@@ -37,6 +39,7 @@ class Getbyid extends \Autocompleteplus\Autosuggest\Controller\Productsbyid
         $id = $request->getParam('id', 1);
         $stripTags = boolval($request->getParam('strip_tags', 0));
         $includeImages = boolval($request->getParam('include_images', 0));
+        $imagesWidth = Generator::sanitizeImagesWidth($request->getParam('images_width'));
 
         if (!$id) {
             $returnArr = [
@@ -49,7 +52,7 @@ class Getbyid extends \Autocompleteplus\Autosuggest\Controller\Productsbyid
         }
 
         $productIds = explode(',', $id);
-        $xml = $this->xmlGenerator->renderCatalogByIds($productIds, $storeId, $stripTags, $includeImages);
+        $xml = $this->xmlGenerator->renderCatalogByIds($productIds, $storeId, $stripTags, $includeImages, $imagesWidth);
         $this->responseInterface->setHeader('Content-type', 'text/xml');
         $this->responseInterface->setBody($xml);
     }

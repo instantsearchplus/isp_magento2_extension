@@ -2,6 +2,8 @@
 
 namespace Autocompleteplus\Autosuggest\Controller\Products;
 
+use Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator;
+
 /**
  * Sendupdated
  *
@@ -69,10 +71,11 @@ class Sendupdated extends \Autocompleteplus\Autosuggest\Controller\Products
         $send_oos = boolval($send_oos);
         $stripTags = boolval($this->getRequest()->getParam('strip_tags', 0));
         $includeImages = boolval($this->getRequest()->getParam('include_images', 0));
+        $imagesWidth = Generator::sanitizeImagesWidth($this->getRequest()->getParam('images_width'));
 
         $this->xmlGenerator->checkCachedAttrValues($storeId);
         $catalogXml = $this->xmlGenerator
-            ->renderUpdatesCatalogXml($count, $storeId, $from, $to, $page, $send_oos, $stripTags, $includeImages);
+            ->renderUpdatesCatalogXml($count, $storeId, $from, $to, $page, $send_oos, $stripTags, $includeImages, $imagesWidth);
 
         $this->response->setHeader('Content-type', 'text/xml');
         $this->response->setBody($catalogXml);

@@ -2,6 +2,8 @@
 
 namespace Autocompleteplus\Autosuggest\Controller\Products;
 
+use Autocompleteplus\Autosuggest\Helper\Product\Xml\Generator;
+
 /**
  * Send
  *
@@ -59,10 +61,11 @@ class Send extends \Autocompleteplus\Autosuggest\Controller\Products
         $interval = $this->getRequest()->getParam('month_interval', 12);
         $stripTags = boolval($this->getRequest()->getParam('strip_tags', 0));
         $includeImages = boolval($this->getRequest()->getParam('include_images', 0));
+        $imagesWidth = Generator::sanitizeImagesWidth($this->getRequest()->getParam('images_width'));
 
         $this->xmlGenerator->checkCachedAttrValues($storeId);
         $catalogXml = $this->xmlGenerator
-            ->renderCatalogXml($offset, $count, $storeId, $orders, $interval, $stripTags, $includeImages);
+            ->renderCatalogXml($offset, $count, $storeId, $orders, $interval, $stripTags, $includeImages, $imagesWidth);
 
         $this->response->setHeader('Content-type', 'text/xml');
         $this->response->setBody($catalogXml);
