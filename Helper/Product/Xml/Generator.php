@@ -629,7 +629,8 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'special_to_date',
                 'sku',
                 'tier_price',
-                'msrp'
+                'msrp',
+                'cost'
             ];
 
             if ($this->helper->canUseProductAttributes()) {
@@ -1502,6 +1503,15 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             'price' => $variantFinalPrice,
                             'sku' => $child_product->getSku()
                         ];
+                        // Emit qty only when it is a positive integer. A non-positive getQty() — 0, a
+                        // negative from oversold backorders, null when untracked, or a fractional <1 value
+                        // — would contradict an is_in_stock flag that can still be true (backorders /
+                        // unmanaged). Omitting lets the consumer fall back to its 1/0 sellable proxy, which
+                        // stays consistent with is_in_stock.
+                        $variantQty = (int)$stockitem->getQty();
+                        if ($variantQty > 0) {
+                            $variant_node_attributes['qty'] = $variantQty;
+                        }
                         if ($child_product->getPrice() > $variantFinalPrice) {
                             $variant_node_attributes['c_price'] = $child_product->getPrice();
                         }
@@ -2339,6 +2349,21 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'is_in_stock' => ($stockQty < 1 && boolval($this->helper->getManageStock())) ? 0 : 1
             ];
 
+            // Product-level qty: emitted only for a non-composite product with a positive integer qty.
+            // Composite parents (configurable/bundle/grouped) are excluded — their own stock row is
+            // structurally meaningless (real inventory lives on the children: a configurable ships
+            // per-variant qty, while bundle/grouped emit no qty at all and rely on the consumer's 1/0
+            // sellable proxy). The >0 guard mirrors the per-variant path: a non-positive qty (0, or a
+            // fractional <1 truncated to 0) is omitted so the consumer uses its sellable proxy instead of
+            // a 0 that would contradict is_in_stock — which is forced to 1 when manage-stock is off.
+            // Reuse the $stockQty already fetched for is_in_stock (same source; getProductQty() guards its
+            // DB read, and its 1000 "effectively unlimited" default for an untracked product reads as
+            // in-stock).
+            $productQty = (int)$stockQty;
+            if ($productQty > 0 && !in_array($product->getTypeId(), ['configurable', 'bundle', 'grouped'], true)) {
+                $xmlAttributes['qty'] = $productQty;
+            }
+
             if ($lastModifiedDate != 0) {
                 $xmlAttributes['updatedate'] = $lastModifiedDate;
             }
@@ -2373,6 +2398,22 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 if ($compare_at_price > $finalPrice) {
                     $xmlAttributes['price_compare_at_price'] = $compare_at_price;
                 }
+            }
+
+            // Emit product cost (for enterprise-merch margin rules) converted to the request store
+            // currency, matching the price/regular_price/msrp conversions above so price - cost is
+            // computed in one currency. Emitted only for a real, non-negative numeric cost: an unset
+            // (null), blank, corrupt, or negative cost sends no attribute (a negative would invert the
+            // margin); an explicit 0 is still emitted and the consumer treats cost=0 as "no cost".
+            // NOTE: because cost is loaded, the generic product-attribute loop MAY ALSO emit a separate
+            // <attribute name="cost"> facet child (raw base currency, carrying is_filterable) — subject to
+            // the merchant having product attributes enabled and a truthy cost (so a cost of 0 yields a
+            // node value but no facet child). That facet is a filter-oriented value; THIS node is the
+            // authoritative margin input (display currency, compared against price). hermes persists the
+            // facet only when is_filterable=1, so it never bloats the datastore.
+            $cost = $product->getCost();
+            if (is_numeric($cost) && $cost >= 0) {
+                $xmlAttributes['cost'] = $this->priceCurrencyInterface->convertAndRound($cost);
             }
 
             $productElem = $this->createChild('product', $xmlAttributes, false, $this->xmlGenerator->getSimpleXml());

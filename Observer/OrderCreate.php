@@ -164,8 +164,7 @@ class OrderCreate implements ObserverInterface
 
     protected function _getVisibleItemsFromOrder($order)
     {
-        $orderItems = $order->getItems();
-        return $this->_buildCartArray($orderItems, $order);
+        return $this->_buildCartArray($order->getItems(), $order);
     }
 
     /**
@@ -184,8 +183,29 @@ class OrderCreate implements ObserverInterface
                 $quantity = $item->getqty_ordered();
             }
             if (is_object($item->getProduct())) {
+                // Skip the redundant payload row for a configurable's simple child — its sale is already
+                // attributed to the parent line via variant_id, so emitting it standalone would
+                // double-count on the consumer. Bundle/grouped children have no parent variant_id
+                // capture, so they keep their own rows (only a 'configurable' parent is skipped). Skip
+                // only when the parent product is loadable — otherwise the parent row is dropped by the
+                // is_object() guard above and the child is the sole row capturing this purchase.
+                $parentItem = $item->getParentItem();
+                if (is_object($parentItem) && $parentItem->getProductType() == 'configurable'
+                    && is_object($parentItem->getProduct())) {
+                    continue;
+                }
+                // For a configurable line the product id is the parent; report the purchased
+                // simple child id as variant_id so hermes can attribute per-variant sales.
+                $variantId = null;
+                if ($item->getProduct()->getTypeId() == 'configurable') {
+                    $children = $item->getChildrenItems();
+                    if (!empty($children)) {
+                        $variantId = reset($children)->getProductId();
+                    }
+                }
                 $items[] = [
                     'product_id' => $item->getProduct()->getId(),
+                    'variant_id' => $variantId,
                     'price' => $item->getProduct()->getFinalPrice(),
                     'quantity' => $quantity,
                     'currency' => ($item->getQuote() == null) ?

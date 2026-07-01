@@ -130,8 +130,7 @@ class Webhook implements ObserverInterface
 
     protected function _getVisibleItemsFromOrder($order)
     {
-        $orderItems = $order->getItems();
-        return $this->_buildCartArray($orderItems);
+        return $this->_buildCartArray($order->getItems());
     }
 
     /**
@@ -151,8 +150,52 @@ class Webhook implements ObserverInterface
             }
             if (is_object($item->getProduct())) {
                 $this->cartProduct = $item->getProduct();
+                // Skip the redundant payload row for a configurable's simple child — its sale is already
+                // attributed to the parent line via variant_id, so emitting it standalone would
+                // double-count on the consumer. cartProduct is set above first, so the post-order
+                // re-index target is preserved; bundle/grouped children have no parent variant_id
+                // capture, so they keep their own rows (only a 'configurable' parent is skipped). Skip
+                // only when the parent product is loadable — otherwise the parent row is dropped by the
+                // is_object() guard above and the child is the sole row capturing this purchase.
+                $parentItem = $item->getParentItem();
+                if (is_object($parentItem) && $parentItem->getProductType() == 'configurable'
+                    && is_object($parentItem->getProduct())) {
+                    continue;
+                }
+                // The product id of a configurable line is the parent; report the purchased simple
+                // child id as variant_id. This builder is shared between the cart-add (quote item)
+                // and success (order item) paths, which expose children via different APIs, so branch
+                // on the same getQuote()==null discriminator used for the currency field below.
+                $variantId = null;
+                if ($item->getProduct()->getTypeId() == 'configurable') {
+                    if ($item->getQuote() == null) {
+                        $children = $item->getChildrenItems();
+                        if (!empty($children)) {
+                            $variantId = reset($children)->getProductId();
+                        }
+                    } else {
+                        $children = $item->getChildren();
+                        if (!empty($children)) {
+                            $childProduct = reset($children)->getProduct();
+                            if (is_object($childProduct)) {
+                                $variantId = $childProduct->getId();
+                            }
+                        }
+                        // Some add-to-cart flows leave a configurable quote item without built
+                        // children; the buy-request option still carries the selected simple's id in
+                        // getValue() (its product object may be unhydrated), so fall back to that
+                        // rather than silently losing variant attribution.
+                        if ($variantId === null) {
+                            $option = $item->getOptionByCode('simple_product');
+                            if ($option && $option->getValue()) {
+                                $variantId = $option->getValue();
+                            }
+                        }
+                    }
+                }
                 $items[] = [
                     'product_id' => $item->getProduct()->getId(),
+                    'variant_id' => $variantId,
                     'price' => $item->getProduct()->getFinalPrice(),
                     'quantity' => $quantity,
                     'currency' => ($item->getQuote() == null) ?

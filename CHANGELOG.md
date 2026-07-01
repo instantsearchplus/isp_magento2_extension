@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.91.52] - 2026-07-01 19:00:00
+### Added
+- Emit per-variant and product-level `qty` and product `cost` in the product feed for enterprise merchandising
+- Include `variant_id` in cart and order webhooks for per-variant sales attribution
+
 ## [4.91.51] - 2026-05-28 19:00:00
 ### Added
 - Add `images_width` parameter to control the resize width of Product images in the feed (`0` = original/source resolution)
