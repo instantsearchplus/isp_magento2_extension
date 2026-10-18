@@ -24,8 +24,11 @@ namespace Autocompleteplus\Autosuggest\Observer;
 use Autocompleteplus\Autosuggest\Helper\Api;
 use Autocompleteplus\Autosuggest\Helper\Batches;
 use Autocompleteplus\Autosuggest\Helper\Html\Injector;
+use Autocompleteplus\Autosuggest\Helper\Order\SoldPrice;
 use Magento\Checkout\Model\Session;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Tax\Model\Config as TaxConfig;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -70,6 +73,10 @@ class OrderCreate implements ObserverInterface
      * @var Session
      */
     protected $checkoutSession;
+    /**
+     * @var TaxConfig
+     */
+    protected $taxConfig;
 
     /**
      * @param Context $context
@@ -83,9 +90,11 @@ class OrderCreate implements ObserverInterface
         Batches  $batchesHelper,
         Api      $api,
         Session  $checkoutSession,
-        Injector $injector_helper
+        Injector $injector_helper,
+        ?TaxConfig $taxConfig = null
     )
     {
+        $this->taxConfig = $taxConfig ?: ObjectManager::getInstance()->get(TaxConfig::class);
         $this->injector_helper = $injector_helper;
         $this->apiHelper = $api;
         $this->batchesHelper = $batchesHelper;
@@ -177,21 +186,19 @@ class OrderCreate implements ObserverInterface
     protected function _buildCartArray($cartItems, $order)
     {
         $items = [];
+        // Read from the order, never $item->getOrder() (unset on items of an unsaved order at
+        // sales_order_place_after) nor the current store (store 0 in adminhtml).
+        $priceIncludesTax = (bool)$this->taxConfig->priceIncludesTax($order->getStoreId());
         foreach ($cartItems as $item) {
             $quantity = $item->getQty();
             if ($quantity == null) {
                 $quantity = $item->getqty_ordered();
             }
             if (is_object($item->getProduct())) {
-                // Skip the redundant payload row for a configurable's simple child — its sale is already
-                // attributed to the parent line via variant_id, so emitting it standalone would
-                // double-count on the consumer. Bundle/grouped children have no parent variant_id
-                // capture, so they keep their own rows (only a 'configurable' parent is skipped). Skip
-                // only when the parent product is loadable — otherwise the parent row is dropped by the
-                // is_object() guard above and the child is the sole row capturing this purchase.
-                $parentItem = $item->getParentItem();
-                if (is_object($parentItem) && $parentItem->getProductType() == 'configurable'
-                    && is_object($parentItem->getProduct())) {
+                // Skip a child row whose sale the parent line already reports (a configurable's simple
+                // child, attributed via variant_id, or a dynamic-price bundle's selection): emitting it
+                // too would double-count on the consumer.
+                if (SoldPrice::isReportedByParent($item)) {
                     continue;
                 }
                 // For a configurable line the product id is the parent; report the purchased
@@ -206,7 +213,7 @@ class OrderCreate implements ObserverInterface
                 $items[] = [
                     'product_id' => $item->getProduct()->getId(),
                     'variant_id' => $variantId,
-                    'price' => $item->getProduct()->getFinalPrice(),
+                    'price' => SoldPrice::unitPrice(SoldPrice::pricedRow($item), $priceIncludesTax),
                     'quantity' => $quantity,
                     'currency' => ($item->getQuote() == null) ?
                         $order->getorder_currency_code() :

@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [4.91.54] - 2026-10-18 10:00:00
+### Fixed
+- Read stock and salability from Magento's multi-source inventory when a website sells from a stock other than the Default Stock, so products stocked only outside the Default source no longer reach Fast Simon as out of stock
+- Report the price the shopper paid, after discounts and on the order store's tax basis, in order webhooks instead of the catalog price; configurable and dynamic-price bundle lines are reported once
+
 ## [4.91.53] - 2026-09-29 19:00:00
 ### Fixed
 - Stop forcing an isp_config customer-data reload on every product, category and search page view

@@ -300,6 +300,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
      */
     protected $swatchHelper;
 
+    /**
+     * @var \Autocompleteplus\Autosuggest\Helper\Product\SalableStock
+     */
+    protected $salableStock;
+
     const ISPKEY = 'ISPKEY_';
 
     const ActiveRulesCount = 'ActiveRulesCount2';
@@ -419,8 +424,11 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\CatalogRule\Model\ResourceModel\Rule $ruleModel,
         \Magento\Framework\EntityManager\MetadataPool $metadataPool,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
-        \Magento\Swatches\Helper\Data $swatchHelper
+        \Magento\Swatches\Helper\Data $swatchHelper,
+        ?\Autocompleteplus\Autosuggest\Helper\Product\SalableStock $salableStock = null
     ) {
+        $this->salableStock = $salableStock
+            ?: ObjectManager::getInstance()->get(\Autocompleteplus\Autosuggest\Helper\Product\SalableStock::class);
         $this->storeManager = $storeManagerInterface;
         $this->helper = $helper;
         $this->batchesHelper = $batchesHelper;
@@ -1455,16 +1463,31 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                             }
                         }
 
-                        $stockitem = $this->stockRegistry
-                            ->getStockItem(
-                                $child_product->getId(),
-                                $product->getStore()->getWebsiteId()
-                            );
+                        $useMsi = $this->salableStock->useMsi((int)$this->getStoreId());
                         $varStockSource = $this->helper->useQtyAsStockSource();
-                        if ($varStockSource != 'qty') {
-                            $is_variant_in_stock = ($stockitem->getIsInStock()) ? 1 : 0;
+                        if ($useMsi) {
+                            $variantSalableQty = $this->salableStock->getSalableQty(
+                                (string)$child_product->getSku(),
+                                (int)$this->getStoreId()
+                            );
+                            $msiVariantFlags = self::msiVariantFlags(
+                                $this->salableStock->isSalable((string)$child_product->getSku(), (int)$this->getStoreId()),
+                                $variantSalableQty,
+                                $this->_getProductEnabledString($child_product) === 1,
+                                $varStockSource == 'qty'
+                            );
+                            $is_variant_in_stock = $msiVariantFlags['is_in_stock'];
                         } else {
-                            $is_variant_in_stock = ($stockitem->getQty() > 0) ? 1 : 0;
+                            $stockitem = $this->stockRegistry
+                                ->getStockItem(
+                                    $child_product->getId(),
+                                    $product->getStore()->getWebsiteId()
+                                );
+                            if ($varStockSource != 'qty') {
+                                $is_variant_in_stock = ($stockitem->getIsInStock()) ? 1 : 0;
+                            } else {
+                                $is_variant_in_stock = ($stockitem->getQty() > 0) ? 1 : 0;
+                            }
                         }
 
                         // Use the same image helper approach as main products for consistency
@@ -1477,7 +1500,9 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         }
 
                         $is_variant_sellable = '';
-                        if (method_exists($child_product, 'isSaleable')) {
+                        if ($useMsi) {
+                            $is_variant_sellable = $msiVariantFlags['is_seallable'];
+                        } elseif (method_exists($child_product, 'isSaleable')) {
                             $is_variant_sellable = ($child_product->isSaleable()) ? 1 : 0;
                             if (!$is_variant_sellable && $child_product->hasData('is_salable')) {
                                 $is_variant_sellable = ($child_product->getData('is_salable')) ? 1 : 0;
@@ -1508,7 +1533,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                         // — would contradict an is_in_stock flag that can still be true (backorders /
                         // unmanaged). Omitting lets the consumer fall back to its 1/0 sellable proxy, which
                         // stays consistent with is_in_stock.
-                        $variantQty = (int)$stockitem->getQty();
+                        $variantQty = $useMsi ? (int)$variantSalableQty : (int)$stockitem->getQty();
                         if ($variantQty > 0) {
                             $variant_node_attributes['qty'] = $variantQty;
                         }
@@ -1951,12 +1976,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $notVisisbleProducts = array_diff($productIds, $visibleProductIds);
+        $msiSkus = !$send_oos ? $this->getMsiSkus($notVisisbleProducts) : null;
 
         foreach ($notVisisbleProducts as $productId) {
             $batch = $updatesBulk[$productId];
             $stockItem = $this->stockFactory->load($productId, 'product_id');
 
-            if ($stockItem->getTypeId() == 'configurable') {
+            $msiAction = $this->msiAction($msiSkus, $productId, $stockItem->getTypeId());
+            if ($msiAction !== null) {
+                $batch->setAction($msiAction);
+            } elseif ($stockItem->getTypeId() == 'configurable') {
                 $product = $this->productModel->load($productId);
                 if (!$send_oos && $product->hasData('is_salable') && !boolval($product->getData('is_salable'))) {
                     $batch->setAction('remove');
@@ -2332,7 +2361,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             $finalPrice = min($productPrices);
 
             $currency = $this->getCurrencyCode();
-            $stockQty = $this->getProductQty($product->getId(), $product->getStore()->getWebsiteId());
+            $isComposite = in_array($product->getTypeId(), ['configurable', 'bundle', 'grouped'], true);
+            $msiProduct = !$isComposite && $this->salableStock->useMsi((int)$this->getStoreId());
+            if ($msiProduct) {
+                $msiSalable = $this->salableStock->isSalable((string)$product->getSku(), (int)$this->getStoreId());
+                $msiQty = $this->salableStock->getSalableQty((string)$product->getSku(), (int)$this->getStoreId());
+            } else {
+                $stockQty = $this->getProductQty($product->getId(), $product->getStore()->getWebsiteId());
+            }
             $xmlAttributes = [
                 'action' => $action,
                 'id' => $product->getId(),
@@ -2346,8 +2382,14 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
                 'currency' => $currency,
                 'visibility' => $product->getVisibility(),
                 'selleable' => $product->isSalable(),
-                'is_in_stock' => ($stockQty < 1 && boolval($this->helper->getManageStock())) ? 0 : 1
+                'is_in_stock' => $msiProduct
+                    ? ($msiSalable ? 1 : 0)
+                    : (($stockQty < 1 && boolval($this->helper->getManageStock())) ? 0 : 1)
             ];
+            if ($msiProduct) {
+                $xmlAttributes['selleable'] = ($msiSalable && $this->_getProductEnabledString($product)) ? 1 : 0;
+                $stockQty = (int)$msiQty;
+            }
 
             // Product-level qty: emitted only for a non-composite product with a positive integer qty.
             // Composite parents (configurable/bundle/grouped) are excluded — their own stock row is
@@ -2360,7 +2402,7 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             // DB read, and its 1000 "effectively unlimited" default for an untracked product reads as
             // in-stock).
             $productQty = (int)$stockQty;
-            if ($productQty > 0 && !in_array($product->getTypeId(), ['configurable', 'bundle', 'grouped'], true)) {
+            if ($productQty > 0 && !$isComposite) {
                 $xmlAttributes['qty'] = $productQty;
             }
 
@@ -2794,13 +2836,16 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
         $notVisisbleProducts = array_diff($ids, $visibleProductIds);
 
         if (count($notVisisbleProducts) > 0) {
+            $msiSkus = $this->getMsiSkus($notVisisbleProducts);
             foreach ($notVisisbleProducts as $productId) {
 
                 $stockItem = $this->stockFactory->load($productId, 'product_id');
                 $itemType = $stockItem->getTypeId();
-                $action = '';
+                $action = $this->msiAction($msiSkus, $productId, $itemType);
                 $sku = '';
-                if ($itemType == 'configurable') {
+                if ($action !== null) {
+                    $sku = $msiSkus[$productId] ?? '';
+                } elseif ($itemType == 'configurable') {
                     $product = $this->productModel->load($productId);
                     $sku = $product->getSku();
                     if ($product->hasData('is_salable') && !boolval($product->getData('is_salable'))) {
@@ -2890,6 +2935,71 @@ class Generator extends \Magento\Framework\App\Helper\AbstractHelper
             return json_decode($string, true);
         }
         return $result;
+    }
+
+    /**
+     * SKUs for products rendered outside the collection, read in one query. Update batches carry the
+     * placeholder SKU 'ISP_NO_SKU', so the batch cannot supply it.
+     *
+     * @param array $productIds
+     * @return array|null entity id => sku (a deleted id is absent), or null when MSI does not apply
+     */
+    protected function getMsiSkus(array $productIds)
+    {
+        if (!$this->salableStock->useMsi((int)$this->getStoreId())) {
+            return null;
+        }
+        if (count($productIds) == 0) {
+            return [];
+        }
+        $skus = [];
+        foreach ($this->productModel->getResource()->getProductsSku(array_values($productIds)) as $row) {
+            $skus[$row['entity_id']] = $row['sku'];
+        }
+        return $skus;
+    }
+
+    /**
+     * The MSI remove/ignore action for a product rendered outside the collection.
+     *
+     * @param array|null $msiSkus getMsiSkus() result
+     * @param int|string $productId
+     * @param string|null $typeId the stock row's type id
+     * @return string|null 'remove' or 'ignore', or null for the legacy branches (MSI off, or a
+     *     configurable, bundle or grouped product)
+     */
+    protected function msiAction($msiSkus, $productId, $typeId)
+    {
+        if ($msiSkus === null) {
+            return null;
+        }
+        if (!isset($msiSkus[$productId])) {
+            // Deleted product: the shared stock model may still hold the previous product's row.
+            return 'remove';
+        }
+        if (in_array($typeId, ['configurable', 'bundle', 'grouped'], true)) {
+            return null;
+        }
+        return $this->salableStock->isSalable($msiSkus[$productId], (int)$this->getStoreId()) ? 'ignore' : 'remove';
+    }
+
+    /**
+     * A variant's stock flags from MSI, as int 1/0 like the legacy branch: a false attribute renders
+     * as "", which the consumer does not read as out of stock.
+     *
+     * @param bool $salable MSI's answer for the website's stock
+     * @param float|null $salableQty positive salable qty, or null
+     * @param bool $enabled the variant's status is enabled
+     * @param bool $qtyMode the "use qty as stock source" setting is on
+     * @return array is_in_stock and is_seallable
+     */
+    public static function msiVariantFlags(bool $salable, $salableQty, bool $enabled, bool $qtyMode): array
+    {
+        $inStock = $qtyMode ? $salableQty > 0 : $salable;
+        return [
+            'is_in_stock' => $inStock ? 1 : 0,
+            'is_seallable' => ($salable && $enabled) ? 1 : 0,
+        ];
     }
 
     public function getProductQty($prouctId, $websiteId)

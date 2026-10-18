@@ -24,12 +24,15 @@ namespace Autocompleteplus\Autosuggest\Observer;
 use Autocompleteplus\Autosuggest\Helper\Api;
 use Autocompleteplus\Autosuggest\Helper\Batches;
 use Autocompleteplus\Autosuggest\Helper\Html\Injector;
+use Autocompleteplus\Autosuggest\Helper\Order\SoldPrice;
 use Magento\Checkout\Model\Session;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Tax\Model\Config as TaxConfig;
 
 /**
  * Webhook
@@ -90,6 +93,11 @@ class Webhook implements ObserverInterface
     protected $date;
 
     /**
+     * @var TaxConfig
+     */
+    protected $taxConfig;
+
+    /**
      * @param Context $context
      * @param Api $api
      * @param Injector $injector_helper
@@ -105,9 +113,11 @@ class Webhook implements ObserverInterface
         Session           $session,
         CollectionFactory $orderCollectionFactory,
         Batches           $batchesHelper,
-        DateTime          $date
+        DateTime          $date,
+        ?TaxConfig        $taxConfig = null
     )
     {
+        $this->taxConfig = $taxConfig ?: ObjectManager::getInstance()->get(TaxConfig::class);
         $this->injector_helper = $injector_helper;
         $this->apiHelper = $api;
         $this->_storeManager = $context->getStoreManager();
@@ -150,16 +160,11 @@ class Webhook implements ObserverInterface
             }
             if (is_object($item->getProduct())) {
                 $this->cartProduct = $item->getProduct();
-                // Skip the redundant payload row for a configurable's simple child — its sale is already
-                // attributed to the parent line via variant_id, so emitting it standalone would
-                // double-count on the consumer. cartProduct is set above first, so the post-order
-                // re-index target is preserved; bundle/grouped children have no parent variant_id
-                // capture, so they keep their own rows (only a 'configurable' parent is skipped). Skip
-                // only when the parent product is loadable — otherwise the parent row is dropped by the
-                // is_object() guard above and the child is the sole row capturing this purchase.
-                $parentItem = $item->getParentItem();
-                if (is_object($parentItem) && $parentItem->getProductType() == 'configurable'
-                    && is_object($parentItem->getProduct())) {
+                // Skip a child row whose sale the parent line already reports (a configurable's simple
+                // child, attributed via variant_id, or a dynamic-price bundle's selection): emitting it
+                // too would double-count on the consumer. cartProduct is set above first, so the
+                // post-order re-index target is preserved.
+                if (SoldPrice::isReportedByParent($item)) {
                     continue;
                 }
                 // The product id of a configurable line is the parent; report the purchased simple
@@ -196,7 +201,13 @@ class Webhook implements ObserverInterface
                 $items[] = [
                     'product_id' => $item->getProduct()->getId(),
                     'variant_id' => $variantId,
-                    'price' => $item->getProduct()->getFinalPrice(),
+                    // Only an order line is priced as sold; a cart-add keeps the catalog price.
+                    'price' => ($item->getQuote() == null) ?
+                        SoldPrice::unitPrice(
+                            SoldPrice::pricedRow($item),
+                            (bool)$this->taxConfig->priceIncludesTax($item->getOrder()->getStoreId())
+                        ) :
+                        $item->getProduct()->getFinalPrice(),
                     'quantity' => $quantity,
                     'currency' => ($item->getQuote() == null) ?
                         $item->getOrder()->getorder_currency_code() :
